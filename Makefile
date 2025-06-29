@@ -69,13 +69,18 @@ dev-react: ## Start React development server only
 dev-electron: ## Start Electron app (requires React server to be running)
 	@echo "$(GREEN)Starting Electron app...$(NC)"
 	@echo "$(YELLOW)Make sure React dev server is running on port 3000$(NC)"
-	npm start
+	npm run dev:electron
 
 # Building and Testing
 build: ## Build React app for production
 	@echo "$(GREEN)Building React app for production...$(NC)"
 	npm run build
 	@echo "$(GREEN)✓ Build completed successfully$(NC)"
+
+build-electron: ## Build Electron app (React + Electron packaging)
+	@echo "$(GREEN)Building Electron app...$(NC)"
+	npm run build:electron
+	@echo "$(GREEN)✓ Electron app built successfully$(NC)"
 
 test: ## Run tests
 	@echo "$(GREEN)Running tests...$(NC)"
@@ -88,17 +93,17 @@ test-watch: ## Run tests in watch mode
 
 lint: ## Run ESLint
 	@echo "$(GREEN)Running ESLint...$(NC)"
-	npx eslint src --ext .js,.jsx,.ts,.tsx
+	npx eslint src electron --ext .js,.jsx,.ts,.tsx
 	@echo "$(GREEN)✓ Linting completed$(NC)"
 
 lint-fix: ## Run ESLint with auto-fix
 	@echo "$(GREEN)Running ESLint with auto-fix...$(NC)"
-	npx eslint src --ext .js,.jsx,.ts,.tsx --fix
+	npx eslint src electron --ext .js,.jsx,.ts,.tsx --fix
 	@echo "$(GREEN)✓ Linting and fixes completed$(NC)"
 
 format: ## Format code with Prettier
 	@echo "$(GREEN)Formatting code with Prettier...$(NC)"
-	npx prettier --write "src/**/*.{js,jsx,ts,tsx,json,css,md}"
+	npx prettier --write "src/**/*.{js,jsx,ts,tsx,json,css,md}" "electron/**/*.js"
 	@echo "$(GREEN)✓ Code formatting completed$(NC)"
 
 # Packaging and Distribution
@@ -109,12 +114,12 @@ pack: build ## Package the app (requires build)
 
 dist: build ## Create distribution packages
 	@echo "$(GREEN)Creating distribution packages...$(NC)"
-	npx electron-builder --publish=never
+	npm run dist
 	@echo "$(GREEN)✓ Distribution packages created$(NC)"
 
 dist-all: build ## Create distribution packages for all platforms
 	@echo "$(GREEN)Creating distribution packages for all platforms...$(NC)"
-	npx electron-builder --mac --win --linux --publish=never
+	npm run dist:all
 	@echo "$(GREEN)✓ Multi-platform distribution packages created$(NC)"
 
 # Release and Publishing

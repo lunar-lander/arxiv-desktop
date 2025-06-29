@@ -1,49 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import styled, { ThemeProvider as StyledThemeProvider } from 'styled-components';
 import HomePage from './components/HomePage';
 import Sidebar from './components/Sidebar';
 import PaperViewer from './components/PaperViewer';
 import { PaperProvider } from './context/PaperContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-
-const AppContainer = styled.div`
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  background-color: ${props => props.theme.background};
-  transition: background-color 0.3s ease;
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-`;
+import styles from './components/App.module.css';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedPaper, setSelectedPaper] = useState(null);
-  const { theme } = useTheme();
+  const { currentTheme } = useTheme();
+
+  // Handle menu actions from Electron
+  useEffect(() => {
+    if (window.electronAPI) {
+      window.electronAPI.onMenuAction((action, data) => {
+        switch (action) {
+          case 'new-search':
+            setCurrentView('home');
+            break;
+          case 'show-bookmarks':
+            // Could add a bookmarks view here
+            break;
+          case 'show-starred':
+            // Could add a starred view here
+            break;
+          case 'clear-cache':
+            // Handle cache clearing
+            break;
+          default:
+            break;
+        }
+      });
+
+      return () => {
+        window.electronAPI.removeMenuActionListener();
+      };
+    }
+  }, []);
 
   return (
-    <StyledThemeProvider theme={theme}>
-      <AppContainer>
-        <Sidebar 
-          onNavigate={setCurrentView}
-          onPaperSelect={setSelectedPaper}
-          currentView={currentView}
-        />
-        <MainContent>
-          {currentView === 'home' && (
-            <HomePage onPaperOpen={setSelectedPaper} />
-          )}
-          {currentView === 'paper' && selectedPaper && (
-            <PaperViewer paper={selectedPaper} />
-          )}
-        </MainContent>
-      </AppContainer>
-    </StyledThemeProvider>
+    <div className={`${styles.appContainer} ${styles[currentTheme]}`}>
+      <Sidebar 
+        onNavigate={setCurrentView}
+        onPaperSelect={setSelectedPaper}
+        currentView={currentView}
+      />
+      <div className={styles.mainContent}>
+        {currentView === 'home' && (
+          <HomePage onPaperOpen={setSelectedPaper} />
+        )}
+        {currentView === 'paper' && selectedPaper && (
+          <PaperViewer paper={selectedPaper} />
+        )}
+      </div>
+    </div>
   );
 }
 
