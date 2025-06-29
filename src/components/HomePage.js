@@ -6,10 +6,9 @@ import SearchFilters from './SearchFilters';
 import styles from './HomePage.module.css';
 
 
-function HomePage({ onPaperOpen }) {
-  const [searchQuery, setSearchQuery] = useState('');
+function HomePage({ onPaperOpen, searchResults, onSearchResults, lastSearchQuery, onSearchQuery }) {
+  const [searchQuery, setSearchQuery] = useState(lastSearchQuery || '');
   const [selectedSource, setSelectedSource] = useState('arxiv');
-  const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     author: '',
@@ -34,7 +33,8 @@ function HomePage({ onPaperOpen }) {
         selectedSource,
         searchFilters
       );
-      setSearchResults(results.papers);
+      onSearchResults(results.papers);
+      onSearchQuery(searchQuery);
       dispatch({ 
         type: 'ADD_SEARCH', 
         payload: { 
@@ -145,7 +145,10 @@ function HomePage({ onPaperOpen }) {
             </h3>
             <button 
               className={styles.clearButton}
-              onClick={() => setSearchResults([])}
+              onClick={() => {
+                onSearchResults([]);
+                onSearchQuery('');
+              }}
             >
               Clear Results
             </button>

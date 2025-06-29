@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Bookmark, Quote } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
@@ -9,14 +9,20 @@ import styles from './PaperViewer.module.css';
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 
+// Store zoom levels and view modes for each paper
+const paperViewState = new Map();
+
 function PaperViewer({ paper }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
+  const [viewMode, setViewMode] = useState('single'); // 'single' or 'continuous'
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCitationModal, setShowCitationModal] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const { state, dispatch } = usePapers();
+  const containerRef = useRef(null);
 
   useEffect(() => {
     setPageNumber(1);

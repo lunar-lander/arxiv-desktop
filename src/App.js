@@ -9,6 +9,8 @@ import styles from './components/App.module.css';
 function AppContent() {
   const [currentView, setCurrentView] = useState('home');
   const [selectedPaper, setSelectedPaper] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  const [lastSearchQuery, setLastSearchQuery] = useState('');
   const { currentTheme } = useTheme();
 
   // Handle menu actions from Electron
@@ -48,10 +50,16 @@ function AppContent() {
       />
       <div className={styles.mainContent}>
         {currentView === 'home' && (
-          <HomePage onPaperOpen={(paper) => {
-            setSelectedPaper(paper);
-            setCurrentView('paper');
-          }} />
+          <HomePage 
+            onPaperOpen={(paper) => {
+              setSelectedPaper(paper);
+              setCurrentView('paper');
+            }}
+            searchResults={searchResults}
+            onSearchResults={setSearchResults}
+            lastSearchQuery={lastSearchQuery}
+            onSearchQuery={setLastSearchQuery}
+          />
         )}
         {currentView === 'paper' && selectedPaper && (
           <PaperViewer paper={selectedPaper} />
