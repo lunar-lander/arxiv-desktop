@@ -11,6 +11,8 @@ const HomeContainer = styled.div`
   height: 100%;
   padding: 2rem;
   overflow-y: auto;
+  background: ${props => props.theme.background};
+  transition: background-color 0.3s ease;
 `;
 
 const Header = styled.div`
@@ -20,12 +22,12 @@ const Header = styled.div`
 
 const Title = styled.h1`
   font-size: 2.5rem;
-  color: #2c3e50;
+  color: ${props => props.theme.text};
   margin-bottom: 0.5rem;
 `;
 
 const Subtitle = styled.p`
-  color: #7f8c8d;
+  color: ${props => props.theme.textMuted};
   font-size: 1.1rem;
 `;
 
@@ -39,13 +41,15 @@ const SearchInput = styled.input`
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
   font-size: 1.1rem;
-  border: 2px solid #e0e6ed;
+  border: 2px solid ${props => props.theme.border};
   border-radius: 10px;
   outline: none;
   transition: border-color 0.2s;
+  background: ${props => props.theme.surface};
+  color: ${props => props.theme.text};
 
   &:focus {
-    border-color: #3498db;
+    border-color: ${props => props.theme.primary};
   }
 `;
 
@@ -54,7 +58,7 @@ const SearchIcon = styled(Search)`
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #7f8c8d;
+  color: ${props => props.theme.textMuted};
 `;
 
 const SourceSelector = styled.div`

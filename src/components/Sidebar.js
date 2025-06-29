@@ -4,38 +4,43 @@ import { Home, FileText, Star, Bookmark, User, X, LogIn, LogOut } from 'lucide-r
 import { usePapers } from '../context/PaperContext';
 import { AuthService } from '../services/authService';
 import LoginModal from './LoginModal';
+import ThemeToggle from './ThemeToggle';
 
 const SidebarContainer = styled.div`
   width: 300px;
-  background: #2c3e50;
-  color: white;
+  background: ${props => props.theme.sidebarBg};
+  color: ${props => props.theme.sidebarText};
   display: flex;
   flex-direction: column;
   height: 100vh;
+  transition: background-color 0.3s ease;
 `;
 
 const SidebarHeader = styled.div`
   padding: 1rem;
-  border-bottom: 1px solid #34495e;
+  border-bottom: 1px solid ${props => props.theme.sidebarBorder};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const AppTitle = styled.h2`
   margin: 0;
   font-size: 1.2rem;
-  color: #ecf0f1;
+  color: ${props => props.theme.sidebarText};
 `;
 
 const Navigation = styled.div`
   padding: 1rem 0;
-  border-bottom: 1px solid #34495e;
+  border-bottom: 1px solid ${props => props.theme.sidebarBorder};
 `;
 
 const NavItem = styled.button`
   width: 100%;
   padding: 0.75rem 1rem;
-  background: ${props => props.active ? '#3498db' : 'transparent'};
+  background: ${props => props.active ? props.theme.sidebarActive : 'transparent'};
   border: none;
-  color: white;
+  color: ${props => props.theme.sidebarText};
   text-align: left;
   cursor: pointer;
   display: flex;
@@ -44,7 +49,7 @@ const NavItem = styled.button`
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.active ? '#3498db' : '#34495e'};
+    background: ${props => props.active ? props.theme.sidebarActive : props.theme.sidebarHover};
   }
 `;
 
@@ -52,7 +57,7 @@ const SectionTitle = styled.h3`
   padding: 1rem 1rem 0.5rem;
   margin: 0;
   font-size: 0.9rem;
-  color: #bdc3c7;
+  color: ${props => props.theme.sidebarTextMuted};
   text-transform: uppercase;
   letter-spacing: 0.5px;
 `;
@@ -64,7 +69,7 @@ const PapersList = styled.div`
 
 const PaperItem = styled.div`
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #34495e;
+  border-bottom: 1px solid ${props => props.theme.sidebarBorder};
   cursor: pointer;
   transition: background 0.2s;
   display: flex;
@@ -72,7 +77,7 @@ const PaperItem = styled.div`
   align-items: flex-start;
 
   &:hover {
-    background: #34495e;
+    background: ${props => props.theme.sidebarHover};
   }
 `;
 
@@ -83,7 +88,7 @@ const PaperInfo = styled.div`
 
 const PaperTitle = styled.div`
   font-size: 0.9rem;
-  color: #ecf0f1;
+  color: ${props => props.theme.sidebarText};
   margin-bottom: 0.25rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -93,13 +98,13 @@ const PaperTitle = styled.div`
 
 const PaperSource = styled.div`
   font-size: 0.75rem;
-  color: #95a5a6;
+  color: ${props => props.theme.sidebarTextMuted};
 `;
 
 const CloseButton = styled.button`
   background: none;
   border: none;
-  color: #95a5a6;
+  color: ${props => props.theme.sidebarTextMuted};
   cursor: pointer;
   padding: 0.25rem;
   margin-left: 0.5rem;
@@ -107,21 +112,21 @@ const CloseButton = styled.button`
   transition: color 0.2s;
 
   &:hover {
-    color: #e74c3c;
+    color: ${props => props.theme.error};
   }
 `;
 
 const EmptyState = styled.div`
   padding: 1rem;
   text-align: center;
-  color: #95a5a6;
+  color: ${props => props.theme.sidebarTextMuted};
   font-size: 0.9rem;
 `;
 
 const UserSection = styled.div`
   padding: 1rem;
-  border-top: 1px solid #34495e;
-  background: #34495e;
+  border-top: 1px solid ${props => props.theme.sidebarBorder};
+  background: ${props => props.theme.sidebarHover};
 `;
 
 const UserInfo = styled.div`
@@ -129,7 +134,7 @@ const UserInfo = styled.div`
   align-items: center;
   justify-content: space-between;
   font-size: 0.9rem;
-  color: #bdc3c7;
+  color: ${props => props.theme.sidebarTextMuted};
 `;
 
 const UserDetails = styled.div`
@@ -141,15 +146,21 @@ const UserDetails = styled.div`
 const AuthButton = styled.button`
   background: none;
   border: none;
-  color: #bdc3c7;
+  color: ${props => props.theme.sidebarTextMuted};
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
   transition: color 0.2s;
 
   &:hover {
-    color: #3498db;
+    color: ${props => props.theme.primary};
   }
+`;
+
+const ThemeSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 function Sidebar({ onNavigate, onPaperSelect, currentView }) {
@@ -195,6 +206,7 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
     <SidebarContainer>
       <SidebarHeader>
         <AppTitle>ArXiv Desktop</AppTitle>
+        <ThemeToggle />
       </SidebarHeader>
 
       <Navigation>
@@ -272,12 +284,14 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
             <User size={16} />
             {state.currentUser ? `${state.currentUser.username} (${state.currentUser.source})` : 'Not logged in'}
           </UserDetails>
-          <AuthButton 
-            onClick={state.currentUser ? handleLogout : () => setShowLoginModal(true)}
-            title={state.currentUser ? 'Logout' : 'Login'}
-          >
-            {state.currentUser ? <LogOut size={16} /> : <LogIn size={16} />}
-          </AuthButton>
+          <ThemeSection>
+            <AuthButton 
+              onClick={state.currentUser ? handleLogout : () => setShowLoginModal(true)}
+              title={state.currentUser ? 'Logout' : 'Login'}
+            >
+              {state.currentUser ? <LogOut size={16} /> : <LogIn size={16} />}
+            </AuthButton>
+          </ThemeSection>
         </UserInfo>
       </UserSection>
 
