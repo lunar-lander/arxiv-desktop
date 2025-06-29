@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Search, FileText, Star, ExternalLink } from 'lucide-react';
 import { ArxivService } from '../services/arxivService';
 import { usePapers } from '../context/PaperContext';
+import SearchFilters from './SearchFilters';
 
 const HomeContainer = styled.div`
   display: flex;
@@ -173,6 +174,15 @@ function HomePage({ onPaperOpen }) {
   const [selectedSource, setSelectedSource] = useState('arxiv');
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchFilters, setSearchFilters] = useState({
+    author: '',
+    title: '',
+    dateFrom: '',
+    dateTo: '',
+    categories: [],
+    sortBy: 'relevance',
+    maxResults: 20
+  });
   const { state, dispatch } = usePapers();
 
   const handleSearch = async () => {
@@ -180,9 +190,23 @@ function HomePage({ onPaperOpen }) {
 
     setIsLoading(true);
     try {
-      const results = await ArxivService.searchPapers(searchQuery, 0, 20, selectedSource);
+      const results = await ArxivService.searchPapersWithFilters(
+        searchQuery, 
+        0, 
+        searchFilters.maxResults, 
+        selectedSource,
+        searchFilters
+      );
       setSearchResults(results.papers);
-      dispatch({ type: 'ADD_SEARCH', payload: { query: searchQuery, source: selectedSource, timestamp: Date.now() } });
+      dispatch({ 
+        type: 'ADD_SEARCH', 
+        payload: { 
+          query: searchQuery, 
+          source: selectedSource, 
+          filters: searchFilters,
+          timestamp: Date.now() 
+        } 
+      });
     } catch (error) {
       console.error('Search failed:', error);
       alert('Search failed. Please try again.');
@@ -258,6 +282,12 @@ function HomePage({ onPaperOpen }) {
       <SearchButton onClick={handleSearch} disabled={isLoading || !searchQuery.trim()}>
         {isLoading ? 'Searching...' : 'Search'}
       </SearchButton>
+
+      <SearchFilters
+        filters={searchFilters}
+        onFiltersChange={setSearchFilters}
+        source={selectedSource}
+      />
 
       {isLoading && (
         <LoadingSpinner>

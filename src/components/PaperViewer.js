@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Bookmark } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Bookmark, Quote } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
+import CitationModal from './CitationModal';
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -147,6 +148,7 @@ function PaperViewer({ paper }) {
   const [scale, setScale] = useState(1.0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCitationModal, setShowCitationModal] = useState(false);
   const { state, dispatch } = usePapers();
 
   useEffect(() => {
@@ -233,6 +235,10 @@ function PaperViewer({ paper }) {
             <Download size={16} />
             Download
           </ActionButton>
+          <ActionButton onClick={() => setShowCitationModal(true)}>
+            <Quote size={16} />
+            Cite
+          </ActionButton>
           <ActionButton onClick={() => window.electronAPI.openExternal(paper.url)}>
             <ExternalLink size={16} />
             View Online
@@ -308,6 +314,12 @@ function PaperViewer({ paper }) {
           </PDFWrapper>
         )}
       </PDFContainer>
+
+      <CitationModal
+        isOpen={showCitationModal}
+        onClose={() => setShowCitationModal(false)}
+        paper={paper}
+      />
     </ViewerContainer>
   );
 }
