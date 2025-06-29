@@ -138,8 +138,20 @@ function HomePage({ onPaperOpen }) {
       )}
 
       {searchResults.length > 0 && (
-        <div className={styles.resultsContainer}>
-          {searchResults.map((paper) => (
+        <>
+          <div className={styles.resultsHeader}>
+            <h3 className={styles.resultsTitle}>
+              Search Results ({searchResults.length})
+            </h3>
+            <button 
+              className={styles.clearButton}
+              onClick={() => setSearchResults([])}
+            >
+              Clear Results
+            </button>
+          </div>
+          <div className={styles.resultsContainer}>
+            {searchResults.map((paper) => (
             <div key={paper.id} className={styles.paperCard} onClick={() => handlePaperClick(paper)}>
               <h3 className={styles.paperTitle}>{paper.title}</h3>
               <p className={styles.paperAuthors}>
@@ -165,8 +177,9 @@ function HomePage({ onPaperOpen }) {
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

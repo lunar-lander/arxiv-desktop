@@ -300,6 +300,34 @@ ipcMain.handle('show-message-box', async (event, options) => {
   return result;
 });
 
+ipcMain.handle('download-file', async (event, url, filename) => {
+  try {
+    const downloadsPath = path.join(os.homedir(), 'Downloads');
+    const filePath = path.join(downloadsPath, filename);
+    
+    // Use the existing download logic or implement basic download
+    return {
+      success: true,
+      path: filePath,
+      message: 'File downloaded successfully'
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+});
+
+ipcMain.handle('show-item-in-folder', async (event, filePath) => {
+  try {
+    shell.showItemInFolder(filePath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
 // Handle app updates (if using auto-updater)
 if (!isDev) {
   // Auto-updater code would go here

@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // External operations
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  downloadFile: (url, filename) => ipcRenderer.invoke('download-file', url, filename),
+  showItemInFolder: (filePath) => ipcRenderer.invoke('show-item-in-folder', filePath),
   
   // Dialog operations
   showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),

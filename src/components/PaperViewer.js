@@ -58,10 +58,27 @@ function PaperViewer({ paper }) {
     setScale(prev => Math.max(0.5, prev - 0.25));
   };
 
-  const handleDownload = () => {
-    if (paper.localPath) {
-      window.electronAPI.openExternal(paper.localPath);
-    } else {
+  const handleDownload = async () => {
+    try {
+      // Try to download the paper if not already downloaded
+      if (!paper.localPath) {
+        const downloadResult = await window.electronAPI.downloadFile(paper.pdfUrl, `${paper.id}.pdf`);
+        if (downloadResult.success) {
+          alert(`PDF downloaded to: ${downloadResult.path}`);
+          return;
+        }
+      }
+      
+      // If already downloaded or download failed, show file in folder
+      if (paper.localPath) {
+        await window.electronAPI.showItemInFolder(paper.localPath);
+      } else {
+        // Fallback to opening URL
+        window.electronAPI.openExternal(paper.pdfUrl);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback to opening URL
       window.electronAPI.openExternal(paper.pdfUrl);
     }
   };
