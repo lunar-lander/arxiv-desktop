@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AuthService } from '../services/authService';
+import storageService from '../services/storageService';
 
 const PaperContext = createContext();
 
@@ -79,6 +80,40 @@ function paperReducer(state, action) {
 export function PaperProvider({ children }) {
   const [state, dispatch] = useReducer(paperReducer, initialState);
 
+  // Enhanced dispatch that handles async storage operations
+  const enhancedDispatch = async (action) => {
+    switch (action.type) {
+      case 'ADD_BOOKMARK':
+        dispatch(action);
+        await storageService.addBookmark(action.payload);
+        break;
+      case 'REMOVE_BOOKMARK':
+        dispatch(action);
+        await storageService.removeBookmark(action.payload);
+        break;
+      case 'TOGGLE_STAR':
+        const isStarred = state.starredPapers.find(p => p.id === action.payload.id);
+        dispatch(action);
+        if (isStarred) {
+          await storageService.removeStar(action.payload.id);
+        } else {
+          await storageService.addStar(action.payload);
+        }
+        break;
+      case 'ADD_SEARCH':
+        dispatch(action);
+        await storageService.addSearchHistory(action.payload);
+        break;
+      case 'ADD_OPEN_PAPER':
+        dispatch(action);
+        await storageService.addToOpenedPapers(action.payload);
+        break;
+      default:
+        dispatch(action);
+        break;
+    }
+  };
+
   useEffect(() => {
     loadPersistedState();
     loadCurrentUser();
@@ -90,38 +125,28 @@ export function PaperProvider({ children }) {
 
   const loadPersistedState = async () => {
     try {
-      const appDataPath = await window.electronAPI.getAppDataPath();
-      const stateFile = `${appDataPath}/app-state.json`;
-      const exists = await window.electronAPI.fileExists(stateFile);
-      
-      if (exists) {
-        const result = await window.electronAPI.readFile(stateFile);
-        if (result.success) {
-          const savedState = JSON.parse(result.data.toString());
-          dispatch({ type: 'LOAD_STATE', payload: savedState });
-        }
-      }
+      const [bookmarked, starred, searchHistory] = await Promise.all([
+        storageService.getBookmarkedPapers(),
+        storageService.getStarredPapers(),
+        storageService.getSearchHistory()
+      ]);
+
+      dispatch({ 
+        type: 'LOAD_STATE', 
+        payload: { 
+          bookmarkedPapers: bookmarked,
+          starredPapers: starred,
+          searchHistory: searchHistory
+        } 
+      });
     } catch (error) {
       console.error('Failed to load persisted state:', error);
     }
   };
 
   const persistState = async () => {
-    try {
-      const appDataPath = await window.electronAPI.getAppDataPath();
-      await window.electronAPI.ensureDirectory(appDataPath);
-      
-      const stateToSave = {
-        bookmarkedPapers: state.bookmarkedPapers,
-        starredPapers: state.starredPapers,
-        searchHistory: state.searchHistory
-      };
-      
-      const stateFile = `${appDataPath}/app-state.json`;
-      await window.electronAPI.writeFile(stateFile, JSON.stringify(stateToSave, null, 2));
-    } catch (error) {
-      console.error('Failed to persist state:', error);
-    }
+    // State is now automatically persisted by individual actions
+    // This function is kept for backward compatibility but no longer needed
   };
 
   const loadCurrentUser = async () => {
@@ -136,7 +161,7 @@ export function PaperProvider({ children }) {
   };
 
   return (
-    <PaperContext.Provider value={{ state, dispatch }}>
+    <PaperContext.Provider value={{ state, dispatch: enhancedDispatch }}>
       {children}
     </PaperContext.Provider>
   );
