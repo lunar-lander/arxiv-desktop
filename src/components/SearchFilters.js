@@ -1,117 +1,7 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { Filter, Calendar, Tag, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import styles from './SearchFilters.module.css';
 
-const FiltersContainer = styled.div`
-  background: white;
-  border: 1px solid #e0e6ed;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-`;
-
-const FiltersHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-  cursor: pointer;
-`;
-
-const FiltersTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #2c3e50;
-`;
-
-const FiltersGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const FilterLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: #5a6c7d;
-  font-weight: 500;
-`;
-
-const FilterInput = styled.input`
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e0e6ed;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:focus {
-    border-color: #3498db;
-  }
-`;
-
-const FilterSelect = styled.select`
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e0e6ed;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-  background: white;
-
-  &:focus {
-    border-color: #3498db;
-  }
-`;
-
-const CategoryTags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-`;
-
-const CategoryTag = styled.button`
-  padding: 0.25rem 0.75rem;
-  border: 1px solid ${props => props.selected ? '#3498db' : '#e0e6ed'};
-  background: ${props => props.selected ? '#3498db' : 'white'};
-  color: ${props => props.selected ? 'white' : '#5a6c7d'};
-  border-radius: 20px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #3498db;
-  }
-`;
-
-const ClearButton = styled.button`
-  background: none;
-  border: none;
-  color: #7f8c8d;
-  cursor: pointer;
-  font-size: 0.9rem;
-  text-decoration: underline;
-
-  &:hover {
-    color: #2c3e50;
-  }
-`;
 
 const CATEGORIES = {
   arxiv: [
@@ -157,84 +47,90 @@ function SearchFilters({ filters, onFiltersChange, source }) {
   );
 
   return (
-    <FiltersContainer>
-      <FiltersHeader onClick={() => setIsExpanded(!isExpanded)}>
-        <FiltersTitle>
+    <div className={styles.filtersContainer}>
+      <div className={styles.filtersHeader} onClick={() => setIsExpanded(!isExpanded)}>
+        <div className={styles.filtersTitle}>
           <Filter size={18} />
           Advanced Search Filters
-          {hasActiveFilters && <span style={{ color: '#3498db' }}>({Object.keys(filters).filter(k => filters[k] && filters[k].length > 0).length} active)</span>}
-        </FiltersTitle>
+          {hasActiveFilters && <span className={styles.activeCount}>({Object.keys(filters).filter(k => filters[k] && filters[k].length > 0).length} active)</span>}
+        </div>
         {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-      </FiltersHeader>
+      </div>
 
       {isExpanded && (
         <>
-          <FiltersGrid>
-            <FilterGroup>
-              <FilterLabel>
+          <div className={styles.filtersGrid}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
                 <UserIcon size={16} />
                 Author
-              </FilterLabel>
-              <FilterInput
+              </label>
+              <input
+                className={styles.filterInput}
                 type="text"
                 placeholder="Author name..."
                 value={filters.author || ''}
                 onChange={(e) => handleFilterChange('author', e.target.value)}
               />
-            </FilterGroup>
+            </div>
 
-            <FilterGroup>
-              <FilterLabel>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
                 <Tag size={16} />
                 Title contains
-              </FilterLabel>
-              <FilterInput
+              </label>
+              <input
+                className={styles.filterInput}
                 type="text"
                 placeholder="Keywords in title..."
                 value={filters.title || ''}
                 onChange={(e) => handleFilterChange('title', e.target.value)}
               />
-            </FilterGroup>
+            </div>
 
-            <FilterGroup>
-              <FilterLabel>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
                 <Calendar size={16} />
                 Date from
-              </FilterLabel>
-              <FilterInput
+              </label>
+              <input
+                className={styles.filterInput}
                 type="date"
                 value={filters.dateFrom || ''}
                 onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
               />
-            </FilterGroup>
+            </div>
 
-            <FilterGroup>
-              <FilterLabel>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>
                 <Calendar size={16} />
                 Date to
-              </FilterLabel>
-              <FilterInput
+              </label>
+              <input
+                className={styles.filterInput}
                 type="date"
                 value={filters.dateTo || ''}
                 onChange={(e) => handleFilterChange('dateTo', e.target.value)}
               />
-            </FilterGroup>
+            </div>
 
-            <FilterGroup>
-              <FilterLabel>Sort by</FilterLabel>
-              <FilterSelect
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Sort by</label>
+              <select
+                className={styles.filterSelect}
                 value={filters.sortBy || 'relevance'}
                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
               >
                 <option value="relevance">Relevance</option>
                 <option value="submittedDate">Submission Date</option>
                 <option value="lastUpdatedDate">Last Updated</option>
-              </FilterSelect>
-            </FilterGroup>
+              </select>
+            </div>
 
-            <FilterGroup>
-              <FilterLabel>Max results</FilterLabel>
-              <FilterSelect
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Max results</label>
+              <select
+                className={styles.filterSelect}
                 value={filters.maxResults || 20}
                 onChange={(e) => handleFilterChange('maxResults', parseInt(e.target.value))}
               >
@@ -242,38 +138,38 @@ function SearchFilters({ filters, onFiltersChange, source }) {
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
-              </FilterSelect>
-            </FilterGroup>
-          </FiltersGrid>
+              </select>
+            </div>
+          </div>
 
-          <FilterGroup style={{ marginTop: '1rem' }}>
-            <FilterLabel>
+          <div className={`${styles.filterGroup} ${styles.categoriesSection}`}>
+            <label className={styles.filterLabel}>
               <Tag size={16} />
               Categories
-            </FilterLabel>
-            <CategoryTags>
+            </label>
+            <div className={styles.categoryTags}>
               {CATEGORIES[source]?.map((category) => (
-                <CategoryTag
+                <button
                   key={category}
-                  selected={filters.categories?.includes(category)}
+                  className={`${styles.categoryTag} ${filters.categories?.includes(category) ? styles.selected : ''}`}
                   onClick={() => handleCategoryToggle(category)}
                 >
                   {category}
-                </CategoryTag>
+                </button>
               ))}
-            </CategoryTags>
-          </FilterGroup>
+            </div>
+          </div>
 
           {hasActiveFilters && (
-            <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-              <ClearButton onClick={clearFilters}>
+            <div className={styles.clearButtonContainer}>
+              <button className={styles.clearButton} onClick={clearFilters}>
                 Clear all filters
-              </ClearButton>
+              </button>
             </div>
           )}
         </>
       )}
-    </FiltersContainer>
+    </div>
   );
 }
 

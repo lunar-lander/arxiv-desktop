@@ -48,7 +48,10 @@ function AppContent() {
       />
       <div className={styles.mainContent}>
         {currentView === 'home' && (
-          <HomePage onPaperOpen={setSelectedPaper} />
+          <HomePage onPaperOpen={(paper) => {
+            setSelectedPaper(paper);
+            setCurrentView('paper');
+          }} />
         )}
         {currentView === 'paper' && selectedPaper && (
           <PaperViewer paper={selectedPaper} />

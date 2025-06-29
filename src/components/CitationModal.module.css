@@ -1,0 +1,139 @@
+/* Citation Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 700px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: var(--text-primary);
+}
+
+.modalTitle {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.paperTitle {
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.citationFormatTabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+}
+
+.formatTab {
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-weight: 400;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.formatTab.active {
+  border-bottom-color: var(--accent-color);
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.formatTab:hover {
+  color: var(--accent-color);
+}
+
+.citationContainer {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-color);
+}
+
+.actionButton.primary {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.actionButton.primary:hover {
+  background: var(--accent-hover);
+}

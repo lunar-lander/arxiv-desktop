@@ -1,146 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Bookmark, Quote } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
 import CitationModal from './CitationModal';
+import styles from './PaperViewer.module.css';
 
 // Set up PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const ViewerContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #f8f9fa;
-`;
-
-const ViewerHeader = styled.div`
-  background: white;
-  padding: 1rem;
-  border-bottom: 1px solid #e0e6ed;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const PaperInfo = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
-const PaperTitle = styled.h2`
-  margin: 0 0 0.5rem 0;
-  color: #2c3e50;
-  font-size: 1.3rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-`;
-
-const PaperMeta = styled.div`
-  color: #7f8c8d;
-  font-size: 0.9rem;
-`;
-
-const ViewerActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-`;
-
-const ActionButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid #e0e6ed;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f8f9fa;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const ViewerControls = styled.div`
-  background: white;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e0e6ed;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const PageControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const PageInput = styled.input`
-  width: 60px;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #e0e6ed;
-  border-radius: 4px;
-  text-align: center;
-`;
-
-const ZoomControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const ZoomLevel = styled.span`
-  min-width: 50px;
-  text-align: center;
-  color: #7f8c8d;
-`;
-
-const PDFContainer = styled.div`
-  flex: 1;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 1rem;
-  background: #e9ecef;
-`;
-
-const PDFWrapper = styled.div`
-  background: white;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  overflow: hidden;
-`;
-
-const LoadingState = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  color: #7f8c8d;
-`;
-
-const ErrorState = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  color: #e74c3c;
-  text-align: center;
-`;
 
 function PaperViewer({ paper }) {
   const [numPages, setNumPages] = useState(null);
@@ -213,48 +80,49 @@ function PaperViewer({ paper }) {
   const pdfUrl = paper.localPath ? `file://${paper.localPath}` : paper.pdfUrl;
 
   return (
-    <ViewerContainer>
-      <ViewerHeader>
-        <PaperInfo>
-          <PaperTitle>{paper.title}</PaperTitle>
-          <PaperMeta>
+    <div className={styles.viewerContainer}>
+      <div className={styles.viewerHeader}>
+        <div className={styles.paperInfo}>
+          <h2 className={styles.paperTitle}>{paper.title}</h2>
+          <div className={styles.paperMeta}>
             {paper.authors.slice(0, 3).join(', ')}
             {paper.authors.length > 3 && ' et al.'} • {paper.source} • {new Date(paper.published).getFullYear()}
-          </PaperMeta>
-        </PaperInfo>
-        <ViewerActions>
-          <ActionButton onClick={handleBookmark} disabled={isBookmarked}>
+          </div>
+        </div>
+        <div className={styles.viewerActions}>
+          <button className={styles.actionButton} onClick={handleBookmark} disabled={isBookmarked}>
             <Bookmark size={16} fill={isBookmarked ? '#3498db' : 'none'} />
             {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-          </ActionButton>
-          <ActionButton onClick={handleStar}>
+          </button>
+          <button className={styles.actionButton} onClick={handleStar}>
             <Star size={16} fill={isStarred ? '#f39c12' : 'none'} />
             {isStarred ? 'Starred' : 'Star'}
-          </ActionButton>
-          <ActionButton onClick={handleDownload}>
+          </button>
+          <button className={styles.actionButton} onClick={handleDownload}>
             <Download size={16} />
             Download
-          </ActionButton>
-          <ActionButton onClick={() => setShowCitationModal(true)}>
+          </button>
+          <button className={styles.actionButton} onClick={() => setShowCitationModal(true)}>
             <Quote size={16} />
             Cite
-          </ActionButton>
-          <ActionButton onClick={() => window.electronAPI.openExternal(paper.url)}>
+          </button>
+          <button className={styles.actionButton} onClick={() => window.electronAPI.openExternal(paper.url)}>
             <ExternalLink size={16} />
             View Online
-          </ActionButton>
-        </ViewerActions>
-      </ViewerHeader>
+          </button>
+        </div>
+      </div>
 
       {!isLoading && !error && (
-        <ViewerControls>
-          <PageControls>
-            <ActionButton onClick={goToPrevPage} disabled={pageNumber <= 1}>
+        <div className={styles.viewerControls}>
+          <div className={styles.pageControls}>
+            <button className={styles.actionButton} onClick={goToPrevPage} disabled={pageNumber <= 1}>
               <ChevronLeft size={16} />
-            </ActionButton>
+            </button>
             <span>
               Page{' '}
-              <PageInput
+              <input
+                className={styles.pageInput}
                 type="number"
                 min={1}
                 max={numPages}
@@ -263,41 +131,41 @@ function PaperViewer({ paper }) {
               />
               {' '}of {numPages}
             </span>
-            <ActionButton onClick={goToNextPage} disabled={pageNumber >= numPages}>
+            <button className={styles.actionButton} onClick={goToNextPage} disabled={pageNumber >= numPages}>
               <ChevronRight size={16} />
-            </ActionButton>
-          </PageControls>
-          <ZoomControls>
-            <ActionButton onClick={zoomOut} disabled={scale <= 0.5}>
+            </button>
+          </div>
+          <div className={styles.zoomControls}>
+            <button className={styles.actionButton} onClick={zoomOut} disabled={scale <= 0.5}>
               <ZoomOut size={16} />
-            </ActionButton>
-            <ZoomLevel>{Math.round(scale * 100)}%</ZoomLevel>
-            <ActionButton onClick={zoomIn} disabled={scale >= 3.0}>
+            </button>
+            <span className={styles.zoomLevel}>{Math.round(scale * 100)}%</span>
+            <button className={styles.actionButton} onClick={zoomIn} disabled={scale >= 3.0}>
               <ZoomIn size={16} />
-            </ActionButton>
-          </ZoomControls>
-        </ViewerControls>
+            </button>
+          </div>
+        </div>
       )}
 
-      <PDFContainer>
+      <div className={styles.pdfContainer}>
         {isLoading && (
-          <LoadingState>
+          <div className={styles.loadingState}>
             Loading PDF...
-          </LoadingState>
+          </div>
         )}
         
         {error && (
-          <ErrorState>
+          <div className={styles.errorState}>
             <p>{error}</p>
-            <ActionButton onClick={() => window.electronAPI.openExternal(paper.url)}>
+            <button className={styles.actionButton} onClick={() => window.electronAPI.openExternal(paper.url)}>
               <ExternalLink size={16} />
               View Online Instead
-            </ActionButton>
-          </ErrorState>
+            </button>
+          </div>
         )}
 
         {!error && (
-          <PDFWrapper>
+          <div className={styles.pdfWrapper}>
             <Document
               file={pdfUrl}
               onLoadSuccess={onDocumentLoadSuccess}
@@ -311,16 +179,16 @@ function PaperViewer({ paper }) {
                 renderAnnotationLayer={false}
               />
             </Document>
-          </PDFWrapper>
+          </div>
         )}
-      </PDFContainer>
+      </div>
 
       <CitationModal
         isOpen={showCitationModal}
         onClose={() => setShowCitationModal(false)}
         paper={paper}
       />
-    </ViewerContainer>
+    </div>
   );
 }
 

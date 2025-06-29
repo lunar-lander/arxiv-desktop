@@ -100,31 +100,48 @@ export class ArxivService {
   }
 
   static async searchBiorxiv(query, start, maxResults) {
-    // BioRxiv API search - simplified for now
-    const response = await axios.get(`${BIORXIV_API_BASE}/details/biorxiv/${new Date().getFullYear()}-01-01/${new Date().getFullYear()}-12-31`);
-    
-    // Filter results based on query
-    const papers = response.data.collection || [];
-    const filtered = papers.filter(paper => 
-      paper.title?.toLowerCase().includes(query.toLowerCase()) ||
-      paper.abstract?.toLowerCase().includes(query.toLowerCase())
-    ).slice(start, start + maxResults);
+    try {
+      // Use a more recent date range for bioRxiv search
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      const response = await axios.get(`${BIORXIV_API_BASE}/details/biorxiv/${startDate}/${endDate}`, {
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'ArxivDesktop/1.0.0'
+        }
+      });
+      
+      // Filter results based on query
+      const papers = response.data.collection || [];
+      const filtered = papers.filter(paper => 
+        paper.title?.toLowerCase().includes(query.toLowerCase()) ||
+        paper.abstract?.toLowerCase().includes(query.toLowerCase()) ||
+        paper.authors?.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      const paginatedPapers = filtered.slice(start, start + maxResults);
 
-    return {
-      papers: filtered.map(paper => ({
-        id: paper.doi || `biorxiv_${paper.server}_${paper.article_id}`,
-        title: paper.title,
-        authors: paper.authors ? paper.authors.split(';').map(a => a.trim()) : [],
-        abstract: paper.abstract,
-        published: paper.date,
-        updated: paper.date,
-        source: 'biorxiv',
-        url: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}`,
-        pdfUrl: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}.full.pdf`,
-        categories: paper.category ? [paper.category] : []
-      })),
-      totalResults: filtered.length
-    };
+      return {
+        papers: paginatedPapers.map(paper => ({
+          id: paper.doi || `biorxiv_${paper.server}_${paper.article_id}`,
+          title: paper.title,
+          authors: paper.authors ? paper.authors.split(';').map(a => a.trim()) : [],
+          abstract: paper.abstract,
+          published: paper.date,
+          updated: paper.date,
+          source: 'biorxiv',
+          url: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}`,
+          pdfUrl: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}.full.pdf`,
+          categories: paper.category ? [paper.category] : []
+        })),
+        totalResults: filtered.length
+      };
+    } catch (error) {
+      console.error('BioRxiv search error:', error);
+      throw new Error(`BioRxiv search failed: ${error.message}`);
+    }
   }
 
   static async searchBiorxivWithFilters(query, start, maxResults, filters) {
@@ -268,7 +285,9 @@ export class ArxivService {
       const filename = `${paper.id.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       const filepath = `${papersDir}/${filename}`;
 
-      await window.electronAPI.writeFile(filepath, Buffer.from(response.data));
+      // Convert ArrayBuffer to Uint8Array for Electron
+      const uint8Array = new Uint8Array(response.data);
+      await window.electronAPI.writeFile(filepath, uint8Array);
 
       return {
         success: true,

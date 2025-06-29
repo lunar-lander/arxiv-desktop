@@ -1,133 +1,7 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { X, Copy, Download, Quote } from 'lucide-react';
+import styles from './CitationModal.module.css';
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  width: 700px;
-  max-width: 90vw;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #7f8c8d;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #2c3e50;
-  }
-`;
-
-const ModalTitle = styled.h2`
-  margin: 0 0 1.5rem 0;
-  color: #2c3e50;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const PaperTitle = styled.h3`
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  line-height: 1.4;
-`;
-
-const CitationFormatTabs = styled.div`
-  display: flex;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e0e6ed;
-  overflow-x: auto;
-`;
-
-const FormatTab = styled.button`
-  padding: 0.75rem 1rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-bottom: 2px solid ${props => props.active ? '#3498db' : 'transparent'};
-  color: ${props => props.active ? '#3498db' : '#7f8c8d'};
-  font-weight: ${props => props.active ? '600' : '400'};
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    color: #3498db;
-  }
-`;
-
-const CitationContainer = styled.div`
-  background: #f8f9fa;
-  border: 1px solid #e0e6ed;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: #2c3e50;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-`;
-
-const ActionButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #e0e6ed;
-  background: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f8f9fa;
-    border-color: #3498db;
-  }
-
-  &.primary {
-    background: #3498db;
-    color: white;
-    border-color: #3498db;
-
-    &:hover {
-      background: #2980b9;
-    }
-  }
-`;
 
 const CITATION_FORMATS = {
   apa: 'APA',
@@ -273,47 +147,47 @@ ER  -`;
   };
 
   return (
-    <ModalOverlay onClick={handleOverlayClick}>
-      <ModalContent>
-        <CloseButton onClick={onClose}>
+    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
+      <div className={styles.modalContent}>
+        <button className={styles.closeButton} onClick={onClose}>
           <X size={20} />
-        </CloseButton>
+        </button>
         
-        <ModalTitle>
+        <h2 className={styles.modalTitle}>
           <Quote size={24} />
           Export Citation
-        </ModalTitle>
+        </h2>
 
-        <PaperTitle>{paper.title}</PaperTitle>
+        <h3 className={styles.paperTitle}>{paper.title}</h3>
         
-        <CitationFormatTabs>
+        <div className={styles.citationFormatTabs}>
           {Object.entries(CITATION_FORMATS).map(([key, label]) => (
-            <FormatTab
+            <button
               key={key}
-              active={selectedFormat === key}
+              className={`${styles.formatTab} ${selectedFormat === key ? styles.active : ''}`}
               onClick={() => setSelectedFormat(key)}
             >
               {label}
-            </FormatTab>
+            </button>
           ))}
-        </CitationFormatTabs>
+        </div>
 
-        <CitationContainer>
+        <div className={styles.citationContainer}>
           {generateCitation(selectedFormat)}
-        </CitationContainer>
+        </div>
 
-        <ActionButtons>
-          <ActionButton onClick={handleCopy}>
+        <div className={styles.actionButtons}>
+          <button className={styles.actionButton} onClick={handleCopy}>
             <Copy size={16} />
             Copy Citation
-          </ActionButton>
-          <ActionButton onClick={handleDownload} className="primary">
+          </button>
+          <button className={`${styles.actionButton} ${styles.primary}`} onClick={handleDownload}>
             <Download size={16} />
             Download Citation
-          </ActionButton>
-        </ActionButtons>
-      </ModalContent>
-    </ModalOverlay>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
