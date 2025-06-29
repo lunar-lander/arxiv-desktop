@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Home, FileText, Star, Bookmark, User, X } from 'lucide-react';
+import { Home, FileText, Star, Bookmark, User, X, LogIn, LogOut } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
+import { AuthService } from '../services/authService';
+import LoginModal from './LoginModal';
 
 const SidebarContainer = styled.div`
   width: 300px;
@@ -125,13 +127,34 @@ const UserSection = styled.div`
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   font-size: 0.9rem;
   color: #bdc3c7;
 `;
 
+const UserDetails = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const AuthButton = styled.button`
+  background: none;
+  border: none;
+  color: #bdc3c7;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #3498db;
+  }
+`;
+
 function Sidebar({ onNavigate, onPaperSelect, currentView }) {
   const { state, dispatch } = usePapers();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleNavigation = (view) => {
     onNavigate(view);
@@ -155,6 +178,17 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
   const handleToggleStar = (paper, e) => {
     e.stopPropagation();
     dispatch({ type: 'TOGGLE_STAR', payload: paper });
+  };
+
+  const handleLogin = (user) => {
+    dispatch({ type: 'SET_USER', payload: user });
+  };
+
+  const handleLogout = async () => {
+    if (state.currentUser) {
+      await AuthService.logout(state.currentUser.source);
+      dispatch({ type: 'SET_USER', payload: null });
+    }
   };
 
   return (
@@ -234,10 +268,24 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
 
       <UserSection>
         <UserInfo>
-          <User size={16} />
-          {state.currentUser ? state.currentUser.name : 'Not logged in'}
+          <UserDetails>
+            <User size={16} />
+            {state.currentUser ? `${state.currentUser.username} (${state.currentUser.source})` : 'Not logged in'}
+          </UserDetails>
+          <AuthButton 
+            onClick={state.currentUser ? handleLogout : () => setShowLoginModal(true)}
+            title={state.currentUser ? 'Logout' : 'Login'}
+          >
+            {state.currentUser ? <LogOut size={16} /> : <LogIn size={16} />}
+          </AuthButton>
         </UserInfo>
       </UserSection>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLogin={handleLogin}
+      />
     </SidebarContainer>
   );
 }

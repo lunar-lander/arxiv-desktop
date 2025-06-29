@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { AuthService } from '../services/authService';
 
 const PaperContext = createContext();
 
@@ -80,6 +81,7 @@ export function PaperProvider({ children }) {
 
   useEffect(() => {
     loadPersistedState();
+    loadCurrentUser();
   }, []);
 
   useEffect(() => {
@@ -119,6 +121,17 @@ export function PaperProvider({ children }) {
       await window.electronAPI.writeFile(stateFile, JSON.stringify(stateToSave, null, 2));
     } catch (error) {
       console.error('Failed to persist state:', error);
+    }
+  };
+
+  const loadCurrentUser = async () => {
+    try {
+      const user = await AuthService.getCurrentUser();
+      if (user) {
+        dispatch({ type: 'SET_USER', payload: user });
+      }
+    } catch (error) {
+      console.error('Failed to load current user:', error);
     }
   };
 

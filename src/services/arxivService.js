@@ -3,6 +3,9 @@ import axios from 'axios';
 const ARXIV_API_BASE = 'http://export.arxiv.org/api/query';
 const BIORXIV_API_BASE = 'https://api.biorxiv.org';
 
+// CORS proxy for development - in production, Electron handles CORS
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
 export class ArxivService {
   static async searchPapers(query, start = 0, maxResults = 20, source = 'arxiv') {
     try {
@@ -26,7 +29,11 @@ export class ArxivService {
       sortOrder: 'descending'
     });
 
-    const response = await axios.get(`${ARXIV_API_BASE}?${params}`);
+    // Use CORS proxy if not in Electron environment
+    const isElectron = window.navigator.userAgent.toLowerCase().indexOf('electron') > -1;
+    const apiUrl = isElectron ? `${ARXIV_API_BASE}?${params}` : `${CORS_PROXY}${encodeURIComponent(`${ARXIV_API_BASE}?${params}`)}`;
+    
+    const response = await axios.get(apiUrl);
     return this.parseArxivXML(response.data);
   }
 
