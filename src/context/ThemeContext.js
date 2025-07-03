@@ -3,15 +3,24 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [currentTheme, setCurrentTheme] = useState('light');
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    // Initialize with system preference to avoid flash
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     loadThemePreference();
   }, []);
 
   useEffect(() => {
-    saveThemePreference();
-  }, [currentTheme]);
+    if (isInitialized) {
+      saveThemePreference();
+    }
+  }, [currentTheme, isInitialized]);
 
   const loadThemePreference = async () => {
     try {
@@ -23,9 +32,17 @@ export function ThemeProvider({ children }) {
         if (exists) {
           const result = await window.electronAPI.readFile(themeFile);
           if (result.success) {
-            const themeData = JSON.parse(result.data.toString());
-            setCurrentTheme(themeData.theme || 'light');
-            return;
+            try {
+              // Ensure data is properly converted to string and clean any BOM or whitespace
+              const dataStr = result.data.toString().trim();
+              const themeData = JSON.parse(dataStr);
+              setCurrentTheme(themeData.theme || 'light');
+              setIsInitialized(true);
+              return;
+            } catch (parseError) {
+              console.error('Failed to parse theme file:', parseError);
+              // Continue with fallback logic
+            }
           }
         }
       }
@@ -39,8 +56,10 @@ export function ThemeProvider({ children }) {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         setCurrentTheme(prefersDark ? 'dark' : 'light');
       }
+      setIsInitialized(true);
     } catch (error) {
       console.error('Failed to load theme preference:', error);
+      setIsInitialized(true);
     }
   };
 

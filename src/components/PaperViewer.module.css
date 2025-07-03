@@ -125,10 +125,26 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 [data-theme="dark"] .pdfWrapper {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pageContainer {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .pageContainer {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .loadingState {
