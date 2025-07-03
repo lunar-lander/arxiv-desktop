@@ -111,20 +111,30 @@ class StorageService {
     await this.initialize();
     
     try {
+      console.log('saveData called with:', data);
+      console.log('Will save to file:', this.dataFile);
+      
       data.lastUpdated = Date.now();
       const jsonData = JSON.stringify(data, null, 2);
       const encoder = new TextEncoder();
       const uint8Array = encoder.encode(jsonData);
       
+      console.log('JSON data to save:', jsonData);
       console.log('Saving data to:', this.dataFile);
-      console.log('Data to save:', data);
       
       const result = await window.electronAPI.writeFile(this.dataFile, uint8Array);
       console.log('Save result:', result);
       
-      return result?.success !== false;
+      if (result?.success) {
+        console.log('✅ Data saved successfully');
+        return true;
+      } else {
+        console.error('❌ Save failed:', result);
+        return false;
+      }
     } catch (error) {
-      console.error('Failed to save data:', error);
+      console.error('❌ Failed to save data:', error);
+      console.error('Error details:', error.message, error.stack);
       return false;
     }
   }
@@ -161,15 +171,22 @@ class StorageService {
   }
 
   async addStar(paper) {
+    console.log('🌟 addStar called for paper:', paper.id, paper.title?.substring(0, 50));
     const data = await this.loadData();
     const starred = data.papers.starred || [];
+    
+    console.log('Current starred papers:', starred.length);
     
     // Remove if already exists to avoid duplicates
     const filtered = starred.filter(p => p.id !== paper.id);
     filtered.push({ ...paper, starredAt: Date.now() });
     
+    console.log('New starred papers count:', filtered.length);
+    
     data.papers.starred = filtered;
-    await this.saveData(data);
+    const saveResult = await this.saveData(data);
+    console.log('Save result for starred paper:', saveResult);
+    
     return filtered;
   }
 
