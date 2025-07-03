@@ -49,13 +49,30 @@ class StorageService {
     try {
       const result = await window.electronAPI.readFile(this.dataFile);
       if (result.success) {
-        const text = new TextDecoder().decode(result.data);
-        return JSON.parse(text);
+        // Handle different data formats
+        let text;
+        if (result.data instanceof ArrayBuffer) {
+          text = new TextDecoder().decode(result.data);
+        } else if (result.data instanceof Uint8Array) {
+          text = new TextDecoder().decode(result.data);
+        } else if (typeof result.data === 'string') {
+          text = result.data;
+        } else {
+          text = result.data.toString();
+        }
+        
+        console.log('Loading data from:', this.dataFile);
+        const data = JSON.parse(text);
+        console.log('Loaded data:', data);
+        return data;
+      } else {
+        console.log('File read failed:', result);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
     }
     
+    console.log('Returning default data');
     return this.getDefaultData();
   }
 
@@ -68,8 +85,13 @@ class StorageService {
       const encoder = new TextEncoder();
       const uint8Array = encoder.encode(jsonData);
       
-      await window.electronAPI.writeFile(this.dataFile, uint8Array);
-      return true;
+      console.log('Saving data to:', this.dataFile);
+      console.log('Data to save:', data);
+      
+      const result = await window.electronAPI.writeFile(this.dataFile, uint8Array);
+      console.log('Save result:', result);
+      
+      return result?.success !== false;
     } catch (error) {
       console.error('Failed to save data:', error);
       return false;
