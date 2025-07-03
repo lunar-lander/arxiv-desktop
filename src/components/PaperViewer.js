@@ -24,7 +24,7 @@ function PaperViewer({ paper }) {
   const containerRef = useRef(null);
   const pdfWrapperRef = useRef(null);
 
-  // Initialize or restore paper state
+  // Initialize or restore paper state and download PDF
   useEffect(() => {
     const loadPaperState = async () => {
       const savedState = await storageService.getPdfViewState(paper.id);
@@ -39,6 +39,19 @@ function PaperViewer({ paper }) {
       }
       setError(null);
       setIsLoading(true);
+
+      // Automatically download and cache the PDF
+      if (!paper.localPath) {
+        try {
+          const localPath = await storageService.downloadAndCachePdf(paper);
+          if (localPath) {
+            // Update the paper object with the local path
+            paper.localPath = localPath;
+          }
+        } catch (error) {
+          console.error('Failed to download PDF:', error);
+        }
+      }
     };
     
     loadPaperState();

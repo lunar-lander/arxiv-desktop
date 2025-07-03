@@ -2,6 +2,7 @@
 class StorageService {
   constructor() {
     this.dataFile = null;
+    this.papersDir = null;
     this.initialized = false;
   }
 
@@ -11,8 +12,13 @@ class StorageService {
     try {
       const appDataPath = await window.electronAPI.getAppDataPath();
       this.dataFile = `${appDataPath}/app-data.json`;
+      this.papersDir = `${appDataPath}/papers`;
       
-      // Ensure the file exists
+      // Ensure directories exist
+      await window.electronAPI.ensureDirectory(appDataPath);
+      await window.electronAPI.ensureDirectory(this.papersDir);
+      
+      // Ensure the data file exists
       const exists = await window.electronAPI.fileExists(this.dataFile);
       if (!exists) {
         await this.saveData(this.getDefaultData());
@@ -149,6 +155,11 @@ class StorageService {
     return data.papers.starred;
   }
 
+  async getOpenedPapers() {
+    const data = await this.loadData();
+    return data.papers.opened || [];
+  }
+
   async addToOpenedPapers(paper) {
     const data = await this.loadData();
     const opened = data.papers.opened || [];
@@ -159,6 +170,13 @@ class StorageService {
     
     // Keep only last 50 opened papers
     data.papers.opened = filtered.slice(0, 50);
+    await this.saveData(data);
+    return data.papers.opened;
+  }
+
+  async removeFromOpenedPapers(paperId) {
+    const data = await this.loadData();
+    data.papers.opened = (data.papers.opened || []).filter(p => p.id !== paperId);
     await this.saveData(data);
     return data.papers.opened;
   }
@@ -240,6 +258,66 @@ class StorageService {
     });
     
     await this.saveData(data);
+  }
+
+  // PDF caching methods
+  sanitizeFilename(filename) {
+    // Remove or replace invalid characters for filenames
+    return filename
+      .replace(/[<>:"/\\|?*]/g, '_')
+      .replace(/\s+/g, '_')
+      .replace(/_{2,}/g, '_')
+      .trim();
+  }
+
+  async downloadAndCachePdf(paper) {
+    await this.initialize();
+    
+    try {
+      const sanitizedId = this.sanitizeFilename(paper.id);
+      const sanitizedTitle = this.sanitizeFilename(paper.title.substring(0, 100));
+      const filename = `${sanitizedId}_${sanitizedTitle}.pdf`;
+      const localPath = `${this.papersDir}/${filename}`;
+      
+      // Check if already cached
+      const exists = await window.electronAPI.fileExists(localPath);
+      if (exists) {
+        console.log('PDF already cached:', localPath);
+        return localPath;
+      }
+      
+      // Download the PDF
+      console.log('Downloading PDF:', paper.pdfUrl, 'to', localPath);
+      const result = await window.electronAPI.downloadFile(paper.pdfUrl, filename);
+      
+      if (result.success) {
+        console.log('PDF downloaded successfully:', result.path);
+        return result.path;
+      } else {
+        console.error('Failed to download PDF:', result.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      return null;
+    }
+  }
+
+  async getPaperCachePath(paper) {
+    await this.initialize();
+    
+    const sanitizedId = this.sanitizeFilename(paper.id);
+    const sanitizedTitle = this.sanitizeFilename(paper.title.substring(0, 100));
+    const filename = `${sanitizedId}_${sanitizedTitle}.pdf`;
+    const localPath = `${this.papersDir}/${filename}`;
+    
+    const exists = await window.electronAPI.fileExists(localPath);
+    return exists ? localPath : null;
+  }
+
+  async getPapersDirectory() {
+    await this.initialize();
+    return this.papersDir;
   }
 
   // Export/Import

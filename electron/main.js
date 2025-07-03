@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const https = require('https');
+const http = require('http');
 const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
@@ -140,6 +142,14 @@ function createMenu() {
           }
         },
         { type: 'separator' },
+        {
+          label: 'Open Papers Folder',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => {
+            const papersPath = path.join(os.homedir(), 'ArxivDesktop', 'papers');
+            shell.openPath(papersPath);
+          }
+        },
         {
           label: 'Clear Cache',
           click: async () => {
@@ -301,22 +311,89 @@ ipcMain.handle('show-message-box', async (event, options) => {
 });
 
 ipcMain.handle('download-file', async (event, url, filename) => {
-  try {
-    const downloadsPath = path.join(os.homedir(), 'Downloads');
-    const filePath = path.join(downloadsPath, filename);
-    
-    // Use the existing download logic or implement basic download
-    return {
-      success: true,
-      path: filePath,
-      message: 'File downloaded successfully'
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
+  return new Promise((resolve) => {
+    try {
+      const papersPath = path.join(os.homedir(), 'ArxivDesktop', 'papers');
+      const filePath = path.join(papersPath, filename);
+      
+      // Ensure directory exists
+      if (!fs.existsSync(papersPath)) {
+        fs.mkdirSync(papersPath, { recursive: true });
+      }
+      
+      const file = fs.createWriteStream(filePath);
+      const protocol = url.startsWith('https:') ? https : http;
+      
+      const request = protocol.get(url, (response) => {
+        // Handle redirects
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          const redirectUrl = response.headers.location;
+          const redirectProtocol = redirectUrl.startsWith('https:') ? https : http;
+          
+          redirectProtocol.get(redirectUrl, (redirectResponse) => {
+            redirectResponse.pipe(file);
+            
+            file.on('finish', () => {
+              file.close();
+              resolve({
+                success: true,
+                path: filePath,
+                message: 'File downloaded successfully'
+              });
+            });
+          }).on('error', (error) => {
+            fs.unlink(filePath, () => {});
+            resolve({
+              success: false,
+              error: error.message
+            });
+          });
+        } else if (response.statusCode === 200) {
+          response.pipe(file);
+          
+          file.on('finish', () => {
+            file.close();
+            resolve({
+              success: true,
+              path: filePath,
+              message: 'File downloaded successfully'
+            });
+          });
+        } else {
+          resolve({
+            success: false,
+            error: `HTTP error! status: ${response.statusCode}`
+          });
+        }
+      });
+      
+      request.on('error', (error) => {
+        if (fs.existsSync(filePath)) {
+          fs.unlink(filePath, () => {});
+        }
+        resolve({
+          success: false,
+          error: error.message
+        });
+      });
+      
+      file.on('error', (error) => {
+        if (fs.existsSync(filePath)) {
+          fs.unlink(filePath, () => {});
+        }
+        resolve({
+          success: false,
+          error: error.message
+        });
+      });
+      
+    } catch (error) {
+      resolve({
+        success: false,
+        error: error.message
+      });
+    }
+  });
 });
 
 ipcMain.handle('show-item-in-folder', async (event, filePath) => {

@@ -108,6 +108,10 @@ export function PaperProvider({ children }) {
         dispatch(action);
         await storageService.addToOpenedPapers(action.payload);
         break;
+      case 'REMOVE_OPEN_PAPER':
+        dispatch(action);
+        await storageService.removeFromOpenedPapers(action.payload);
+        break;
       default:
         dispatch(action);
         break;
@@ -125,10 +129,11 @@ export function PaperProvider({ children }) {
 
   const loadPersistedState = async () => {
     try {
-      const [bookmarked, starred, searchHistory] = await Promise.all([
+      const [bookmarked, starred, searchHistory, opened] = await Promise.all([
         storageService.getBookmarkedPapers(),
         storageService.getStarredPapers(),
-        storageService.getSearchHistory()
+        storageService.getSearchHistory(),
+        storageService.getOpenedPapers()
       ]);
 
       dispatch({ 
@@ -136,7 +141,8 @@ export function PaperProvider({ children }) {
         payload: { 
           bookmarkedPapers: bookmarked,
           starredPapers: starred,
-          searchHistory: searchHistory
+          searchHistory: searchHistory,
+          openPapers: opened
         } 
       });
     } catch (error) {
