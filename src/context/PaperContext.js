@@ -6,7 +6,6 @@ const PaperContext = createContext();
 
 const initialState = {
   openPapers: [],
-  bookmarkedPapers: [],
   starredPapers: [],
   searchHistory: [],
   currentUser: null,
@@ -35,19 +34,6 @@ function paperReducer(state, action) {
         openPapers: state.openPapers.filter(p => p.id !== action.payload)
       };
     
-    case 'ADD_BOOKMARK':
-      const bookmarkExists = state.bookmarkedPapers.find(p => p.id === action.payload.id);
-      if (bookmarkExists) return state;
-      return {
-        ...state,
-        bookmarkedPapers: [...state.bookmarkedPapers, action.payload]
-      };
-    
-    case 'REMOVE_BOOKMARK':
-      return {
-        ...state,
-        bookmarkedPapers: state.bookmarkedPapers.filter(p => p.id !== action.payload)
-      };
     
     case 'TOGGLE_STAR':
       const isStarred = state.starredPapers.find(p => p.id === action.payload.id);
@@ -83,14 +69,6 @@ export function PaperProvider({ children }) {
   // Enhanced dispatch that handles async storage operations
   const enhancedDispatch = async (action) => {
     switch (action.type) {
-      case 'ADD_BOOKMARK':
-        dispatch(action);
-        await storageService.addBookmark(action.payload);
-        break;
-      case 'REMOVE_BOOKMARK':
-        dispatch(action);
-        await storageService.removeBookmark(action.payload);
-        break;
       case 'TOGGLE_STAR':
         const isStarred = state.starredPapers.find(p => p.id === action.payload.id);
         dispatch(action);
@@ -125,21 +103,19 @@ export function PaperProvider({ children }) {
 
   useEffect(() => {
     persistState();
-  }, [state.bookmarkedPapers, state.starredPapers, state.searchHistory]);
+  }, [state.starredPapers, state.searchHistory]);
 
   const loadPersistedState = async () => {
     try {
       console.log('PaperContext: Loading persisted state...');
       
-      const [bookmarked, starred, searchHistory, opened] = await Promise.all([
-        storageService.getBookmarkedPapers(),
+      const [starred, searchHistory, opened] = await Promise.all([
         storageService.getStarredPapers(),
         storageService.getSearchHistory(),
         storageService.getOpenedPapers()
       ]);
 
       console.log('PaperContext: Loaded state:', {
-        bookmarked: bookmarked.length,
         starred: starred.length,
         searchHistory: searchHistory.length,
         opened: opened.length
@@ -148,7 +124,6 @@ export function PaperProvider({ children }) {
       dispatch({ 
         type: 'LOAD_STATE', 
         payload: { 
-          bookmarkedPapers: bookmarked,
           starredPapers: starred,
           searchHistory: searchHistory,
           openPapers: opened

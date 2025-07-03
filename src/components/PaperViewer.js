@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Bookmark, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Quote } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
 import CitationModal from './CitationModal';
 import storageService from '../services/storageService';
@@ -195,16 +195,11 @@ function PaperViewer({ paper }) {
     }
   };
 
-  const handleBookmark = () => {
-    dispatch({ type: 'ADD_BOOKMARK', payload: paper });
-  };
-
   const handleStar = () => {
     dispatch({ type: 'TOGGLE_STAR', payload: paper });
   };
 
   const isStarred = state.starredPapers.some(p => p.id === paper.id);
-  const isBookmarked = state.bookmarkedPapers.some(p => p.id === paper.id);
 
   const pdfUrl = paper.localPath ? `file://${paper.localPath}` : paper.pdfUrl;
 
@@ -219,10 +214,6 @@ function PaperViewer({ paper }) {
           </div>
         </div>
         <div className={styles.viewerActions}>
-          <button className={styles.actionButton} onClick={handleBookmark} disabled={isBookmarked}>
-            <Bookmark size={16} fill={isBookmarked ? '#3498db' : 'none'} />
-            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-          </button>
           <button className={styles.actionButton} onClick={handleStar}>
             <Star size={16} fill={isStarred ? '#f39c12' : 'none'} />
             {isStarred ? 'Starred' : 'Star'}

@@ -33,18 +33,11 @@ class StorageService {
   getDefaultData() {
     return {
       version: '1.0.0',
-      papers: {
-        bookmarked: [],
-        starred: [],
-        opened: [],
-        searchHistory: []
-      },
+      starredPapers: [],
+      openPapers: [],
+      searchHistory: [],
       pdfViewState: {}, // paperId -> { scale, pageNumber, viewMode, lastViewed }
-      preferences: {
-        defaultZoom: 1.0,
-        defaultViewMode: 'single',
-        theme: 'light'
-      },
+      theme: 'light',
       lastUpdated: Date.now()
     };
   }
@@ -139,41 +132,16 @@ class StorageService {
     }
   }
 
-  // Paper management
-  async getBookmarkedPapers() {
-    const data = await this.loadData();
-    return data.papers.bookmarked || [];
-  }
-
-  async addBookmark(paper) {
-    const data = await this.loadData();
-    const bookmarks = data.papers.bookmarked || [];
-    
-    // Remove if already exists to avoid duplicates
-    const filtered = bookmarks.filter(p => p.id !== paper.id);
-    filtered.push({ ...paper, bookmarkedAt: Date.now() });
-    
-    data.papers.bookmarked = filtered;
-    await this.saveData(data);
-    return filtered;
-  }
-
-  async removeBookmark(paperId) {
-    const data = await this.loadData();
-    data.papers.bookmarked = (data.papers.bookmarked || []).filter(p => p.id !== paperId);
-    await this.saveData(data);
-    return data.papers.bookmarked;
-  }
-
+  // Paper management  
   async getStarredPapers() {
     const data = await this.loadData();
-    return data.papers.starred || [];
+    return data.starredPapers || [];
   }
 
   async addStar(paper) {
     console.log('🌟 addStar called for paper:', paper.id, paper.title?.substring(0, 50));
     const data = await this.loadData();
-    const starred = data.papers.starred || [];
+    const starred = data.starredPapers || [];
     
     console.log('Current starred papers:', starred.length);
     
@@ -183,7 +151,7 @@ class StorageService {
     
     console.log('New starred papers count:', filtered.length);
     
-    data.papers.starred = filtered;
+    data.starredPapers = filtered;
     const saveResult = await this.saveData(data);
     console.log('Save result for starred paper:', saveResult);
     
@@ -191,36 +159,40 @@ class StorageService {
   }
 
   async removeStar(paperId) {
+    console.log('🗑️ removeStar called for paper:', paperId);
     const data = await this.loadData();
-    data.papers.starred = (data.papers.starred || []).filter(p => p.id !== paperId);
-    await this.saveData(data);
-    return data.papers.starred;
+    data.starredPapers = (data.starredPapers || []).filter(p => p.id !== paperId);
+    const saveResult = await this.saveData(data);
+    console.log('Save result for removing star:', saveResult);
+    return data.starredPapers;
   }
 
   async getOpenedPapers() {
     const data = await this.loadData();
-    return data.papers.opened || [];
+    return data.openPapers || [];
   }
 
   async addToOpenedPapers(paper) {
+    console.log('📂 addToOpenedPapers called for paper:', paper.id);
     const data = await this.loadData();
-    const opened = data.papers.opened || [];
+    const opened = data.openPapers || [];
     
     // Remove if already exists and add to front (most recent)
     const filtered = opened.filter(p => p.id !== paper.id);
     filtered.unshift({ ...paper, openedAt: Date.now() });
     
     // Keep only last 50 opened papers
-    data.papers.opened = filtered.slice(0, 50);
-    await this.saveData(data);
-    return data.papers.opened;
+    data.openPapers = filtered.slice(0, 50);
+    const saveResult = await this.saveData(data);
+    console.log('Save result for opened paper:', saveResult);
+    return data.openPapers;
   }
 
   async removeFromOpenedPapers(paperId) {
     const data = await this.loadData();
-    data.papers.opened = (data.papers.opened || []).filter(p => p.id !== paperId);
+    data.openPapers = (data.openPapers || []).filter(p => p.id !== paperId);
     await this.saveData(data);
-    return data.papers.opened;
+    return data.openPapers;
   }
 
   // PDF view state management
@@ -240,8 +212,9 @@ class StorageService {
 
   // Search history
   async addSearchHistory(searchData) {
+    console.log('🔍 addSearchHistory called:', searchData);
     const data = await this.loadData();
-    const history = data.papers.searchHistory || [];
+    const history = data.searchHistory || [];
     
     // Remove duplicate searches
     const filtered = history.filter(h => 
@@ -254,28 +227,17 @@ class StorageService {
     });
     
     // Keep only last 20 searches
-    data.papers.searchHistory = filtered.slice(0, 20);
-    await this.saveData(data);
-    return data.papers.searchHistory;
+    data.searchHistory = filtered.slice(0, 20);
+    const saveResult = await this.saveData(data);
+    console.log('Save result for search history:', saveResult);
+    return data.searchHistory;
   }
 
   async getSearchHistory() {
     const data = await this.loadData();
-    return data.papers.searchHistory || [];
+    return data.searchHistory || [];
   }
 
-  // Preferences
-  async getPreferences() {
-    const data = await this.loadData();
-    return data.preferences || this.getDefaultData().preferences;
-  }
-
-  async updatePreferences(preferences) {
-    const data = await this.loadData();
-    data.preferences = { ...data.preferences, ...preferences };
-    await this.saveData(data);
-    return data.preferences;
-  }
 
   // Cleanup old data
   async cleanup(olderThanDays = 30) {
@@ -283,13 +245,12 @@ class StorageService {
     const cutoffTime = Date.now() - (olderThanDays * 24 * 60 * 60 * 1000);
     
     // Clean old search history
-    data.papers.searchHistory = (data.papers.searchHistory || [])
+    data.searchHistory = (data.searchHistory || [])
       .filter(h => h.timestamp > cutoffTime);
     
-    // Clean old PDF view states (keep starred/bookmarked papers)
+    // Clean old PDF view states (keep starred papers)
     const keepPaperIds = new Set([
-      ...(data.papers.bookmarked || []).map(p => p.id),
-      ...(data.papers.starred || []).map(p => p.id)
+      ...(data.starredPapers || []).map(p => p.id)
     ]);
     
     Object.keys(data.pdfViewState).forEach(paperId => {
@@ -372,7 +333,7 @@ class StorageService {
     try {
       const importedData = JSON.parse(jsonString);
       // Validate basic structure
-      if (importedData.version && importedData.papers) {
+      if (importedData.version && importedData.starredPapers) {
         await this.saveData(importedData);
         return true;
       }
