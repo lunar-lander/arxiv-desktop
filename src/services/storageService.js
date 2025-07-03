@@ -53,7 +53,20 @@ class StorageService {
     await this.initialize();
     
     try {
+      console.log('Attempting to load data from:', this.dataFile);
+      const exists = await window.electronAPI.fileExists(this.dataFile);
+      console.log('File exists:', exists);
+      
+      if (!exists) {
+        console.log('Data file does not exist, creating default data');
+        const defaultData = this.getDefaultData();
+        await this.saveData(defaultData);
+        return defaultData;
+      }
+      
       const result = await window.electronAPI.readFile(this.dataFile);
+      console.log('Read file result:', result);
+      
       if (result.success) {
         // Handle different data formats
         let text;
@@ -67,19 +80,31 @@ class StorageService {
           text = result.data.toString();
         }
         
-        console.log('Loading data from:', this.dataFile);
+        console.log('Raw file content:', text);
+        console.log('File content length:', text.length);
+        
+        if (!text.trim()) {
+          console.log('File is empty, using default data');
+          const defaultData = this.getDefaultData();
+          await this.saveData(defaultData);
+          return defaultData;
+        }
+        
         const data = JSON.parse(text);
-        console.log('Loaded data:', data);
+        console.log('Successfully parsed data:', data);
         return data;
       } else {
         console.log('File read failed:', result);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
+      console.error('Error details:', error.message, error.stack);
     }
     
-    console.log('Returning default data');
-    return this.getDefaultData();
+    console.log('Falling back to default data');
+    const defaultData = this.getDefaultData();
+    await this.saveData(defaultData);
+    return defaultData;
   }
 
   async saveData(data) {

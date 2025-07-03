@@ -129,12 +129,21 @@ export function PaperProvider({ children }) {
 
   const loadPersistedState = async () => {
     try {
+      console.log('PaperContext: Loading persisted state...');
+      
       const [bookmarked, starred, searchHistory, opened] = await Promise.all([
         storageService.getBookmarkedPapers(),
         storageService.getStarredPapers(),
         storageService.getSearchHistory(),
         storageService.getOpenedPapers()
       ]);
+
+      console.log('PaperContext: Loaded state:', {
+        bookmarked: bookmarked.length,
+        starred: starred.length,
+        searchHistory: searchHistory.length,
+        opened: opened.length
+      });
 
       dispatch({ 
         type: 'LOAD_STATE', 
@@ -147,6 +156,7 @@ export function PaperProvider({ children }) {
       });
     } catch (error) {
       console.error('Failed to load persisted state:', error);
+      console.error('Error details:', error.message, error.stack);
     }
   };
 

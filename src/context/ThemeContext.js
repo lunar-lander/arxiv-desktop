@@ -33,14 +33,30 @@ export function ThemeProvider({ children }) {
           const result = await window.electronAPI.readFile(themeFile);
           if (result.success) {
             try {
-              // Ensure data is properly converted to string and clean any BOM or whitespace
-              const dataStr = result.data.toString().trim();
+              // Handle different data formats like in storage service
+              let dataStr;
+              if (result.data instanceof ArrayBuffer) {
+                dataStr = new TextDecoder().decode(result.data);
+              } else if (result.data instanceof Uint8Array) {
+                dataStr = new TextDecoder().decode(result.data);
+              } else if (typeof result.data === 'string') {
+                dataStr = result.data;
+              } else {
+                dataStr = result.data.toString();
+              }
+              
+              // Clean any BOM or whitespace
+              dataStr = dataStr.trim();
+              console.log('Theme file content:', dataStr);
+              
               const themeData = JSON.parse(dataStr);
               setCurrentTheme(themeData.theme || 'light');
               setIsInitialized(true);
               return;
             } catch (parseError) {
               console.error('Failed to parse theme file:', parseError);
+              console.error('Raw data:', result.data);
+              console.error('Data type:', typeof result.data);
               // Continue with fallback logic
             }
           }
