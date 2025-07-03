@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, FileText, Star, Bookmark, User, X, LogIn, LogOut } from 'lucide-react';
+import { Home, FileText, Star, User, X, LogIn, LogOut } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
 import { AuthService } from '../services/authService';
 import LoginModal from './LoginModal';
@@ -25,10 +25,6 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
     dispatch({ type: 'REMOVE_OPEN_PAPER', payload: paperId });
   };
 
-  const handleRemoveBookmark = (paperId, e) => {
-    e.stopPropagation();
-    dispatch({ type: 'REMOVE_BOOKMARK', payload: paperId });
-  };
 
   const handleToggleStar = (paper, e) => {
     e.stopPropagation();
@@ -81,22 +77,6 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
           </>
         )}
 
-        {state.bookmarkedPapers.length > 0 && (
-          <>
-            <h3 className={styles.sectionTitle}>Bookmarks ({state.bookmarkedPapers.length})</h3>
-            {state.bookmarkedPapers.map((paper) => (
-              <div key={`bookmark-${paper.id}`} className={styles.paperItem} onClick={() => handlePaperSelect(paper)}>
-                <div className={styles.paperInfo}>
-                  <div className={styles.paperTitle}>{paper.title}</div>
-                  <div className={styles.paperSource}>{paper.source}</div>
-                </div>
-                <button className={styles.closeButton} onClick={(e) => handleRemoveBookmark(paper.id, e)}>
-                  <Bookmark size={14} fill="#f39c12" />
-                </button>
-              </div>
-            ))}
-          </>
-        )}
 
         {state.starredPapers.length > 0 && (
           <>
@@ -115,7 +95,7 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
           </>
         )}
 
-        {state.openPapers.length === 0 && state.bookmarkedPapers.length === 0 && state.starredPapers.length === 0 && (
+        {state.openPapers.length === 0 && state.starredPapers.length === 0 && (
           <div className={styles.emptyState}>
             No papers yet. Search and open papers to see them here.
           </div>
