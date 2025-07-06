@@ -6,7 +6,7 @@ A desktop application for browsing, searching, and managing academic papers from
 
 - **Search Papers**: Search academic papers from both arXiv and bioRxiv
 - **Advanced Search**: Filters by author, title, date range, and categories
-- **PDF Viewer**: Built-in PDF viewer with zoom and navigation controls
+- **PDF Viewer**: Built-in PDF viewer with zoom, navigation controls, and text selection/copy functionality
 - **Paper Management**: 
   - Open multiple papers in tabs
   - Bookmark papers for later reading
@@ -124,7 +124,7 @@ Papers and app data are stored locally:
 - [x] CSS modules for component styling (migrated from styled-components)
 - [x] Paper search functionality for arXiv and bioRxiv
 - [x] Advanced search filters (author, title, date, categories)
-- [x] PDF viewer with zoom and navigation controls
+- [x] PDF viewer with zoom, navigation controls, and text selection/copy functionality
 - [x] Sidebar with paper management (open, bookmarks, starred)
 - [x] Local caching system for offline reading
 - [x] Citation export in multiple formats (APA, MLA, Chicago, BibTeX, RIS, EndNote)
@@ -154,6 +154,7 @@ Papers and app data are stored locally:
 - Local paper caching for offline access
 
 ### Recent Updates
+- **2025-01-07**: Added text selection and copy functionality to PDF viewer with floating copy button
 - **2025-01-07**: Added multiple theme support (Cyberpunk, Brogrammer, Bearded) with enhanced theme toggle
 - **2025-06-29**: Converted all components from styled-components to CSS modules
 - **2025-06-29**: Fixed compilation errors and verified build process

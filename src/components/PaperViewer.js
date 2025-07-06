@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Quote } from 'lucide-react';
+import 'react-pdf/dist/Page/TextLayer.css';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, ExternalLink, Star, Quote, Copy } from 'lucide-react';
 import { usePapers } from '../context/PaperContext';
 import CitationModal from './CitationModal';
 import storageService from '../services/storageService';
@@ -20,6 +21,9 @@ function PaperViewer({ paper }) {
   const [showCitationModal, setShowCitationModal] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [actualScale, setActualScale] = useState(1.0); // Track actual scale for display
+  const [selectedText, setSelectedText] = useState('');
+  const [showCopyButton, setShowCopyButton] = useState(false);
+  const [copyButtonPosition, setCopyButtonPosition] = useState({ x: 0, y: 0 });
   const { state, dispatch } = usePapers();
   const containerRef = useRef(null);
   const pdfWrapperRef = useRef(null);
@@ -92,6 +96,46 @@ function PaperViewer({ paper }) {
       });
     }
   }, [paper, scale, pageNumber, viewMode]);
+
+  // Handle text selection
+  useEffect(() => {
+    const handleTextSelection = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) {
+        const selectedText = selection.toString();
+        setSelectedText(selectedText);
+        
+        // Get selection position for copy button
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setCopyButtonPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 40
+        });
+        setShowCopyButton(true);
+      } else {
+        setSelectedText('');
+        setShowCopyButton(false);
+      }
+    };
+
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.react-pdf__Page__textContent')) {
+        setShowCopyButton(false);
+        setSelectedText('');
+      }
+    };
+
+    document.addEventListener('mouseup', handleTextSelection);
+    document.addEventListener('selectionchange', handleTextSelection);
+    document.addEventListener('click', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mouseup', handleTextSelection);
+      document.removeEventListener('selectionchange', handleTextSelection);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   const onDocumentLoadSuccess = async ({ numPages }) => {
     setNumPages(numPages);
@@ -197,6 +241,32 @@ function PaperViewer({ paper }) {
 
   const handleStar = () => {
     dispatch({ type: 'TOGGLE_STAR', payload: paper });
+  };
+
+  const handleCopySelectedText = async () => {
+    if (selectedText) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(selectedText);
+        } else {
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = selectedText;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        }
+        setShowCopyButton(false);
+        setSelectedText('');
+        // Clear selection
+        if (window.getSelection) {
+          window.getSelection().removeAllRanges();
+        }
+      } catch (error) {
+        console.error('Failed to copy text:', error);
+      }
+    }
   };
 
   const isStarred = state.starredPapers.some(p => p.id === paper.id);
@@ -310,7 +380,7 @@ function PaperViewer({ paper }) {
                     <Page 
                       pageNumber={index + 1} 
                       scale={getCurrentScale()}
-                      renderTextLayer={false}
+                      renderTextLayer={true}
                       renderAnnotationLayer={false}
                     />
                   </div>
@@ -320,7 +390,7 @@ function PaperViewer({ paper }) {
                 <Page 
                   pageNumber={pageNumber} 
                   scale={getCurrentScale()}
-                  renderTextLayer={false}
+                  renderTextLayer={true}
                   renderAnnotationLayer={false}
                 />
               )}
@@ -334,6 +404,22 @@ function PaperViewer({ paper }) {
         onClose={() => setShowCitationModal(false)}
         paper={paper}
       />
+      
+      {showCopyButton && (
+        <div 
+          className={styles.copyButton}
+          style={{
+            left: copyButtonPosition.x,
+            top: copyButtonPosition.y,
+            position: 'fixed',
+            zIndex: 1000
+          }}
+          onClick={handleCopySelectedText}
+        >
+          <Copy size={14} />
+          Copy
+        </div>
+      )}
     </div>
   );
 }
