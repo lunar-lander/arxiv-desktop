@@ -1,18 +1,23 @@
 import React from 'react';
-import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import styles from './Sidebar.module.css';
 
 function ThemeToggle() {
-  const { isDark, toggleTheme } = useTheme();
+  const { currentTheme, toggleTheme, availableThemes } = useTheme();
+  
+  const currentThemeData = availableThemes.find(theme => theme.id === currentTheme);
+  const nextThemeIndex = (availableThemes.findIndex(theme => theme.id === currentTheme) + 1) % availableThemes.length;
+  const nextTheme = availableThemes[nextThemeIndex];
 
   return (
     <button 
       className={styles.themeToggle}
       onClick={toggleTheme} 
-      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={`Current: ${currentThemeData?.name || 'Unknown'} - Click to switch to ${nextTheme?.name || 'Unknown'}`}
     >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      <span style={{ fontSize: '14px' }}>
+        {currentThemeData?.icon || '🎨'} {currentThemeData?.name || 'Theme'}
+      </span>
     </button>
   );
 }

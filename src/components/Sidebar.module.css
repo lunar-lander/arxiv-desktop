@@ -186,10 +186,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 80px;
+  font-size: 12px;
 }
 
 .themeToggle:hover {
   color: var(--primary);
+  background: var(--sidebar-hover);
 }
 
 /* Scrollbar styling */

@@ -10,6 +10,14 @@ export function ThemeProvider({ children }) {
     }
     return 'light';
   });
+
+  const availableThemes = [
+    { id: 'light', name: 'Light', icon: '☀️' },
+    { id: 'dark', name: 'Dark', icon: '🌙' },
+    { id: 'cyberpunk', name: 'Cyberpunk', icon: '🌆' },
+    { id: 'brogrammer', name: 'Brogrammer', icon: '💻' },
+    { id: 'bearded', name: 'Bearded', icon: '🧔' }
+  ];
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -65,7 +73,8 @@ export function ThemeProvider({ children }) {
       
       // Fallback to localStorage for development
       const savedTheme = localStorage.getItem('arxiv-theme');
-      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+      const validThemes = availableThemes.map(t => t.id);
+      if (savedTheme && validThemes.includes(savedTheme)) {
         setCurrentTheme(savedTheme);
       } else {
         // Detect system preference
@@ -99,11 +108,14 @@ export function ThemeProvider({ children }) {
   };
 
   const toggleTheme = () => {
-    setCurrentTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const currentIndex = availableThemes.findIndex(t => t.id === currentTheme);
+    const nextIndex = (currentIndex + 1) % availableThemes.length;
+    setCurrentTheme(availableThemes[nextIndex].id);
   };
 
   const setTheme = (themeName) => {
-    if (themeName === 'light' || themeName === 'dark') {
+    const validThemes = availableThemes.map(t => t.id);
+    if (validThemes.includes(themeName)) {
       setCurrentTheme(themeName);
     }
   };
@@ -113,6 +125,7 @@ export function ThemeProvider({ children }) {
       currentTheme,
       toggleTheme,
       setTheme,
+      availableThemes,
       isDark: currentTheme === 'dark'
     }}>
       {children}

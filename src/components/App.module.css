@@ -68,3 +68,78 @@
   --sidebar-hover: #333333;
   --sidebar-active: #3498db;
 }
+
+/* Cyberpunk theme variables */
+.cyberpunk {
+  --primary: #ff00ff;
+  --primary-hover: #cc00cc;
+  --secondary: #00ffff;
+  --background: #0a0a0a;
+  --surface: #1a1a1a;
+  --text: #00ffff;
+  --text-secondary: #ff00ff;
+  --text-muted: #666666;
+  --border: #333333;
+  --shadow: rgba(255, 0, 255, 0.3);
+  --success: #00ff00;
+  --warning: #ffff00;
+  --error: #ff0040;
+  
+  /* Sidebar specific */
+  --sidebar-bg: #000000;
+  --sidebar-text: #00ffff;
+  --sidebar-text-muted: #ff00ff;
+  --sidebar-border: #333333;
+  --sidebar-hover: #1a1a1a;
+  --sidebar-active: #ff00ff;
+}
+
+/* Brogrammer theme variables */
+.brogrammer {
+  --primary: #ff6b35;
+  --primary-hover: #e55a2b;
+  --secondary: #004e89;
+  --background: #1a1a2e;
+  --surface: #16213e;
+  --text: #f39c12;
+  --text-secondary: #ff6b35;
+  --text-muted: #95a5a6;
+  --border: #0f3460;
+  --shadow: rgba(255, 107, 53, 0.2);
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --error: #e74c3c;
+  
+  /* Sidebar specific */
+  --sidebar-bg: #0f3460;
+  --sidebar-text: #f39c12;
+  --sidebar-text-muted: #ff6b35;
+  --sidebar-border: #1a1a2e;
+  --sidebar-hover: #16213e;
+  --sidebar-active: #ff6b35;
+}
+
+/* Bearded theme variables */
+.bearded {
+  --primary: #8b4513;
+  --primary-hover: #a0522d;
+  --secondary: #daa520;
+  --background: #2f1b14;
+  --surface: #3e2723;
+  --text: #f5deb3;
+  --text-secondary: #daa520;
+  --text-muted: #8d6e63;
+  --border: #4e342e;
+  --shadow: rgba(139, 69, 19, 0.3);
+  --success: #689f38;
+  --warning: #ff8f00;
+  --error: #d32f2f;
+  
+  /* Sidebar specific */
+  --sidebar-bg: #1c0e0a;
+  --sidebar-text: #f5deb3;
+  --sidebar-text-muted: #daa520;
+  --sidebar-border: #2f1b14;
+  --sidebar-hover: #3e2723;
+  --sidebar-active: #8b4513;
+}
