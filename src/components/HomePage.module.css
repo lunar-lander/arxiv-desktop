@@ -254,25 +254,25 @@
   .homeContainer {
     padding: 1rem;
   }
-  
+
   .title {
     font-size: 2rem;
   }
-  
+
   .searchContainer {
     margin-bottom: 1.5rem;
   }
-  
+
   .sourceSelector {
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
   }
-  
+
   .paperActions {
     gap: 0.5rem;
   }
-  
+
   .actionButton {
     font-size: 0.8rem;
     padding: 0.4rem 0.8rem;

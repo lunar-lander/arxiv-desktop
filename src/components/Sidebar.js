@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { Home, FileText, Star, User, X, LogIn, LogOut } from 'lucide-react';
-import { usePapers } from '../context/PaperContext';
-import { AuthService } from '../services/authService';
-import LoginModal from './LoginModal';
-import ThemeToggle from './ThemeToggle';
-import styles from './Sidebar.module.css';
-
+import React, { useState } from "react";
+import { Home, FileText, Star, User, X, LogIn, LogOut } from "lucide-react";
+import { usePapers } from "../context/PaperContext";
+import { AuthService } from "../services/authService";
+import LoginModal from "./LoginModal";
+import ThemeToggle from "./ThemeToggle";
+import styles from "./Sidebar.module.css";
 
 function Sidebar({ onNavigate, onPaperSelect, currentView }) {
   const { state, dispatch } = usePapers();
@@ -17,28 +16,27 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
 
   const handlePaperSelect = (paper) => {
     onPaperSelect(paper);
-    onNavigate('paper');
+    onNavigate("paper");
   };
 
   const handleClosePaper = (paperId, e) => {
     e.stopPropagation();
-    dispatch({ type: 'REMOVE_OPEN_PAPER', payload: paperId });
+    dispatch({ type: "REMOVE_OPEN_PAPER", payload: paperId });
   };
-
 
   const handleToggleStar = (paper, e) => {
     e.stopPropagation();
-    dispatch({ type: 'TOGGLE_STAR', payload: paper });
+    dispatch({ type: "TOGGLE_STAR", payload: paper });
   };
 
   const handleLogin = (user) => {
-    dispatch({ type: 'SET_USER', payload: user });
+    dispatch({ type: "SET_USER", payload: user });
   };
 
   const handleLogout = async () => {
     if (state.currentUser) {
       await AuthService.logout(state.currentUser.source);
-      dispatch({ type: 'SET_USER', payload: null });
+      dispatch({ type: "SET_USER", payload: null });
     }
   };
 
@@ -51,8 +49,10 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
 
       <div className={styles.navigation}>
         <button
-          className={`${styles.navItem} ${currentView === 'home' ? styles.active : ''}`}
-          onClick={() => handleNavigation('home')}
+          className={`${styles.navItem} ${
+            currentView === "home" ? styles.active : ""
+          }`}
+          onClick={() => handleNavigation("home")}
         >
           <Home size={18} />
           Home
@@ -62,14 +62,23 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
       <div className={styles.papersList}>
         {state.openPapers.length > 0 && (
           <>
-            <h3 className={styles.sectionTitle}>Open Papers ({state.openPapers.length})</h3>
+            <h3 className={styles.sectionTitle}>
+              Open Papers ({state.openPapers.length})
+            </h3>
             {state.openPapers.map((paper) => (
-              <div key={`open-${paper.id}`} className={styles.paperItem} onClick={() => handlePaperSelect(paper)}>
+              <div
+                key={`open-${paper.id}`}
+                className={styles.paperItem}
+                onClick={() => handlePaperSelect(paper)}
+              >
                 <div className={styles.paperInfo}>
                   <div className={styles.paperTitle}>{paper.title}</div>
                   <div className={styles.paperSource}>{paper.source}</div>
                 </div>
-                <button className={styles.closeButton} onClick={(e) => handleClosePaper(paper.id, e)}>
+                <button
+                  className={styles.closeButton}
+                  onClick={(e) => handleClosePaper(paper.id, e)}
+                >
                   <X size={14} />
                 </button>
               </div>
@@ -77,17 +86,25 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
           </>
         )}
 
-
         {state.starredPapers.length > 0 && (
           <>
-            <h3 className={styles.sectionTitle}>Starred ({state.starredPapers.length})</h3>
+            <h3 className={styles.sectionTitle}>
+              Starred ({state.starredPapers.length})
+            </h3>
             {state.starredPapers.map((paper) => (
-              <div key={`starred-${paper.id}`} className={styles.paperItem} onClick={() => handlePaperSelect(paper)}>
+              <div
+                key={`starred-${paper.id}`}
+                className={styles.paperItem}
+                onClick={() => handlePaperSelect(paper)}
+              >
                 <div className={styles.paperInfo}>
                   <div className={styles.paperTitle}>{paper.title}</div>
                   <div className={styles.paperSource}>{paper.source}</div>
                 </div>
-                <button className={styles.closeButton} onClick={(e) => handleToggleStar(paper, e)}>
+                <button
+                  className={styles.closeButton}
+                  onClick={(e) => handleToggleStar(paper, e)}
+                >
                   <Star size={14} fill="#f39c12" />
                 </button>
               </div>
@@ -107,13 +124,17 @@ function Sidebar({ onNavigate, onPaperSelect, currentView }) {
           <div className={styles.userDetails}>
             <User size={16} />
             <span className={styles.username}>
-              {state.currentUser ? `${state.currentUser.username} (${state.currentUser.source})` : 'Not logged in'}
+              {state.currentUser
+                ? `${state.currentUser.username} (${state.currentUser.source})`
+                : "Not logged in"}
             </span>
           </div>
-          <button 
+          <button
             className={styles.authButton}
-            onClick={state.currentUser ? handleLogout : () => setShowLoginModal(true)}
-            title={state.currentUser ? 'Logout' : 'Login'}
+            onClick={
+              state.currentUser ? handleLogout : () => setShowLoginModal(true)
+            }
+            title={state.currentUser ? "Logout" : "Login"}
           >
             {state.currentUser ? <LogOut size={16} /> : <LogIn size={16} />}
           </button>

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import HomePage from './components/HomePage';
-import Sidebar from './components/Sidebar';
-import PaperViewer from './components/PaperViewer';
-import { PaperProvider } from './context/PaperContext';
-import { ThemeProvider, useTheme } from './context/ThemeContext';
-import styles from './components/App.module.css';
+import React, { useState, useEffect } from "react";
+import HomePage from "./components/HomePage";
+import Sidebar from "./components/Sidebar";
+import PaperViewer from "./components/PaperViewer";
+import { PaperProvider } from "./context/PaperContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import styles from "./components/App.module.css";
 
 function AppContent() {
-  const [currentView, setCurrentView] = useState('home');
+  const [currentView, setCurrentView] = useState("home");
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
-  const [lastSearchQuery, setLastSearchQuery] = useState('');
+  const [lastSearchQuery, setLastSearchQuery] = useState("");
   const { currentTheme } = useTheme();
 
   // Handle menu actions from Electron
@@ -18,16 +18,13 @@ function AppContent() {
     if (window.electronAPI) {
       window.electronAPI.onMenuAction((action, data) => {
         switch (action) {
-          case 'new-search':
-            setCurrentView('home');
+          case "new-search":
+            setCurrentView("home");
             break;
-          case 'show-bookmarks':
-            // Could add a bookmarks view here
-            break;
-          case 'show-starred':
+          case "show-starred":
             // Could add a starred view here
             break;
-          case 'clear-cache':
+          case "clear-cache":
             // Handle cache clearing
             break;
           default:
@@ -43,17 +40,17 @@ function AppContent() {
 
   return (
     <div className={`${styles.appContainer} ${styles[currentTheme]}`}>
-      <Sidebar 
+      <Sidebar
         onNavigate={setCurrentView}
         onPaperSelect={setSelectedPaper}
         currentView={currentView}
       />
       <div className={styles.mainContent}>
-        {currentView === 'home' && (
-          <HomePage 
+        {currentView === "home" && (
+          <HomePage
             onPaperOpen={(paper) => {
               setSelectedPaper(paper);
-              setCurrentView('paper');
+              setCurrentView("paper");
             }}
             searchResults={searchResults}
             onSearchResults={setSearchResults}
@@ -61,7 +58,7 @@ function AppContent() {
             onSearchQuery={setLastSearchQuery}
           />
         )}
-        {currentView === 'paper' && selectedPaper && (
+        {currentView === "paper" && selectedPaper && (
           <PaperViewer paper={selectedPaper} />
         )}
       </div>
