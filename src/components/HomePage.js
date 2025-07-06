@@ -161,6 +161,22 @@ function HomePage({ onPaperOpen, searchResults, onSearchResults, lastSearchQuery
                 {paper.authors.slice(0, 3).join(', ')}
                 {paper.authors.length > 3 && ' et al.'}
               </p>
+              <p className={styles.paperDate}>
+                Published: {new Date(paper.published).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+                {paper.updated && paper.updated !== paper.published && (
+                  <span className={styles.updateDate}>
+                    • Updated: {new Date(paper.updated).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                )}
+              </p>
               <p className={styles.paperAbstract}>{paper.abstract}</p>
               <div className={styles.paperActions}>
                 <button className={styles.actionButton} onClick={(e) => handleBookmark(paper, e)}>

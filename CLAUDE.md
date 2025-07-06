@@ -154,6 +154,7 @@ Papers and app data are stored locally:
 - Local paper caching for offline access
 
 ### Recent Updates
+- **2025-01-07**: Added publish/update dates to search results and fixed text color issues in dark themes
 - **2025-01-07**: Added text selection and copy functionality to PDF viewer with floating copy button
 - **2025-01-07**: Added multiple theme support (Cyberpunk, Brogrammer, Bearded) with enhanced theme toggle
 - **2025-06-29**: Converted all components from styled-components to CSS modules
