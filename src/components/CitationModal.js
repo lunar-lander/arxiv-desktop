@@ -72,32 +72,36 @@ function CitationModal({ isOpen, onClose, paper }) {
   const generateCitation = (format) => {
     const year = new Date(paper.published).getFullYear();
     const formattedAuthors = formatAuthors(paper.authors, format);
+    const isBioRxiv = paper.source === 'biorxiv';
+    const journal = isBioRxiv ? 'bioRxiv preprint' : 'arXiv preprint';
+    const identifier = isBioRxiv ? `bioRxiv ${paper.id}` : `arXiv:${paper.id}`;
     
     switch (format) {
       case 'apa':
-        return `${formattedAuthors} (${year}). ${paper.title}. arXiv preprint arXiv:${paper.id}.`;
+        return `${formattedAuthors} (${year}). ${paper.title}. ${journal} ${identifier}.`;
         
       case 'mla':
-        return `${formattedAuthors} "${paper.title}." arXiv preprint arXiv:${paper.id} (${year}).`;
+        return `${formattedAuthors} "${paper.title}." ${journal} ${identifier} (${year}).`;
         
       case 'chicago':
-        return `${formattedAuthors} "${paper.title}." arXiv preprint arXiv:${paper.id} (${year}).`;
+        return `${formattedAuthors} "${paper.title}." ${journal} ${identifier} (${year}).`;
         
       case 'bibtex':
         const bibtexKey = `${paper.authors[0]?.split(' ').pop()?.toLowerCase() || 'unknown'}${year}`;
         return `@article{${bibtexKey},
   title={${paper.title}},
   author={${paper.authors.join(' and ')}},
-  journal={arXiv preprint arXiv:${paper.id}},
+  journal={${journal}},
   year={${year}},
-  url={${paper.url}}
+  url={${paper.url}},
+  ${isBioRxiv ? 'doi' : 'eprint'}={${paper.id}}
 }`;
         
       case 'ris':
         return `TY  - JOUR
 AU  - ${paper.authors.join('\nAU  - ')}
 TI  - ${paper.title}
-JO  - arXiv preprint
+JO  - ${journal}
 PY  - ${year}
 UR  - ${paper.url}
 ID  - ${paper.id}
@@ -107,13 +111,13 @@ ER  -`;
         return `%0 Journal Article
 %A ${paper.authors.join('\n%A ')}
 %T ${paper.title}
-%J arXiv preprint
+%J ${journal}
 %D ${year}
 %U ${paper.url}
 %M ${paper.id}`;
         
       default:
-        return `${formattedAuthors} (${year}). ${paper.title}. arXiv preprint arXiv:${paper.id}.`;
+        return `${formattedAuthors} (${year}). ${paper.title}. ${journal} ${identifier}.`;
     }
   };
 

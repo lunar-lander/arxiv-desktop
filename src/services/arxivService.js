@@ -274,8 +274,32 @@ export class ArxivService {
 
   static async downloadPaper(paper) {
     try {
-      const response = await axios.get(paper.pdfUrl, {
-        responseType: 'arraybuffer'
+      // For bioRxiv papers, try different PDF URL formats if the first one fails
+      let pdfUrl = paper.pdfUrl;
+      
+      if (paper.source === 'biorxiv') {
+        // bioRxiv PDFs might need different URL format
+        // Try the direct PDF URL first, then fallback to alternative format
+        const altPdfUrl = paper.pdfUrl.replace('.full.pdf', '.pdf');
+        try {
+          // Test if the URL is accessible
+          const testResponse = await axios.head(pdfUrl);
+          if (testResponse.status !== 200) {
+            pdfUrl = altPdfUrl;
+          }
+        } catch (headError) {
+          console.log('Trying alternative bioRxiv PDF URL format');
+          pdfUrl = altPdfUrl;
+        }
+      }
+
+      const response = await axios.get(pdfUrl, {
+        responseType: 'arraybuffer',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/pdf,*/*'
+        },
+        timeout: 30000 // 30 second timeout
       });
 
       const appDataPath = await window.electronAPI.getAppDataPath();
@@ -296,6 +320,17 @@ export class ArxivService {
       };
     } catch (error) {
       console.error('Download failed:', error);
+      
+      // For bioRxiv, if download fails, try to open in browser instead
+      if (paper.source === 'biorxiv') {
+        console.log('Falling back to browser view for bioRxiv paper');
+        return {
+          success: false,
+          error: 'bioRxiv PDF download failed - opening in browser',
+          fallbackToBrowser: true
+        };
+      }
+      
       return {
         success: false,
         error: error.message
