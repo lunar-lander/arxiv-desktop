@@ -123,7 +123,10 @@ function HomePage({
       );
 
       if (append) {
-        onSearchResults([...searchResults, ...results.papers]);
+        // Filter out duplicates when appending results
+        const existingIds = new Set(searchResults.map(p => p.id));
+        const newPapers = results.papers.filter(p => !existingIds.has(p.id));
+        onSearchResults([...searchResults, ...newPapers]);
       } else {
         onSearchResults(results.papers);
         onSearchQuery(searchQuery);
@@ -168,19 +171,14 @@ function HomePage({
           localPath: downloadResult.localPath,
         };
         onPaperOpen(paperWithLocalPath);
-      } else if (
-        downloadResult.fallbackToBrowser &&
-        paper.source === "biorxiv"
-      ) {
-        // For bioRxiv papers that can't be downloaded, open in browser
-        alert("Opening bioRxiv paper in your default browser...");
-        window.electronAPI.openExternal(paper.url);
       } else {
-        // Try to open the PDF in viewer anyway with the remote URL
+        // If download fails, try to open the PDF in viewer with the remote URL
+        console.log("Download failed, attempting to open remote PDF directly");
         onPaperOpen(paper);
       }
     } catch (error) {
       console.error("Download failed:", error);
+      // Fallback to remote PDF viewing
       onPaperOpen(paper);
     }
   };
@@ -274,9 +272,9 @@ function HomePage({
             </button>
           </div>
           <div className={styles.resultsContainer} ref={resultsContainerRef}>
-            {searchResults.map((paper) => (
+            {searchResults.map((paper, index) => (
               <div
-                key={paper.id}
+                key={`${paper.id}_${index}`}
                 className={styles.paperCard}
                 onClick={() => handlePaperClick(paper)}
               >

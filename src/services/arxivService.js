@@ -149,6 +149,7 @@ export class ArxivService {
 
       // Filter results based on query
       const papers = response.data.collection || [];
+      console.log("Sample bioRxiv paper data:", papers[0]); // Debug log
       const filtered = papers.filter(
         (paper) =>
           paper.title?.toLowerCase().includes(query.toLowerCase()) ||
@@ -159,20 +160,30 @@ export class ArxivService {
       const paginatedPapers = filtered.slice(start, start + maxResults);
 
       return {
-        papers: paginatedPapers.map((paper) => ({
-          id: paper.doi || `biorxiv_${paper.server}_${paper.article_id}`,
-          title: paper.title,
-          authors: paper.authors
-            ? paper.authors.split(";").map((a) => a.trim())
-            : [],
-          abstract: paper.abstract,
-          published: paper.date,
-          updated: paper.date,
-          source: "biorxiv",
-          url: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}`,
-          pdfUrl: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}.full.pdf`,
-          categories: paper.category ? [paper.category] : [],
-        })),
+        papers: paginatedPapers.map((paper, index) => {
+          // Extract article ID from DOI (format: 10.1101/YYYY.MM.DD.XXXXXX)
+          const doi = paper.doi;
+          const articleId = doi ? doi.split('/')[1] : `${paper.server || 'biorxiv'}.${Date.now()}`;
+          const version = paper.version || '1';
+          const server = paper.server || 'biorxiv';
+          
+          console.log("URL components:", { server, articleId, version, doi }); // Debug log
+          
+          return {
+            id: doi,
+            title: paper.title,
+            authors: paper.authors
+              ? paper.authors.split(";").map((a) => a.trim())
+              : [],
+            abstract: paper.abstract,
+            published: paper.date,
+            updated: paper.date,
+            source: "biorxiv",
+            url: `https://www.biorxiv.org/content/10.1101/${articleId}v${version}`,
+            pdfUrl: `https://www.biorxiv.org/content/10.1101/${articleId}v${version}.full.pdf`,
+            categories: paper.category ? [paper.category] : [],
+          };
+        }),
         totalResults: filtered.length,
       };
     } catch (error) {
@@ -244,20 +255,30 @@ export class ArxivService {
     const paginatedPapers = papers.slice(start, start + maxResults);
 
     return {
-      papers: paginatedPapers.map((paper) => ({
-        id: paper.doi || `biorxiv_${paper.server}_${paper.article_id}`,
-        title: paper.title,
-        authors: paper.authors
-          ? paper.authors.split(";").map((a) => a.trim())
-          : [],
-        abstract: paper.abstract,
-        published: paper.date,
-        updated: paper.date,
-        source: "biorxiv",
-        url: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}`,
-        pdfUrl: `https://www.biorxiv.org/content/10.1101/${paper.server}.${paper.article_id}v${paper.version}.full.pdf`,
-        categories: paper.category ? [paper.category] : [],
-      })),
+      papers: paginatedPapers.map((paper, index) => {
+        // Extract article ID from DOI (format: 10.1101/YYYY.MM.DD.XXXXXX)
+        const doi = paper.doi;
+        const articleId = doi ? doi.split('/')[1] : `${paper.server || 'biorxiv'}.${Date.now()}`;
+        const version = paper.version || '1';
+        const server = paper.server || 'biorxiv';
+        
+        console.log("URL components (filters):", { server, articleId, version, doi }); // Debug log
+        
+        return {
+          id: doi,
+          title: paper.title,
+          authors: paper.authors
+            ? paper.authors.split(";").map((a) => a.trim())
+            : [],
+          abstract: paper.abstract,
+          published: paper.date,
+          updated: paper.date,
+          source: "biorxiv",
+          url: `https://www.biorxiv.org/content/10.1101/${articleId}v${version}`,
+          pdfUrl: `https://www.biorxiv.org/content/10.1101/${articleId}v${version}.full.pdf`,
+          categories: paper.category ? [paper.category] : [],
+        };
+      }),
       totalResults: papers.length,
     };
   }
@@ -327,64 +348,64 @@ export class ArxivService {
 
   static async downloadPaper(paper) {
     try {
-      // For bioRxiv papers, try different PDF URL formats if the first one fails
       let pdfUrl = paper.pdfUrl;
+      const urlsToTry = [pdfUrl];
 
+      // For bioRxiv papers, add alternative URL formats to try
       if (paper.source === "biorxiv") {
-        // bioRxiv PDFs might need different URL format
-        // Try the direct PDF URL first, then fallback to alternative format
-        const altPdfUrl = paper.pdfUrl.replace(".full.pdf", ".pdf");
+        urlsToTry.push(pdfUrl.replace(".full.pdf", ".pdf"));
+        urlsToTry.push(pdfUrl.replace(".full.pdf", ".full-text.pdf"));
+      }
+
+      let lastError = null;
+      
+      // Try each URL format until one works
+      for (const url of urlsToTry) {
         try {
-          // Test if the URL is accessible
-          const testResponse = await axios.head(pdfUrl);
-          if (testResponse.status !== 200) {
-            pdfUrl = altPdfUrl;
+          console.log(`Attempting to download PDF from: ${url}`);
+          
+          const response = await axios.get(url, {
+            responseType: "arraybuffer",
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+              Accept: "application/pdf,*/*",
+            },
+            timeout: 30000, // 30 second timeout
+          });
+
+          // Check if we got a valid PDF response
+          if (response.data && response.data.byteLength > 1000) {
+            const appDataPath = await window.electronAPI.getAppDataPath();
+            const papersDir = `${appDataPath}/papers`;
+            await window.electronAPI.ensureDirectory(papersDir);
+
+            const filename = `${paper.id.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+            const filepath = `${papersDir}/${filename}`;
+
+            // Convert ArrayBuffer to Uint8Array for Electron
+            const uint8Array = new Uint8Array(response.data);
+            await window.electronAPI.writeFile(filepath, uint8Array);
+
+            console.log(`Successfully downloaded PDF: ${filename}`);
+            return {
+              success: true,
+              localPath: filepath,
+              filename,
+            };
           }
-        } catch (headError) {
-          console.log("Trying alternative bioRxiv PDF URL format");
-          pdfUrl = altPdfUrl;
+        } catch (urlError) {
+          console.log(`Failed to download from ${url}:`, urlError.message);
+          lastError = urlError;
+          continue; // Try next URL
         }
       }
 
-      const response = await axios.get(pdfUrl, {
-        responseType: "arraybuffer",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          Accept: "application/pdf,*/*",
-        },
-        timeout: 30000, // 30 second timeout
-      });
-
-      const appDataPath = await window.electronAPI.getAppDataPath();
-      const papersDir = `${appDataPath}/papers`;
-      await window.electronAPI.ensureDirectory(papersDir);
-
-      const filename = `${paper.id.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
-      const filepath = `${papersDir}/${filename}`;
-
-      // Convert ArrayBuffer to Uint8Array for Electron
-      const uint8Array = new Uint8Array(response.data);
-      await window.electronAPI.writeFile(filepath, uint8Array);
-
-      return {
-        success: true,
-        localPath: filepath,
-        filename,
-      };
+      // If all URLs failed, throw the last error
+      throw lastError || new Error("No valid PDF URLs found");
+      
     } catch (error) {
-      console.error("Download failed:", error);
-
-      // For bioRxiv, if download fails, try to open in browser instead
-      if (paper.source === "biorxiv") {
-        console.log("Falling back to browser view for bioRxiv paper");
-        return {
-          success: false,
-          error: "bioRxiv PDF download failed - opening in browser",
-          fallbackToBrowser: true,
-        };
-      }
-
+      console.error("Download failed for all attempted URLs:", error);
       return {
         success: false,
         error: error.message,
