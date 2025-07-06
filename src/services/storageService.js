@@ -46,19 +46,15 @@ class StorageService {
     await this.initialize();
     
     try {
-      console.log('Attempting to load data from:', this.dataFile);
       const exists = await window.electronAPI.fileExists(this.dataFile);
-      console.log('File exists:', exists);
       
       if (!exists) {
-        console.log('Data file does not exist, creating default data');
         const defaultData = this.getDefaultData();
         await this.saveData(defaultData);
         return defaultData;
       }
       
       const result = await window.electronAPI.readFile(this.dataFile);
-      console.log('Read file result:', result);
       
       if (result.success) {
         // Handle different data formats
@@ -73,28 +69,19 @@ class StorageService {
           text = result.data.toString();
         }
         
-        console.log('Raw file content:', text);
-        console.log('File content length:', text.length);
-        
         if (!text.trim()) {
-          console.log('File is empty, using default data');
           const defaultData = this.getDefaultData();
           await this.saveData(defaultData);
           return defaultData;
         }
         
         const data = JSON.parse(text);
-        console.log('Successfully parsed data:', data);
         return data;
-      } else {
-        console.log('File read failed:', result);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      console.error('Error details:', error.message, error.stack);
     }
     
-    console.log('Falling back to default data');
     const defaultData = this.getDefaultData();
     await this.saveData(defaultData);
     return defaultData;
@@ -104,30 +91,21 @@ class StorageService {
     await this.initialize();
     
     try {
-      console.log('saveData called with:', data);
-      console.log('Will save to file:', this.dataFile);
-      
       data.lastUpdated = Date.now();
       const jsonData = JSON.stringify(data, null, 2);
       const encoder = new TextEncoder();
       const uint8Array = encoder.encode(jsonData);
       
-      console.log('JSON data to save:', jsonData);
-      console.log('Saving data to:', this.dataFile);
-      
       const result = await window.electronAPI.writeFile(this.dataFile, uint8Array);
-      console.log('Save result:', result);
       
       if (result?.success) {
-        console.log('✅ Data saved successfully');
         return true;
       } else {
-        console.error('❌ Save failed:', result);
+        console.error('Failed to save data:', result);
         return false;
       }
     } catch (error) {
-      console.error('❌ Failed to save data:', error);
-      console.error('Error details:', error.message, error.stack);
+      console.error('Failed to save data:', error);
       return false;
     }
   }
@@ -139,31 +117,23 @@ class StorageService {
   }
 
   async addStar(paper) {
-    console.log('🌟 addStar called for paper:', paper.id, paper.title?.substring(0, 50));
     const data = await this.loadData();
     const starred = data.starredPapers || [];
-    
-    console.log('Current starred papers:', starred.length);
     
     // Remove if already exists to avoid duplicates
     const filtered = starred.filter(p => p.id !== paper.id);
     filtered.push({ ...paper, starredAt: Date.now() });
     
-    console.log('New starred papers count:', filtered.length);
-    
     data.starredPapers = filtered;
-    const saveResult = await this.saveData(data);
-    console.log('Save result for starred paper:', saveResult);
+    await this.saveData(data);
     
     return filtered;
   }
 
   async removeStar(paperId) {
-    console.log('🗑️ removeStar called for paper:', paperId);
     const data = await this.loadData();
     data.starredPapers = (data.starredPapers || []).filter(p => p.id !== paperId);
-    const saveResult = await this.saveData(data);
-    console.log('Save result for removing star:', saveResult);
+    await this.saveData(data);
     return data.starredPapers;
   }
 
@@ -173,7 +143,6 @@ class StorageService {
   }
 
   async addToOpenedPapers(paper) {
-    console.log('📂 addToOpenedPapers called for paper:', paper.id);
     const data = await this.loadData();
     const opened = data.openPapers || [];
     
@@ -183,8 +152,7 @@ class StorageService {
     
     // Keep only last 50 opened papers
     data.openPapers = filtered.slice(0, 50);
-    const saveResult = await this.saveData(data);
-    console.log('Save result for opened paper:', saveResult);
+    await this.saveData(data);
     return data.openPapers;
   }
 
@@ -212,7 +180,6 @@ class StorageService {
 
   // Search history
   async addSearchHistory(searchData) {
-    console.log('🔍 addSearchHistory called:', searchData);
     const data = await this.loadData();
     const history = data.searchHistory || [];
     
@@ -228,8 +195,7 @@ class StorageService {
     
     // Keep only last 20 searches
     data.searchHistory = filtered.slice(0, 20);
-    const saveResult = await this.saveData(data);
-    console.log('Save result for search history:', saveResult);
+    await this.saveData(data);
     return data.searchHistory;
   }
 
@@ -346,4 +312,12 @@ class StorageService {
 
 // Create singleton instance
 export const storageService = new StorageService();
+
+// Initialize immediately when imported
+if (typeof window !== 'undefined' && window.electronAPI) {
+  storageService.initialize().catch(error => {
+    console.error('Failed to auto-initialize storage service:', error);
+  });
+}
+
 export default storageService;
