@@ -6,6 +6,8 @@ A powerful desktop application for browsing, searching, and managing academic pa
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
 
+![demo](./assets/arxiv-desktop.gif)
+
 ## ✨ Features
 
 ### 🔍 **Smart Search**
