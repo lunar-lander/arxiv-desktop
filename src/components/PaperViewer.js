@@ -296,105 +296,107 @@ function PaperViewer({ paper }) {
             {new Date(paper.published).getFullYear()}
           </div>
         </div>
-        <div className={styles.viewerActions}>
-          <button className={styles.actionButton} onClick={handleStar}>
-            <Star size={16} fill={isStarred ? "#f39c12" : "none"} />
-            {isStarred ? "Starred" : "Star"}
-          </button>
-          <button className={styles.actionButton} onClick={handleDownload}>
-            <Download size={16} />
-            Download
-          </button>
-          <button
-            className={styles.actionButton}
-            onClick={() => setShowCitationModal(true)}
-          >
-            <Quote size={16} />
-            Cite
-          </button>
-          <button
-            className={styles.actionButton}
-            onClick={() => window.electronAPI.openExternal(paper.url)}
-          >
-            <ExternalLink size={16} />
-            View Online
-          </button>
+        
+        <div className={styles.allControls}>
+          {!isLoading && !error && (
+            <div className={styles.pdfControls}>
+              <div className={styles.pageControls}>
+                <button
+                  className={styles.controlButton}
+                  onClick={goToPrevPage}
+                  disabled={pageNumber <= 1}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className={styles.pageInfo}>
+                  <input
+                    className={styles.pageInput}
+                    type="number"
+                    min={1}
+                    max={numPages}
+                    value={pageNumber}
+                    onChange={handlePageChange}
+                  />
+                  <span className={styles.pageTotal}>/ {numPages}</span>
+                </span>
+                <button
+                  className={styles.controlButton}
+                  onClick={goToNextPage}
+                  disabled={pageNumber >= numPages}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+              
+              <div className={styles.zoomControls}>
+                <button
+                  className={styles.controlButton}
+                  onClick={zoomOut}
+                  disabled={getCurrentScale() <= 0.5}
+                >
+                  <ZoomOut size={16} />
+                </button>
+                <span className={styles.zoomLevel}>
+                  {Math.round(getCurrentScale() * 100)}%
+                </span>
+                <button
+                  className={styles.controlButton}
+                  onClick={zoomIn}
+                  disabled={getCurrentScale() >= 3.0}
+                >
+                  <ZoomIn size={16} />
+                </button>
+                <button
+                  className={styles.controlButton}
+                  onClick={fitToWidth}
+                  title="Fit to width"
+                >
+                  Auto
+                </button>
+                <button
+                  className={styles.controlButton}
+                  onClick={resetZoom}
+                  title="Reset zoom"
+                >
+                  100%
+                </button>
+                <button
+                  className={styles.controlButton}
+                  onClick={toggleViewMode}
+                  title="Toggle view mode"
+                >
+                  {viewMode === "continuous" ? "Single" : "Continuous"}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className={styles.viewerActions}>
+            <button className={styles.actionButton} onClick={handleStar}>
+              <Star size={16} fill={isStarred ? "#f39c12" : "none"} />
+              {isStarred ? "Starred" : "Star"}
+            </button>
+            <button className={styles.actionButton} onClick={handleDownload}>
+              <Download size={16} />
+              Download
+            </button>
+            <button
+              className={styles.actionButton}
+              onClick={() => setShowCitationModal(true)}
+            >
+              <Quote size={16} />
+              Cite
+            </button>
+            <button
+              className={styles.actionButton}
+              onClick={() => window.electronAPI.openExternal(paper.url)}
+            >
+              <ExternalLink size={16} />
+              View Online
+            </button>
+          </div>
         </div>
       </div>
-
-      {!isLoading && !error && (
-        <div className={styles.viewerControls}>
-          <div className={styles.pageControls}>
-            <button
-              className={styles.actionButton}
-              onClick={goToPrevPage}
-              disabled={pageNumber <= 1}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <span>
-              Page{" "}
-              <input
-                className={styles.pageInput}
-                type="number"
-                min={1}
-                max={numPages}
-                value={pageNumber}
-                onChange={handlePageChange}
-              />{" "}
-              of {numPages}
-            </span>
-            <button
-              className={styles.actionButton}
-              onClick={goToNextPage}
-              disabled={pageNumber >= numPages}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-          <div className={styles.zoomControls}>
-            <button
-              className={styles.actionButton}
-              onClick={zoomOut}
-              disabled={getCurrentScale() <= 0.5}
-            >
-              <ZoomOut size={16} />
-            </button>
-            <span className={styles.zoomLevel}>
-              {Math.round(getCurrentScale() * 100)}%
-              {scale === "auto" ? " (auto)" : ""}
-            </span>
-            <button
-              className={styles.actionButton}
-              onClick={zoomIn}
-              disabled={getCurrentScale() >= 3.0}
-            >
-              <ZoomIn size={16} />
-            </button>
-            <button
-              className={styles.actionButton}
-              onClick={fitToWidth}
-              title="Fit to width"
-            >
-              Auto
-            </button>
-            <button
-              className={styles.actionButton}
-              onClick={resetZoom}
-              title="Reset zoom"
-            >
-              100%
-            </button>
-            <button
-              className={styles.actionButton}
-              onClick={toggleViewMode}
-              title="Toggle view mode"
-            >
-              {viewMode === "continuous" ? "Single" : "Continuous"}
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className={styles.pdfContainer} ref={containerRef}>
         {isLoading && <div className={styles.loadingState}>Loading PDF...</div>}

@@ -3,6 +3,7 @@ import { Search, FileText, Star, ExternalLink } from "lucide-react";
 import { ArxivService } from "../services/arxivService";
 import { usePapers } from "../context/PaperContext";
 import SearchFilters from "./SearchFilters";
+import MathJaxRenderer from "./MathJaxRenderer";
 import styles from "./HomePage.module.css";
 
 function HomePage({
@@ -321,7 +322,11 @@ function HomePage({
                 className={styles.paperCard}
                 onClick={() => handlePaperClick(paper)}
               >
-                <h3 className={styles.paperTitle}>{paper.title}</h3>
+                <h3 className={styles.paperTitle}>
+                  <MathJaxRenderer inline={true}>
+                    {paper.title}
+                  </MathJaxRenderer>
+                </h3>
                 <p className={styles.paperAuthors}>
                   {paper.authors.slice(0, 3).join(", ")}
                   {paper.authors.length > 3 && " et al."}
@@ -344,7 +349,11 @@ function HomePage({
                     </span>
                   )}
                 </p>
-                <p className={styles.paperAbstract}>{paper.abstract}</p>
+                <div className={styles.paperAbstract}>
+                  <MathJaxRenderer inline={true}>
+                    {paper.abstract}
+                  </MathJaxRenderer>
+                </div>
                 <div className={styles.paperActions}>
                   <button
                     className={styles.actionButton}
