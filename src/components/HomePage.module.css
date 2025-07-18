@@ -28,7 +28,8 @@
 }
 
 .searchContainer {
-  max-width: 600px;
+  max-width: 90%;
+  width: 100%;
   margin: 0 auto 2rem;
   position: relative;
 }
