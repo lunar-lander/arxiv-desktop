@@ -27,6 +27,7 @@ function HomePage({
     sortBy: "relevance",
     maxResults: 20,
   });
+  const [sortBy, setSortBy] = useState("relevance");
   const { state, dispatch } = usePapers();
   const resultsContainerRef = useRef(null);
   const homeContainerRef = useRef(null);
@@ -197,6 +198,29 @@ function HomePage({
     return state.starredPapers.some((p) => p.id === paperId);
   };
 
+  const sortResults = (results, sortType) => {
+    const sorted = [...results];
+    switch (sortType) {
+      case "date-desc":
+        return sorted.sort((a, b) => new Date(b.published) - new Date(a.published));
+      case "date-asc":
+        return sorted.sort((a, b) => new Date(a.published) - new Date(b.published));
+      case "title":
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case "author":
+        return sorted.sort((a, b) => a.authors[0]?.localeCompare(b.authors[0]) || 0);
+      case "relevance":
+      default:
+        return sorted;
+    }
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    const sorted = sortResults(searchResults, newSortBy);
+    onSearchResults(sorted);
+  };
+
   return (
     <div className={styles.homeContainer} ref={homeContainerRef}>
       <div className={styles.header}>
@@ -206,44 +230,46 @@ function HomePage({
         </p>
       </div>
 
-      <div className={styles.searchContainer}>
-        <Search size={20} className={styles.searchIcon} />
-        <input
-          type="text"
-          placeholder="Search for papers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-          className={styles.searchInput}
-        />
-      </div>
+      <div className={styles.searchRow}>
+        <div className={styles.searchContainer}>
+          <Search size={20} className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search for papers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+            className={styles.searchInput}
+          />
+        </div>
+        
+        <div className={styles.sourceSelector}>
+          <button
+            className={`${styles.sourceButton} ${
+              selectedSource === "arxiv" ? styles.active : ""
+            }`}
+            onClick={() => setSelectedSource("arxiv")}
+          >
+            arXiv
+          </button>
+          <button
+            className={`${styles.sourceButton} ${
+              selectedSource === "biorxiv" ? styles.active : ""
+            }`}
+            onClick={() => setSelectedSource("biorxiv")}
+          >
+            bioRxiv
+          </button>
+        </div>
 
-      <div className={styles.sourceSelector}>
         <button
-          className={`${styles.sourceButton} ${
-            selectedSource === "arxiv" ? styles.active : ""
-          }`}
-          onClick={() => setSelectedSource("arxiv")}
+          className={styles.searchButton}
+          onClick={handleSearch}
+          disabled={isLoading || !searchQuery.trim()}
         >
-          arXiv
-        </button>
-        <button
-          className={`${styles.sourceButton} ${
-            selectedSource === "biorxiv" ? styles.active : ""
-          }`}
-          onClick={() => setSelectedSource("biorxiv")}
-        >
-          bioRxiv
+          {isLoading ? "Searching..." : "Search"}
         </button>
       </div>
-
-      <button
-        className={styles.searchButton}
-        onClick={handleSearch}
-        disabled={isLoading || !searchQuery.trim()}
-      >
-        {isLoading ? "Searching..." : "Search"}
-      </button>
 
       <SearchFilters
         filters={searchFilters}
@@ -261,15 +287,32 @@ function HomePage({
             <h3 className={styles.resultsTitle}>
               Search Results ({searchResults.length})
             </h3>
-            <button
-              className={styles.clearButton}
-              onClick={() => {
-                onSearchResults([]);
-                onSearchQuery("");
-              }}
-            >
-              Clear Results
-            </button>
+            <div className={styles.resultsControls}>
+              <div className={styles.sortContainer}>
+                <label className={styles.sortLabel}>Sort by:</label>
+                <select
+                  className={styles.sortSelect}
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="date-desc">Date (Newest)</option>
+                  <option value="date-asc">Date (Oldest)</option>
+                  <option value="title">Title</option>
+                  <option value="author">Author</option>
+                </select>
+              </div>
+              <button
+                className={styles.clearButton}
+                onClick={() => {
+                  onSearchResults([]);
+                  onSearchQuery("");
+                  setSortBy("relevance");
+                }}
+              >
+                Clear Results
+              </button>
+            </div>
           </div>
           <div className={styles.resultsContainer} ref={resultsContainerRef}>
             {searchResults.map((paper, index) => (
