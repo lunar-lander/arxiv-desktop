@@ -19,6 +19,31 @@ export function ThemeProvider({ children }) {
     { id: "cyberpunk", name: "Cyberpunk", icon: "🌆" },
     { id: "brogrammer", name: "Brogrammer", icon: "💻" },
     { id: "bearded", name: "Bearded", icon: "🧔" },
+    { id: "neon", name: "Neon", icon: "🔥" },
+    { id: "forest", name: "Forest", icon: "🌲" },
+    { id: "ocean", name: "Ocean", icon: "🌊" },
+    { id: "sunset", name: "Sunset", icon: "🌅" },
+    { id: "midnight", name: "Midnight", icon: "🌃" },
+    { id: "matrix", name: "Matrix", icon: "🔢" },
+    { id: "vampire", name: "Vampire", icon: "🧛" },
+    { id: "synthwave", name: "Synthwave", icon: "🎵" },
+    { id: "terminal", name: "Terminal", icon: "⌨️" },
+    { id: "arctic", name: "Arctic", icon: "🧊" },
+    { id: "autumn", name: "Autumn", icon: "🍂" },
+    { id: "cherry", name: "Cherry", icon: "🌸" },
+    { id: "galaxy", name: "Galaxy", icon: "🌌" },
+    { id: "vintage", name: "Vintage", icon: "📻" },
+    { id: "monochrome", name: "Monochrome", icon: "⚫" },
+    { id: "pastel", name: "Pastel", icon: "🎨" },
+    { id: "coffee", name: "Coffee", icon: "☕" },
+    { id: "lavender", name: "Lavender", icon: "💜" },
+    { id: "emerald", name: "Emerald", icon: "💚" },
+    { id: "ruby", name: "Ruby", icon: "💎" },
+    { id: "copper", name: "Copper", icon: "🟫" },
+    { id: "slate", name: "Slate", icon: "🏔️" },
+    { id: "coral", name: "Coral", icon: "🪸" },
+    { id: "ninja", name: "Ninja", icon: "🥷" },
+    { id: "royal", name: "Royal", icon: "👑" },
   ];
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -57,7 +82,6 @@ export function ThemeProvider({ children }) {
 
               // Clean any BOM or whitespace
               dataStr = dataStr.trim();
-              console.log("Theme file content:", dataStr);
 
               const themeData = JSON.parse(dataStr);
               setCurrentTheme(themeData.theme || "light");
@@ -65,8 +89,6 @@ export function ThemeProvider({ children }) {
               return;
             } catch (parseError) {
               console.error("Failed to parse theme file:", parseError);
-              console.error("Raw data:", result.data);
-              console.error("Data type:", typeof result.data);
               // Continue with fallback logic
             }
           }

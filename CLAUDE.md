@@ -14,7 +14,7 @@ A desktop application for browsing, searching, and managing academic papers from
   - Automatic local caching of downloaded papers
 - **Citation Export**: Export citations in multiple formats (APA, MLA, Chicago, BibTeX, RIS, EndNote)
 - **User Authentication**: Login to arXiv and bioRxiv with local credential storage
-- **Multiple Themes**: Choose from 5 different themes (Light, Dark, Cyberpunk, Brogrammer, Bearded) with system preference detection
+- **Multiple Themes**: Choose from 30 different themes with system preference detection and visual theme cycling
 - **Sidebar Navigation**: Easy access to open papers, bookmarks, and starred papers
 - **Offline Reading**: Papers are cached locally for offline access
 
@@ -128,7 +128,7 @@ Papers and app data are stored locally:
 - [x] Sidebar with paper management (open, bookmarks, starred)
 - [x] Local caching system for offline reading
 - [x] Citation export in multiple formats (APA, MLA, Chicago, BibTeX, RIS, EndNote)
-- [x] Multiple theme support (Light, Dark, Cyberpunk, Brogrammer, Bearded) with system preference detection
+- [x] Multiple theme support (30 themes including Light, Dark, Cyberpunk, Brogrammer, Bearded, Neon, Forest, Ocean, Sunset, Midnight, Matrix, Vampire, Synthwave, Terminal, Arctic, Autumn, Cherry, Galaxy, Vintage, Monochrome, Pastel, Coffee, Lavender, Emerald, Ruby, Copper, Slate, Coral, Ninja, Royal) with system preference detection
 - [x] User authentication framework (local storage)
 - [x] Persistent state management with automatic saving
 
@@ -154,6 +154,7 @@ Papers and app data are stored locally:
 - Local paper caching for offline access
 
 ### Recent Updates
+- **2025-01-18**: Expanded theme collection to 30 themes including Neon, Forest, Ocean, Sunset, Midnight, Matrix, Vampire, Synthwave, Terminal, Arctic, Autumn, Cherry, Galaxy, Vintage, Monochrome, Pastel, Coffee, Lavender, Emerald, Ruby, Copper, Slate, Coral, Ninja, and Royal themes
 - **2025-01-07**: Added publish/update dates to search results and fixed text color issues in dark themes
 - **2025-01-07**: Added text selection and copy functionality to PDF viewer with floating copy button
 - **2025-01-07**: Added multiple theme support (Cyberpunk, Brogrammer, Bearded) with enhanced theme toggle
