@@ -10,7 +10,7 @@ function AIChat({ isVisible, onClose }) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [contextMode, setContextMode] = useState("none");
+  const [selectedPapers, setSelectedPapers] = useState(new Set());
   const [serviceType, setServiceType] = useState("openai");
   const [endpoint, setEndpoint] = useState("https://api.openai.com/v1/chat/completions");
   const [model, setModel] = useState("gpt-3.5-turbo");
@@ -81,16 +81,50 @@ function AIChat({ isVisible, onClose }) {
   };
 
   const getContextPapers = () => {
-    switch (contextMode) {
-      case "current":
-        return state.currentPaper ? [state.currentPaper] : [];
-      case "open":
-        return state.openPapers || [];
-      case "starred":
-        return state.starredPapers || [];
-      default:
-        return [];
-    }
+    const allPapers = [
+      ...(state.openPapers || []),
+      ...(state.starredPapers || [])
+    ];
+    
+    // Remove duplicates based on paper ID
+    const uniquePapers = allPapers.filter((paper, index, arr) => 
+      arr.findIndex(p => p.id === paper.id) === index
+    );
+    
+    return uniquePapers.filter(paper => selectedPapers.has(paper.id));
+  };
+
+  const getAllAvailablePapers = () => {
+    const allPapers = [
+      ...(state.openPapers || []),
+      ...(state.starredPapers || [])
+    ];
+    
+    // Remove duplicates based on paper ID
+    return allPapers.filter((paper, index, arr) => 
+      arr.findIndex(p => p.id === paper.id) === index
+    );
+  };
+
+  const togglePaperSelection = (paperId) => {
+    setSelectedPapers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(paperId)) {
+        newSet.delete(paperId);
+      } else {
+        newSet.add(paperId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllPapers = () => {
+    const allPapers = getAllAvailablePapers();
+    setSelectedPapers(new Set(allPapers.map(p => p.id)));
+  };
+
+  const deselectAllPapers = () => {
+    setSelectedPapers(new Set());
   };
 
   const handleSendMessage = async () => {
@@ -215,19 +249,6 @@ function AIChat({ isVisible, onClose }) {
             />
           </div>
           
-          <div className={styles.settingGroup}>
-            <label>Context Mode:</label>
-            <select
-              value={contextMode}
-              onChange={(e) => setContextMode(e.target.value)}
-              className={styles.contextSelect}
-            >
-              <option value="none">No Context</option>
-              <option value="current">Current Paper</option>
-              <option value="open">All Open Papers</option>
-              <option value="starred">Starred Papers</option>
-            </select>
-          </div>
 
           <button onClick={handleSaveSettings} className={styles.saveButton}>
             Save Settings
@@ -241,12 +262,14 @@ function AIChat({ isVisible, onClose }) {
             <Bot className={styles.welcomeIcon} />
             <p>Welcome! I can help you with:</p>
             <ul>
-              <li>Understanding research papers</li>
-              <li>Suggesting related work</li>
-              <li>Explaining concepts</li>
+              <li>Analyzing paper abstracts and metadata</li>
+              <li>Suggesting related research and papers</li>
+              <li>Explaining concepts and methodologies</li>
               <li>Finding research directions</li>
+              <li>Comparing approaches between papers</li>
             </ul>
-            <p>Configure your API key in settings to get started.</p>
+            <p><strong>Note:</strong> I work with paper abstracts and metadata. For detailed content analysis, copy and paste specific text from the PDF viewer.</p>
+            <p>Select papers above and configure your API key in settings to get started.</p>
           </div>
         )}
 
@@ -288,11 +311,58 @@ function AIChat({ isVisible, onClose }) {
       </div>
 
       <div className={styles.inputContainer}>
-        <div className={styles.contextIndicator}>
-          {contextMode !== "none" && (
-            <span className={styles.contextBadge}>
-              Context: {contextMode} ({getContextPapers().length} papers)
+        <div className={styles.paperSelection}>
+          <div className={styles.paperSelectionHeader}>
+            <span className={styles.paperSelectionTitle}>
+              Context Papers ({getContextPapers().length} selected)
             </span>
+            <div className={styles.paperSelectionControls}>
+              <button 
+                onClick={selectAllPapers} 
+                className={styles.selectAllButton}
+                disabled={getAllAvailablePapers().length === 0}
+              >
+                All
+              </button>
+              <button 
+                onClick={deselectAllPapers} 
+                className={styles.selectAllButton}
+                disabled={selectedPapers.size === 0}
+              >
+                None
+              </button>
+            </div>
+          </div>
+          
+          {getAllAvailablePapers().length > 0 && (
+            <div className={styles.paperTags}>
+              {getAllAvailablePapers().map((paper) => (
+                <button
+                  key={paper.id}
+                  onClick={() => togglePaperSelection(paper.id)}
+                  className={`${styles.paperTag} ${
+                    selectedPapers.has(paper.id) ? styles.paperTagSelected : ""
+                  }`}
+                  title={paper.title}
+                >
+                  <span className={styles.paperTagText}>
+                    {paper.title.length > 40 
+                      ? `${paper.title.substring(0, 40)}...` 
+                      : paper.title
+                    }
+                  </span>
+                  <span className={styles.paperTagSource}>
+                    {paper.source || 'arXiv'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {getAllAvailablePapers().length === 0 && (
+            <div className={styles.noPapersMessage}>
+              No papers available. Open or star some papers to use them as context.
+            </div>
           )}
         </div>
         <div className={styles.inputRow}>

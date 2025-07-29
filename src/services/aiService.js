@@ -124,7 +124,19 @@ export class AIService {
         context += "\n---\n\n";
       });
       
-      context += `Instructions: Use the above papers as context for your response. You can reference specific papers by their titles or by "Paper X" (where X is the number). If the user asks about content not covered in the abstracts, mention that you would need the full paper text for more detailed analysis.`;
+      context += `Instructions: Use the above papers as context for your response. You can reference specific papers by their titles or by "Paper X" (where X is the number). 
+
+IMPORTANT: You currently only have access to the paper metadata and abstracts. If the user asks about:
+- Specific methodological details not in the abstract
+- Experimental results beyond what's summarized
+- Detailed mathematical derivations
+- Specific figures, tables, or equations
+- Full paper content analysis
+
+Please let them know that you only have access to the abstract and metadata, and suggest they can:
+1. Copy and paste specific text from the PDF viewer into the chat for detailed discussion
+2. Ask questions about the general concepts, implications, or relationships between papers
+3. Request paper recommendations or research directions based on the abstracts`;
     }
     
     return await this.sendMessage(message, context);

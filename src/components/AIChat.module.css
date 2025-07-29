@@ -176,6 +176,7 @@
 .message.ai .messageContent {
   background-color: var(--surface);
   border: 1px solid var(--border);
+  color: var(--text);
   margin-right: 40px;
 }
 
@@ -216,6 +217,7 @@
   font-size: 14px;
   line-height: 1.4;
   white-space: pre-wrap;
+  color: inherit;
 }
 
 .messageTime {
@@ -230,19 +232,113 @@
   background-color: var(--surface);
 }
 
-.contextIndicator {
+.paperSelection {
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: var(--secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.paperSelectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
 }
 
-.contextBadge {
-  display: inline-block;
+.paperSelectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+.paperSelectionControls {
+  display: flex;
+  gap: 4px;
+}
+
+.selectAllButton {
   padding: 4px 8px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selectAllButton:hover:not(:disabled) {
   background-color: var(--primary);
   color: white;
+  border-color: var(--primary);
+}
+
+.selectAllButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paperTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.paperTag {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 8px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 200px;
+  text-align: left;
+}
+
+.paperTag:hover {
+  border-color: var(--primary);
+}
+
+.paperTagSelected {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.paperTagSelected .paperTagText,
+.paperTagSelected .paperTagSource {
+  color: white;
+}
+
+.paperTagText {
   font-size: 11px;
-  border-radius: 12px;
-  text-transform: uppercase;
   font-weight: 500;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.paperTagSource {
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.noPapersMessage {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 12px;
+  font-style: italic;
 }
 
 .inputRow {
