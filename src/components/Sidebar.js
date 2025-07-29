@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { Home, FileText, Star, User, X, LogIn, LogOut, Bot } from "lucide-react";
+import { Home, FileText, Star, User, X, LogIn, LogOut, Bot, PanelLeftClose } from "lucide-react";
 import { usePapers } from "../context/PaperContext";
 import { AuthService } from "../services/authService";
 import LoginModal from "./LoginModal";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleAIChat, isAIChatVisible }) {
+function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleAIChat, isAIChatVisible, onToggleSidebar }) {
   const { state, dispatch } = usePapers();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -44,7 +44,16 @@ function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleAIChat, isAIC
     <div className={styles.sidebarContainer}>
       <div className={styles.sidebarHeader}>
         <h2 className={styles.appTitle}>ArXiv Desktop</h2>
-        <ThemeToggle />
+        <div className={styles.headerControls}>
+          <ThemeToggle />
+          <button
+            className={styles.hideSidebarButton}
+            onClick={onToggleSidebar}
+            title="Hide sidebar"
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        </div>
       </div>
 
       <div className={styles.navigation}>

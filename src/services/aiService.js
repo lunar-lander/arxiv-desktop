@@ -86,6 +86,104 @@ export class AIService {
       throw new Error("Failed to get AI response. Please check your settings and try again.");
     }
   }
+
+  static async sendMessageStream(message, context = null, onChunk = null) {
+    if (!this.apiKey && this.serviceType !== "ollama") {
+      throw new Error("AI API key not configured. Please set your API key in settings.");
+    }
+    
+    try {
+      let systemPrompt = "You are an AI assistant helping with academic research. You can help users understand papers, suggest research directions, and answer questions about academic content.";
+      
+      if (context) {
+        systemPrompt += `\n\nContext: ${context}`;
+      }
+      
+      // OpenAI-compatible format with streaming
+      const requestBody = {
+        model: this.model,
+        max_tokens: 1000,
+        stream: true,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ]
+      };
+      
+      // Headers for different services
+      const headers = {
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream"
+      };
+      
+      if (this.serviceType === "openai") {
+        headers["Authorization"] = `Bearer ${this.apiKey}`;
+      } else if (this.serviceType === "anthropic") {
+        // Anthropic doesn't support streaming in the same way, fall back to regular
+        return await this.sendMessage(message, context);
+      } else if (this.apiKey) {
+        headers["Authorization"] = `Bearer ${this.apiKey}`;
+      }
+      
+      const response = await fetch(this.apiEndpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+              if (content) {
+                fullResponse += content;
+                if (onChunk) {
+                  onChunk(content, fullResponse);
+                }
+              }
+            } catch (e) {
+              // Skip invalid JSON lines
+            }
+          }
+        }
+      }
+
+      return fullResponse;
+    } catch (error) {
+      console.error("AI streaming API error:", error);
+      if (error.message.includes('401')) {
+        throw new Error("Invalid API key. Please check your credentials.");
+      } else if (error.message.includes('429')) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error("Failed to get AI response. Please check your settings and try again.");
+    }
+  }
   
   static async suggestPapers(query, preferences = {}) {
     const message = `Based on the query "${query}", suggest some relevant academic papers or research topics to explore. Consider the following preferences: ${JSON.stringify(preferences)}. Please provide specific paper titles, authors, or research directions that would be relevant.`;
@@ -93,7 +191,7 @@ export class AIService {
     return await this.sendMessage(message);
   }
   
-  static async chatWithPaperContext(message, papers = []) {
+  static async chatWithPaperContext(message, papers = [], onChunk = null) {
     let context = "";
     
     if (papers.length > 0) {
@@ -139,7 +237,11 @@ Please let them know that you only have access to the abstract and metadata, and
 3. Request paper recommendations or research directions based on the abstracts`;
     }
     
-    return await this.sendMessage(message, context);
+    if (onChunk) {
+      return await this.sendMessageStream(message, context, onChunk);
+    } else {
+      return await this.sendMessage(message, context);
+    }
   }
   
   static async extractKeywords(papers = []) {

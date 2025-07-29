@@ -13,6 +13,7 @@ function AppContent() {
   const [searchResults, setSearchResults] = useState([]);
   const [lastSearchQuery, setLastSearchQuery] = useState("");
   const [isAIChatVisible, setIsAIChatVisible] = useState(false);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const { currentTheme } = useTheme();
   const { dispatch } = usePapers();
 
@@ -49,14 +50,26 @@ function AppContent() {
 
   return (
     <div className={`${styles.appContainer} ${styles[currentTheme]}`}>
-      <Sidebar
-        onNavigate={setCurrentView}
-        onPaperSelect={handlePaperSelect}
-        currentView={currentView}
-        onToggleAIChat={() => setIsAIChatVisible(!isAIChatVisible)}
-        isAIChatVisible={isAIChatVisible}
-      />
-      <div className={styles.mainContent}>
+      {isSidebarVisible && (
+        <Sidebar
+          onNavigate={setCurrentView}
+          onPaperSelect={handlePaperSelect}
+          currentView={currentView}
+          onToggleAIChat={() => setIsAIChatVisible(!isAIChatVisible)}
+          isAIChatVisible={isAIChatVisible}
+          onToggleSidebar={() => setIsSidebarVisible(false)}
+        />
+      )}
+      <div className={`${styles.mainContent} ${!isSidebarVisible ? styles.fullWidth : ''}`}>
+        {!isSidebarVisible && (
+          <button 
+            className={styles.showSidebarButton}
+            onClick={() => setIsSidebarVisible(true)}
+            title="Show sidebar"
+          >
+            ☰
+          </button>
+        )}
         {currentView === "home" && (
           <HomePage
             onPaperOpen={handlePaperSelect}

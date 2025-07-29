@@ -62,7 +62,7 @@ function AISearchHelper({ onSuggestion }) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <Bot size={16} />
-        <span>AI Search Help</span>
+        <span>Search with AI</span>
         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 

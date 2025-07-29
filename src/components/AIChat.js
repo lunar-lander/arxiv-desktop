@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Settings, Loader2 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { AIService } from "../services/aiService";
 import { usePapers } from "../context/PaperContext";
 import styles from "./AIChat.module.css";
@@ -14,7 +16,10 @@ function AIChat({ isVisible, onClose }) {
   const [serviceType, setServiceType] = useState("openai");
   const [endpoint, setEndpoint] = useState("https://api.openai.com/v1/chat/completions");
   const [model, setModel] = useState("gpt-3.5-turbo");
+  const [sidebarWidth, setSidebarWidth] = useState(400);
+  const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef(null);
+  const resizeRef = useRef(null);
   const { state } = usePapers();
 
   const scrollToBottom = () => {
@@ -24,6 +29,44 @@ function AIChat({ isVisible, onClose }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Resize functionality
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const newWidth = window.innerWidth - e.clientX;
+      const minWidth = 300;
+      const maxWidth = window.innerWidth * 0.8;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setSidebarWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
+
+  const handleResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
 
   useEffect(() => {
     // Load settings from localStorage
@@ -144,27 +187,52 @@ function AIChat({ isVisible, onClose }) {
 
     setMessages(prev => [...prev, newUserMessage]);
 
+    // Add initial AI message that will be updated with streaming content
+    const aiMessageId = Date.now() + 1;
+    const aiMessage = {
+      id: aiMessageId,
+      type: "ai",
+      content: "",
+      timestamp: new Date(),
+      isStreaming: true
+    };
+
+    setMessages(prev => [...prev, aiMessage]);
+
     try {
       const contextPapers = getContextPapers();
-      const response = await AIService.chatWithPaperContext(userMessage, contextPapers);
+      
+      await AIService.chatWithPaperContext(
+        userMessage, 
+        contextPapers,
+        (chunk, fullContent) => {
+          // Update the AI message with streaming content
+          setMessages(prev => prev.map(msg => 
+            msg.id === aiMessageId 
+              ? { ...msg, content: fullContent }
+              : msg
+          ));
+        }
+      );
 
-      // Add AI response to chat
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: "ai",
-        content: response,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
+      // Mark streaming as complete
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? { ...msg, isStreaming: false }
+          : msg
+      ));
     } catch (error) {
-      const errorMessage = {
-        id: Date.now() + 1,
-        type: "error",
-        content: error.message,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      // Replace the streaming message with error
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessageId 
+          ? {
+              ...msg,
+              type: "error",
+              content: error.message,
+              isStreaming: false
+            }
+          : msg
+      ));
     }
 
     setIsLoading(false);
@@ -180,7 +248,15 @@ function AIChat({ isVisible, onClose }) {
   if (!isVisible) return null;
 
   return (
-    <div className={styles.aiChatContainer}>
+    <div 
+      className={styles.aiChatContainer}
+      style={{ width: sidebarWidth }}
+    >
+      <div 
+        className={styles.resizeHandle}
+        onMouseDown={handleResizeStart}
+        ref={resizeRef}
+      />
       <div className={styles.aiChatHeader}>
         <div className={styles.headerLeft}>
           <Bot className={styles.botIcon} />
@@ -288,7 +364,21 @@ function AIChat({ isVisible, onClose }) {
               )}
             </div>
             <div className={styles.messageContent}>
-              <div className={styles.messageText}>{message.content}</div>
+              <div className={styles.messageText}>
+                {message.type === "ai" ? (
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
+                    className={styles.markdown}
+                  >
+                    {message.content || (message.isStreaming ? "..." : "")}
+                  </ReactMarkdown>
+                ) : (
+                  message.content
+                )}
+                {message.isStreaming && (
+                  <span className={styles.streamingIndicator}>▊</span>
+                )}
+              </div>
               <div className={styles.messageTime}>
                 {message.timestamp.toLocaleTimeString()}
               </div>
