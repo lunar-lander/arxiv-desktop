@@ -14,6 +14,7 @@ import remarkGfm from "remark-gfm";
 import { useAIChat } from "../hooks/useAIChat";
 import { useUISettings } from "../hooks/useUISettings";
 import { useChatHistory } from "../hooks/useChatHistory";
+import { usePDFContent } from "../hooks/usePDFContent";
 import { usePapers } from "../context/PaperContext";
 import ChatHistory from "./ChatHistory";
 import styles from "./AIChat.module.css";
@@ -38,6 +39,13 @@ function AIChat({ isVisible, onClose }) {
     saveChatSession,
   } = useChatHistory();
   const {
+    extractPDFContent,
+    getPDFContent,
+    getExtractionStatus,
+    isExtracting: isPDFExtracting,
+    extractedContent,
+  } = usePDFContent();
+  const {
     apiKey,
     setApiKey,
     serviceType,
@@ -59,13 +67,14 @@ function AIChat({ isVisible, onClose }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Load temporary chat history on mount
-  useEffect(() => {
-    const tempHistory = loadTemporaryHistory();
-    if (tempHistory.length > 0) {
-      setMessages(tempHistory);
-    }
-  }, [loadTemporaryHistory]);
+  // Start with blank chat on app startup
+  // Note: Temporary history loading disabled to ensure fresh start
+  // useEffect(() => {
+  //   const tempHistory = loadTemporaryHistory();
+  //   if (tempHistory.length > 0) {
+  //     setMessages(tempHistory);
+  //   }
+  // }, [loadTemporaryHistory]);
 
   // Auto-save messages to temporary storage
   useEffect(() => {
@@ -135,6 +144,32 @@ function AIChat({ isVisible, onClose }) {
     return uniquePapers.filter((paper) => selectedPapers.has(paper.id));
   };
 
+  // Extract PDF content for selected papers when they change
+  useEffect(() => {
+    const contextPapers = getContextPapers();
+    if (contextPapers.length > 0) {
+      contextPapers.forEach(async (paper) => {
+        const paperId = paper.id || paper.arxivId;
+        const status = getExtractionStatus(paperId);
+
+        // Only extract if not already extracted or in progress
+        if (status === "not_started" && paper.pdfPath) {
+          try {
+            await extractPDFContent(paper, { maxPages: 30 }); // Limit for LLM context
+          } catch (error) {
+            console.error(`Failed to extract PDF for ${paper.title}:`, error);
+          }
+        }
+      });
+    }
+  }, [
+    selectedPapers,
+    state.openPapers,
+    state.starredPapers,
+    extractPDFContent,
+    getExtractionStatus,
+  ]);
+
   const getAllAvailablePapers = () => {
     const allPapers = [
       ...(state.openPapers || []),
@@ -198,11 +233,23 @@ function AIChat({ isVisible, onClose }) {
 
     try {
       const contextPapers = getContextPapers();
+
+      // Prepare PDF content map for context
+      const pdfContentMap = new Map();
+      contextPapers.forEach((paper) => {
+        const paperId = paper.id || paper.arxivId;
+        const pdfContent = getPDFContent(paperId);
+        if (pdfContent) {
+          pdfContentMap.set(paperId, pdfContent);
+        }
+      });
+
       let streamedContent = "";
 
       await chatWithPaperContextStream(
         userMessage,
         contextPapers,
+        pdfContentMap,
         (chunk, fullContent) => {
           streamedContent = fullContent;
           setMessages((prev) =>
@@ -260,7 +307,12 @@ function AIChat({ isVisible, onClose }) {
           <button
             className={styles.newChatButton}
             onClick={() => {
-              if (messages.length > 0 && window.confirm("Start a new chat? Current conversation will be saved automatically.")) {
+              if (
+                messages.length > 0 &&
+                window.confirm(
+                  "Start a new chat? Current conversation will be saved automatically."
+                )
+              ) {
                 startNewChat();
                 setMessages([]);
               } else if (messages.length === 0) {
@@ -363,13 +415,14 @@ function AIChat({ isVisible, onClose }) {
               <li>Comparing approaches between papers</li>
             </ul>
             <p>
-              <strong>Note:</strong> I work with paper abstracts and metadata.
-              For detailed content analysis, copy and paste specific text from
-              the PDF viewer.
+              <strong>Enhanced with PDF Content:</strong> I can analyze full PDF
+              content automatically when you select papers. Look for 📄✓
+              indicators showing successful PDF text extraction for deep
+              analysis of methodologies, results, and technical details.
             </p>
             <p>
               Select papers above and configure your API key in settings to get
-              started. <strong>All conversations are automatically saved</strong> after a few messages.
+              started.
             </p>
           </div>
         )}
@@ -468,6 +521,14 @@ function AIChat({ isVisible, onClose }) {
                   </span>
                   <span className={styles.paperTagSource}>
                     {paper.source || "arXiv"}
+                    {(() => {
+                      const paperId = paper.id || paper.arxivId;
+                      const status = getExtractionStatus(paperId);
+                      if (status === "extracting") return " 📄...";
+                      if (status === "completed") return " 📄✓";
+                      if (status === "error") return " 📄✗";
+                      return "";
+                    })()}
                   </span>
                 </button>
               ))}

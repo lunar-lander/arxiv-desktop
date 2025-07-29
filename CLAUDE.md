@@ -19,13 +19,15 @@ A desktop application for browsing, searching, and managing academic papers from
 - **Offline Reading**: Papers are cached locally for offline access
 - **AI Research Assistant**: Intelligent chat assistant for paper analysis and research guidance
   - Contextual chat with current, open, or starred papers
+  - **Full PDF content extraction** - automatically extracts and analyzes complete paper text
   - Paper suggestion and search assistance
   - Multi-service AI support (OpenAI, Anthropic, Ollama, custom endpoints)
-  - Enhanced paper context with metadata and abstracts
+  - Enhanced paper context with metadata, abstracts, and full PDF content
   - **Automatic chat session saving** - conversations are automatically saved after a few messages
   - **Chat history management** - browse, search, delete, and export previous conversations
   - **Persistent UI settings** - sidebar sizes and visibility states remembered across restarts
   - **Multiple export formats** - save chats as JSON, Text, or Markdown files
+  - **Fresh chat startup** - always starts with blank conversation for clean experience
 
 ## Project Structure
 
@@ -61,13 +63,15 @@ arxiv-desktop/
 │   ├── hooks/              # Custom React hooks
 │   │   ├── useAIChat.js    # AI chat functionality and settings management
 │   │   ├── useUISettings.js # Persistent UI settings management
-│   │   └── useChatHistory.js # Chat session management and history
+│   │   ├── useChatHistory.js # Chat session management and history
+│   │   └── usePDFContent.js # PDF text extraction and content management
 │   └── services/           # API and storage services
 │       ├── arxivService.js # arXiv and bioRxiv API integration
 │       ├── authService.js  # Authentication service
 │       ├── aiService.js    # AI chat service with multi-provider support
 │       ├── storageService.js # Local storage management
-│       └── settingsService.js # Persistent settings and chat history storage
+│       ├── settingsService.js # Persistent settings and chat history storage
+│       └── pdfExtractionService.js # PDF text extraction and processing
 ├── public/                 # Static assets
 ├── build/                  # Production build output
 └── package.json           # Dependencies and scripts
@@ -191,10 +195,20 @@ The app includes an intelligent AI assistant to help with research tasks and pap
 - **Bulk Operations**: Select multiple sessions for batch export
 - **Storage Management**: Monitor storage usage and manage old sessions
 
+### PDF Content Extraction
+- **Automatic Extraction**: Full PDF text is extracted when papers are selected for AI context
+- **Smart Caching**: Extracted content is cached to avoid re-processing
+- **Visual Indicators**: 📄✓ (extracted), 📄... (extracting), 📄✗ (error) status icons
+- **Content Limits**: Extracts up to 30 pages per paper to optimize LLM performance
+- **Metadata Inclusion**: PDF title, author, creation date, and page count included
+- **Error Handling**: Graceful fallback to abstract-only analysis if extraction fails
+- **Performance Optimized**: Background extraction with progress indicators
+
 ### Persistent UI Settings
 - **Chat Sidebar Width**: Resizable sidebar that remembers its size across restarts
-- **Left Sidebar Visibility**: Hidden/shown state persists between sessions
+- **Left Sidebar Visibility**: Hidden/shown state persists between sessions  
 - **Chat Window State**: Whether the AI chat is open or closed is remembered
+- **Fresh Startup**: Always starts with blank chat for clean experience
 - **Automatic Restore**: All UI customizations are restored when the app starts
 
 ## Local Storage
@@ -235,6 +249,10 @@ Papers and app data are stored locally:
 - [x] Persistent UI settings (sidebar sizes, visibility states)
 - [x] Streaming chat responses with real-time text appearance
 - [x] New chat functionality with automatic session creation
+- [x] Full PDF content extraction for comprehensive paper analysis
+- [x] Automatic PDF text processing with caching and error handling
+- [x] Enhanced AI context with complete paper content (not just abstracts)
+- [x] Fresh chat startup (blank state on app launch)
 
 ### 🚧 TODO
 - [ ] Add paper annotations and highlighting
@@ -262,6 +280,10 @@ Papers and app data are stored locally:
 - Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-30**: Implemented full PDF content extraction for comprehensive paper analysis
+- **2025-07-30**: Added automatic PDF text processing with smart caching and visual status indicators
+- **2025-07-30**: Enhanced AI context with complete paper content (beyond just abstracts)
+- **2025-07-30**: Changed to fresh chat startup - app now starts with blank conversation
 - **2025-07-30**: Added automatic chat session saving - conversations are saved without user intervention
 - **2025-07-30**: Implemented "New Chat" functionality with automatic session management
 - **2025-07-30**: Added comprehensive chat history management with search, export, and organization

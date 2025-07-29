@@ -261,11 +261,12 @@ Please let them know that you only have access to the abstract and metadata, and
     return await this.sendMessage(message, context);
   }
 
-  static async chatWithPaperContextStream(message, papers = [], onChunk = null) {
+  static async chatWithPaperContextStream(message, papers = [], pdfContentMap = null, onChunk = null) {
     let context = "";
     
     if (papers.length > 0) {
       context = `Available papers for reference (${papers.length} papers):\n\n`;
+      
       papers.forEach((paper, index) => {
         context += `Paper ${index + 1}:\n`;
         context += `Title: ${paper.title}\n`;
@@ -289,22 +290,43 @@ Please let them know that you only have access to the abstract and metadata, and
           context += `ArXiv ID: ${paper.arxivId}\n`;
         }
         
-        context += "\n---\n\n";
+        // Add PDF content if available
+        const paperId = paper.id || paper.arxivId;
+        const pdfContent = pdfContentMap?.get?.(paperId) || pdfContentMap?.[paperId];
+        
+        if (pdfContent && !pdfContent.error) {
+          context += `\n--- FULL PDF CONTENT ---\n`;
+          context += `Word Count: ${pdfContent.wordCount || 'Unknown'}\n`;
+          context += `Content: ${pdfContent.content}\n`;
+        } else if (pdfContent?.error) {
+          context += `\n--- PDF CONTENT UNAVAILABLE ---\n`;
+          context += `Error: ${pdfContent.error}\n`;
+        }
+        
+        context += "\n" + "=".repeat(80) + "\n\n";
       });
       
-      context += `Instructions: Use the above papers as context for your response. You can reference specific papers by their titles or by "Paper X" (where X is the number). 
+      const hasPDFContent = papers.some(paper => {
+        const paperId = paper.id || paper.arxivId;
+        const pdfContent = pdfContentMap?.get?.(paperId) || pdfContentMap?.[paperId];
+        return pdfContent && !pdfContent.error;
+      });
+      
+      if (hasPDFContent) {
+        context += `Instructions: You have access to both paper metadata/abstracts AND full PDF content for the papers above. You can:
+1. Answer detailed questions about methodologies, experiments, and results
+2. Reference specific sections, figures, or equations mentioned in the text
+3. Analyze the complete paper content including technical details
+4. Compare detailed approaches between papers
+5. Provide comprehensive analysis based on the full paper content
 
-IMPORTANT: You currently only have access to the paper metadata and abstracts. If the user asks about:
-- Specific methodological details not in the abstract
-- Experimental results beyond what's summarized
-- Detailed mathematical derivations
-- Specific figures, tables, or equations
-- Full paper content analysis
-
-Please let them know that you only have access to the abstract and metadata, and suggest they can:
-1. Copy and paste specific text from the PDF viewer into the chat for detailed discussion
-2. Ask questions about the general concepts, implications, or relationships between papers
-3. Request paper recommendations or search directions based on the abstracts`;
+When referencing content, please cite it as "Paper X" where X is the paper number.`;
+      } else {
+        context += `Instructions: You currently only have access to paper metadata and abstracts (PDF content extraction not available). For detailed analysis:
+1. Copy and paste specific text from the PDF viewer into the chat
+2. Ask questions about general concepts and implications
+3. Request paper recommendations based on the abstracts available`;
+      }
     }
     
     return await this.sendMessageStream(message, context, onChunk);

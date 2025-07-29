@@ -95,6 +95,7 @@
 .markdown {
   font-size: 14px;
   color: inherit;
+  line-height: 1.5;
 }
 
 .markdown h1,

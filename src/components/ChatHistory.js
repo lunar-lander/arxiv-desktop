@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { 
-  History, 
-  Save, 
-  Trash2, 
-  Download, 
-  MessageSquare, 
+import {
+  History,
+  Save,
+  Trash2,
+  Download,
+  MessageSquare,
   Calendar,
   Search,
   X,
   FileText,
   FileJson,
-  Hash
+  Hash,
 } from "lucide-react";
 import { useChatHistory } from "../hooks/useChatHistory";
 import styles from "./ChatHistory.module.css";
@@ -23,7 +23,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
     exportAndDownloadSession,
     exportAndDownloadAllSessions,
     isLoading,
-    getStorageUsage
+    getStorageUsage,
   } = useChatHistory();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,11 +31,12 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
   const [sessionName, setSessionName] = useState("");
   const [selectedSessions, setSelectedSessions] = useState(new Set());
 
-  const filteredSessions = chatSessions.filter(session =>
-    session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.messages.some(msg => 
-      msg.content.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredSessions = chatSessions.filter(
+    (session) =>
+      session.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      session.messages.some((msg) =>
+        msg.content.toLowerCase().includes(searchTerm.toLowerCase())
+      )
   );
 
   const handleSaveCurrentChat = async () => {
@@ -71,7 +72,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
   };
 
   const toggleSessionSelection = (sessionId) => {
-    setSelectedSessions(prev => {
+    setSelectedSessions((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(sessionId)) {
         newSet.delete(sessionId);
@@ -88,7 +89,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
       exportAndDownloadAllSessions(format);
     } else {
       // Export selected sessions
-      selectedSessions.forEach(sessionId => {
+      selectedSessions.forEach((sessionId) => {
         exportAndDownloadSession(sessionId, format);
       });
     }
@@ -125,35 +126,24 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
           </div>
 
           <div className={styles.actions}>
-            {currentMessages && currentMessages.length > 0 && (
-              <button
-                className={styles.saveButton}
-                onClick={() => setSaveDialogOpen(true)}
-                disabled={isLoading}
-              >
-                <Save size={16} />
-                Save Current
-              </button>
-            )}
-
             <div className={styles.exportButtons}>
               <button
                 className={styles.exportButton}
-                onClick={() => handleBulkExport('json')}
+                onClick={() => handleBulkExport("json")}
                 title="Export as JSON"
               >
                 <FileJson size={16} />
               </button>
               <button
                 className={styles.exportButton}
-                onClick={() => handleBulkExport('txt')}
+                onClick={() => handleBulkExport("txt")}
                 title="Export as Text"
               >
                 <FileText size={16} />
               </button>
               <button
                 className={styles.exportButton}
-                onClick={() => handleBulkExport('md')}
+                onClick={() => handleBulkExport("md")}
                 title="Export as Markdown"
               >
                 <Hash size={16} />
@@ -184,7 +174,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
                   />
                 </div>
 
-                <div 
+                <div
                   className={styles.sessionContent}
                   onClick={() => handleLoadSession(session)}
                 >
@@ -192,26 +182,12 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
                     <h3 className={styles.sessionName}>{session.name}</h3>
                     <div className={styles.sessionMeta}>
                       <Calendar size={12} />
-                      <span>{new Date(session.createdAt).toLocaleDateString()}</span>
+                      <span>
+                        {new Date(session.createdAt).toLocaleDateString()}
+                      </span>
                       <MessageSquare size={12} />
                       <span>{session.messageCount} messages</span>
                     </div>
-                  </div>
-
-                  <div className={styles.sessionPreview}>
-                    {session.messages.slice(0, 2).map((msg, idx) => (
-                      <div key={idx} className={styles.messagePreview}>
-                        <span className={styles.messageType}>
-                          {msg.type === 'user' ? '👤' : '🤖'}
-                        </span>
-                        <span className={styles.messageText}>
-                          {msg.content.length > 100 
-                            ? `${msg.content.substring(0, 100)}...` 
-                            : msg.content
-                          }
-                        </span>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
@@ -220,7 +196,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
                     className={styles.actionButton}
                     onClick={(e) => {
                       e.stopPropagation();
-                      exportAndDownloadSession(session.id, 'json');
+                      exportAndDownloadSession(session.id, "json");
                     }}
                     title="Export as JSON"
                   >
@@ -248,7 +224,7 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
               Storage used: {storageUsageMB} MB • {chatSessions.length} sessions
             </span>
           </div>
-          
+
           {selectedSessions.size > 0 && (
             <div className={styles.selectionInfo}>
               <span>{selectedSessions.size} selected</span>
