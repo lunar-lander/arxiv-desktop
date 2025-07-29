@@ -153,12 +153,16 @@ function AIChat({ isVisible, onClose }) {
         const status = getExtractionStatus(paperId);
 
         // Only extract if not already extracted or in progress
-        if (status === "not_started" && paper.pdfPath) {
+        if (status === "not_started" && paper.localPath) {
+          console.log(`Starting PDF extraction for: ${paper.title}`);
+          console.log(`PDF path: ${paper.localPath}`);
           try {
             await extractPDFContent(paper, { maxPages: 30 }); // Limit for LLM context
           } catch (error) {
             console.error(`Failed to extract PDF for ${paper.title}:`, error);
           }
+        } else if (status === "not_started") {
+          console.log(`No local PDF path for: ${paper.title}`);
         }
       });
     }

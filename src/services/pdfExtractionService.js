@@ -1,8 +1,14 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
+// Configure PDF.js worker - try multiple possible locations
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+  // Try to use the worker from node_modules first
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  } catch (e) {
+    // Fallback to local worker if available
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+  }
 }
 
 export class PDFExtractionService {
@@ -30,9 +36,13 @@ export class PDFExtractionService {
     }
 
     try {
+      console.log('Attempting to extract PDF text from:', filePath);
+      
       // Load the PDF document
       const loadingTask = pdfjsLib.getDocument(filePath);
       const pdf = await loadingTask.promise;
+      
+      console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`);
       
       let fullText = '';
       let metadata = {};
@@ -93,6 +103,9 @@ export class PDFExtractionService {
       
       // Cache the result
       this.cacheResult(cacheKey, result);
+      
+      console.log(`PDF extraction completed. Content length: ${result.length} characters`);
+      console.log('First 200 chars:', result.substring(0, 200));
       
       return result;
       

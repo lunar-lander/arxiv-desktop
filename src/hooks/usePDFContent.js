@@ -9,8 +9,8 @@ export function usePDFContent() {
 
   // Extract PDF content for a paper
   const extractPDFContent = useCallback(async (paper, options = {}) => {
-    if (!paper || !paper.pdfPath) {
-      console.warn('No PDF path available for paper:', paper?.title);
+    if (!paper || !paper.localPath) {
+      console.warn('No local PDF path available for paper:', paper?.title);
       return null;
     }
 
@@ -45,7 +45,7 @@ export function usePDFContent() {
         ...options
       };
 
-      const content = await PDFExtractionService.extractText(paper.pdfPath, defaultOptions);
+      const content = await PDFExtractionService.extractText(paper.localPath, defaultOptions);
       
       const extractedData = {
         paperId,
@@ -85,13 +85,13 @@ export function usePDFContent() {
 
   // Extract PDF summary (first few pages only)
   const extractPDFSummary = useCallback(async (paper) => {
-    if (!paper || !paper.pdfPath) return null;
+    if (!paper || !paper.localPath) return null;
 
     const paperId = paper.id || paper.arxivId;
     if (!paperId) return null;
 
     try {
-      const summary = await PDFExtractionService.extractSummary(paper.pdfPath);
+      const summary = await PDFExtractionService.extractSummary(paper.localPath);
       
       const summaryData = {
         paperId,

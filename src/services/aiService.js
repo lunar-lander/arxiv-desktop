@@ -149,7 +149,15 @@ export class AIService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.text();
+          console.log('API Error Response:', errorData);
+          errorMessage += `: ${errorData}`;
+        } catch (e) {
+          // Ignore if we can't read the error response
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body.getReader();
@@ -187,12 +195,23 @@ export class AIService {
       return fullResponse;
     } catch (error) {
       console.error("AI streaming API error:", error);
-      if (error.message.includes('401')) {
+      
+      // Check for specific HTTP status codes
+      if (error.message.includes('401') || (error.response && error.response.status === 401)) {
         throw new Error("Invalid API key. Please check your credentials.");
-      } else if (error.message.includes('429')) {
+      } else if (error.message.includes('429') || (error.response && error.response.status === 429)) {
         throw new Error("Rate limit exceeded. Please try again later.");
+      } else if (error.message.includes('400') || (error.response && error.response.status === 400)) {
+        throw new Error("Invalid request. The content might be too long or malformed.");
+      } else if (error.message.includes('500') || (error.response && error.response.status >= 500)) {
+        throw new Error("Server error. Please try again later.");
+      } else if (error.name === 'TypeError' || error.message.includes('fetch')) {
+        throw new Error("Network error. Please check your connection and try again.");
       }
-      throw new Error("Failed to get AI response. Please check your settings and try again.");
+      
+      // For debugging, include the actual error message
+      console.log("Full error details:", error);
+      throw new Error(`AI request failed: ${error.message || 'Unknown error'}`);
     }
   }
   
@@ -321,11 +340,13 @@ Please let them know that you only have access to the abstract and metadata, and
 5. Provide comprehensive analysis based on the full paper content
 
 When referencing content, please cite it as "Paper X" where X is the paper number.`;
+        console.log(`AI context includes PDF content for ${papers.length} papers. Context length: ${context.length} characters`);
       } else {
         context += `Instructions: You currently only have access to paper metadata and abstracts (PDF content extraction not available). For detailed analysis:
 1. Copy and paste specific text from the PDF viewer into the chat
 2. Ask questions about general concepts and implications
 3. Request paper recommendations based on the abstracts available`;
+        console.log(`AI context includes only metadata/abstracts for ${papers.length} papers. Context length: ${context.length} characters`);
       }
     }
     
