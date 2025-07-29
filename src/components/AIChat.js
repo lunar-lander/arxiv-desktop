@@ -366,12 +366,11 @@ function AIChat({ isVisible, onClose }) {
             <div className={styles.messageContent}>
               <div className={styles.messageText}>
                 {message.type === "ai" ? (
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    className={styles.markdown}
-                  >
-                    {message.content || (message.isStreaming ? "..." : "")}
-                  </ReactMarkdown>
+                  <div className={styles.markdown}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {message.content || (message.isStreaming ? "..." : "")}
+                    </ReactMarkdown>
+                  </div>
                 ) : (
                   message.content
                 )}

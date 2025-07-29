@@ -190,6 +190,16 @@ export class AIService {
     
     return await this.sendMessage(message);
   }
+
+  static async suggestPapersStream(query, preferences = {}, onChunk = null) {
+    const message = `Based on the query "${query}", suggest some relevant academic papers or research topics to explore. Consider the following preferences: ${JSON.stringify(preferences)}. Please provide specific paper titles, authors, or research directions that would be relevant.`;
+    
+    if (onChunk) {
+      return await this.sendMessageStream(message, null, onChunk);
+    } else {
+      return await this.sendMessage(message);
+    }
+  }
   
   static async chatWithPaperContext(message, papers = [], onChunk = null) {
     let context = "";

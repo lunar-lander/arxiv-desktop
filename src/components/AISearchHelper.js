@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Bot, Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { AIService } from "../services/aiService";
 import styles from "./AISearchHelper.module.css";
 
@@ -8,16 +10,27 @@ function AISearchHelper({ onSuggestion }) {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastSuggestion, setLastSuggestion] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const handleGetSuggestion = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
     setIsLoading(true);
+    setIsStreaming(true);
+    setLastSuggestion("");
+    
     try {
-      const suggestion = await AIService.suggestPapers(inputMessage.trim());
-      setLastSuggestion(suggestion);
+      await AIService.suggestPapersStream(
+        inputMessage.trim(),
+        {},
+        (chunk, fullContent) => {
+          setLastSuggestion(fullContent);
+        }
+      );
+      setIsStreaming(false);
     } catch (error) {
       setLastSuggestion(`Error: ${error.message}`);
+      setIsStreaming(false);
     }
     setIsLoading(false);
   };
@@ -89,7 +102,18 @@ function AISearchHelper({ onSuggestion }) {
           {lastSuggestion && (
             <div className={styles.suggestionResult}>
               <div className={styles.suggestionText}>
-                {lastSuggestion}
+                {lastSuggestion.startsWith('Error:') ? (
+                  lastSuggestion
+                ) : (
+                  <div className={styles.markdown}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {lastSuggestion || (isStreaming ? "..." : "")}
+                    </ReactMarkdown>
+                    {isStreaming && (
+                      <span className={styles.streamingIndicator}>▊</span>
+                    )}
+                  </div>
+                )}
               </div>
               {!lastSuggestion.startsWith('Error:') && (
                 <button

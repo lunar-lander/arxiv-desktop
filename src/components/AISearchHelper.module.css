@@ -94,6 +94,93 @@
   margin-bottom: 8px;
 }
 
+.markdown {
+  font-size: 14px;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 12px 0 8px 0;
+  color: inherit;
+  font-weight: 600;
+}
+
+.markdown h1 {
+  font-size: 18px;
+}
+
+.markdown h2 {
+  font-size: 16px;
+}
+
+.markdown h3 {
+  font-size: 15px;
+}
+
+.markdown p {
+  margin: 8px 0;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.markdown li {
+  margin: 4px 0;
+}
+
+.markdown code {
+  background-color: var(--secondary);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+}
+
+.markdown pre {
+  background-color: var(--secondary);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.markdown pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 12px;
+  margin: 8px 0;
+  opacity: 0.8;
+}
+
+.streamingIndicator {
+  display: inline-block;
+  animation: blink 1s infinite;
+  margin-left: 2px;
+  color: var(--primary);
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
 .applyButton {
   padding: 6px 12px;
   background-color: var(--success);
