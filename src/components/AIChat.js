@@ -187,52 +187,27 @@ function AIChat({ isVisible, onClose }) {
 
     setMessages(prev => [...prev, newUserMessage]);
 
-    // Add initial AI message that will be updated with streaming content
-    const aiMessageId = Date.now() + 1;
-    const aiMessage = {
-      id: aiMessageId,
-      type: "ai",
-      content: "",
-      timestamp: new Date(),
-      isStreaming: true
-    };
-
-    setMessages(prev => [...prev, aiMessage]);
-
     try {
       const contextPapers = getContextPapers();
-      
-      await AIService.chatWithPaperContext(
-        userMessage, 
-        contextPapers,
-        (chunk, fullContent) => {
-          // Update the AI message with streaming content
-          setMessages(prev => prev.map(msg => 
-            msg.id === aiMessageId 
-              ? { ...msg, content: fullContent }
-              : msg
-          ));
-        }
-      );
+      const response = await AIService.chatWithPaperContext(userMessage, contextPapers);
 
-      // Mark streaming as complete
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? { ...msg, isStreaming: false }
-          : msg
-      ));
+      // Add AI response to chat
+      const aiMessage = {
+        id: Date.now() + 1,
+        type: "ai",
+        content: response,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      // Replace the streaming message with error
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessageId 
-          ? {
-              ...msg,
-              type: "error",
-              content: error.message,
-              isStreaming: false
-            }
-          : msg
-      ));
+      const errorMessage = {
+        id: Date.now() + 1,
+        type: "error",
+        content: error.message,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
 
     setIsLoading(false);
@@ -368,14 +343,11 @@ function AIChat({ isVisible, onClose }) {
                 {message.type === "ai" ? (
                   <div className={styles.markdown}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {message.content || (message.isStreaming ? "..." : "")}
+                      {message.content}
                     </ReactMarkdown>
                   </div>
                 ) : (
                   message.content
-                )}
-                {message.isStreaming && (
-                  <span className={styles.streamingIndicator}>▊</span>
                 )}
               </div>
               <div className={styles.messageTime}>

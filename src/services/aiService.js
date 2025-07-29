@@ -201,7 +201,7 @@ export class AIService {
     }
   }
   
-  static async chatWithPaperContext(message, papers = [], onChunk = null) {
+  static async chatWithPaperContext(message, papers = []) {
     let context = "";
     
     if (papers.length > 0) {
@@ -247,11 +247,7 @@ Please let them know that you only have access to the abstract and metadata, and
 3. Request paper recommendations or research directions based on the abstracts`;
     }
     
-    if (onChunk) {
-      return await this.sendMessageStream(message, context, onChunk);
-    } else {
-      return await this.sendMessage(message, context);
-    }
+    return await this.sendMessage(message, context);
   }
   
   static async extractKeywords(papers = []) {

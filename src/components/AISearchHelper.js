@@ -16,21 +16,11 @@ function AISearchHelper({ onSuggestion }) {
     if (!inputMessage.trim() || isLoading) return;
 
     setIsLoading(true);
-    setIsStreaming(true);
-    setLastSuggestion("");
-    
     try {
-      await AIService.suggestPapersStream(
-        inputMessage.trim(),
-        {},
-        (chunk, fullContent) => {
-          setLastSuggestion(fullContent);
-        }
-      );
-      setIsStreaming(false);
+      const suggestion = await AIService.suggestPapers(inputMessage.trim());
+      setLastSuggestion(suggestion);
     } catch (error) {
       setLastSuggestion(`Error: ${error.message}`);
-      setIsStreaming(false);
     }
     setIsLoading(false);
   };
@@ -107,11 +97,8 @@ function AISearchHelper({ onSuggestion }) {
                 ) : (
                   <div className={styles.markdown}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {lastSuggestion || (isStreaming ? "..." : "")}
+                      {lastSuggestion}
                     </ReactMarkdown>
-                    {isStreaming && (
-                      <span className={styles.streamingIndicator}>▊</span>
-                    )}
                   </div>
                 )}
               </div>
