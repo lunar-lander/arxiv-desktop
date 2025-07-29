@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Settings, Loader2, History, Save } from "lucide-react";
+import {
+  Send,
+  Bot,
+  User,
+  Settings,
+  Loader2,
+  History,
+  Save,
+  Plus,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAIChat } from "../hooks/useAIChat";
@@ -20,11 +29,13 @@ function AIChat({ isVisible, onClose }) {
   const resizeRef = useRef(null);
   const { state } = usePapers();
   const { settings, updateSetting } = useUISettings();
-  const { 
-    currentMessages, 
-    setCurrentMessages, 
+  const {
+    currentMessages,
+    setCurrentMessages,
     loadTemporaryHistory,
-    saveChatSession 
+    startNewChat,
+    currentSessionId,
+    saveChatSession,
   } = useChatHistory();
   const {
     apiKey,
@@ -40,9 +51,9 @@ function AIChat({ isVisible, onClose }) {
     isLoading,
     chatWithPaperContextStream,
   } = useAIChat();
-  
+
   const sidebarWidth = settings.chatSidebarWidth;
-  const setSidebarWidth = (width) => updateSetting('chatSidebarWidth', width);
+  const setSidebarWidth = (width) => updateSetting("chatSidebarWidth", width);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -247,6 +258,20 @@ function AIChat({ isVisible, onClose }) {
         </div>
         <div className={styles.headerRight}>
           <button
+            className={styles.newChatButton}
+            onClick={() => {
+              if (messages.length > 0 && window.confirm("Start a new chat? Current conversation will be saved automatically.")) {
+                startNewChat();
+                setMessages([]);
+              } else if (messages.length === 0) {
+                startNewChat();
+              }
+            }}
+            title="New Chat"
+          >
+            <Plus size={18} />
+          </button>
+          <button
             className={styles.historyButton}
             onClick={() => setShowChatHistory(true)}
             title="Chat History"
@@ -344,7 +369,7 @@ function AIChat({ isVisible, onClose }) {
             </p>
             <p>
               Select papers above and configure your API key in settings to get
-              started.
+              started. <strong>All conversations are automatically saved</strong> after a few messages.
             </p>
           </div>
         )}
@@ -391,7 +416,8 @@ function AIChat({ isVisible, onClose }) {
                 )}
               </div>
               <div className={styles.messageTime}>
-                {message.timestamp.toLocaleTimeString()}
+                {message.timestamp.toLocaleTimeString &&
+                  message.timestamp.toLocaleTimeString()}
               </div>
             </div>
           </div>
@@ -473,7 +499,7 @@ function AIChat({ isVisible, onClose }) {
           </button>
         </div>
       </div>
-      
+
       <ChatHistory
         isVisible={showChatHistory}
         onClose={() => setShowChatHistory(false)}

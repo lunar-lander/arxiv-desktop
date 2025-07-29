@@ -116,6 +116,43 @@ export class SettingsService {
     }
   }
 
+  static updateChatSession(sessionId, messages, context = {}) {
+    try {
+      const sessions = this.getChatSessions();
+      const sessionIndex = sessions.findIndex(session => session.id === sessionId);
+      
+      if (sessionIndex !== -1) {
+        sessions[sessionIndex] = {
+          ...sessions[sessionIndex],
+          messages: messages,
+          context: context,
+          updatedAt: new Date().toISOString(),
+          messageCount: messages.length
+        };
+        
+        localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
+        return sessions[sessionIndex];
+      }
+      return null;
+    } catch (error) {
+      console.error("Error updating chat session:", error);
+      return null;
+    }
+  }
+
+  static generateAutoSessionName(messages) {
+    if (messages.length === 0) return "New Chat";
+    
+    // Use the first user message as session name (truncated)
+    const firstUserMessage = messages.find(msg => msg.type === 'user');
+    if (firstUserMessage && firstUserMessage.content) {
+      const name = firstUserMessage.content.trim();
+      return name.length > 50 ? `${name.substring(0, 50)}...` : name;
+    }
+    
+    return `Chat ${new Date().toLocaleDateString()}`;
+  }
+
   static loadChatSession(sessionId) {
     try {
       const sessions = this.getChatSessions();

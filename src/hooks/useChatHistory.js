@@ -4,6 +4,7 @@ import { SettingsService } from "../services/settingsService";
 export function useChatHistory() {
   const [currentMessages, setCurrentMessages] = useState([]);
   const [chatSessions, setChatSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Load chat sessions on mount
@@ -66,11 +67,36 @@ export function useChatHistory() {
     setCurrentMessages([]);
   }, []);
 
-  // Auto-save current messages to temporary storage
+  // Start a new chat session
+  const startNewChat = useCallback(() => {
+    setCurrentMessages([]);
+    setCurrentSessionId(null);
+    SettingsService.clearChatHistory();
+  }, []);
+
+  // Auto-save current messages to both temporary storage and session
   const saveCurrentMessages = useCallback((messages) => {
     setCurrentMessages(messages);
     SettingsService.saveChatHistory(messages);
-  }, []);
+    
+    // Auto-save to session after 3 messages (user + AI + user)
+    if (messages.length >= 3 && !currentSessionId) {
+      const autoName = SettingsService.generateAutoSessionName(messages);
+      const newSession = SettingsService.saveChatSession(autoName, messages);
+      if (newSession) {
+        setCurrentSessionId(newSession.id);
+        setChatSessions(prev => [newSession, ...prev]);
+      }
+    } else if (currentSessionId && messages.length > 0) {
+      // Update existing session
+      const updatedSession = SettingsService.updateChatSession(currentSessionId, messages);
+      if (updatedSession) {
+        setChatSessions(prev => prev.map(session => 
+          session.id === currentSessionId ? updatedSession : session
+        ));
+      }
+    }
+  }, [currentSessionId]);
 
   // Load temporary chat history
   const loadTemporaryHistory = useCallback(() => {
@@ -126,7 +152,9 @@ export function useChatHistory() {
     currentMessages,
     setCurrentMessages: saveCurrentMessages,
     clearCurrentChat,
+    startNewChat,
     loadTemporaryHistory,
+    currentSessionId,
     
     // Chat sessions
     chatSessions,

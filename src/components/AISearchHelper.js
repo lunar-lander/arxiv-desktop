@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Bot, Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useAIChat } from "../hooks/useAIChat";
 import styles from "./AISearchHelper.module.css";
 
@@ -17,7 +17,7 @@ function AISearchHelper({ onSuggestion }) {
 
     setIsStreaming(true);
     setLastSuggestion("");
-    
+
     try {
       let streamedContent = "";
       await sendStreamingPaperSuggestion(
@@ -44,25 +44,25 @@ function AISearchHelper({ onSuggestion }) {
 
   const applySuggestionAsSearch = (text) => {
     // Extract potential search terms from AI suggestion
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     const searchTerms = [];
-    
-    lines.forEach(line => {
+
+    lines.forEach((line) => {
       // Look for quoted terms or paper titles
       const quotes = line.match(/"([^"]+)"/g);
       if (quotes) {
-        quotes.forEach(quote => {
-          searchTerms.push(quote.replace(/"/g, ''));
+        quotes.forEach((quote) => {
+          searchTerms.push(quote.replace(/"/g, ""));
         });
       }
-      
+
       // Look for "search for: " patterns
       const searchPattern = line.match(/search for:?\s*(.+)/i);
       if (searchPattern) {
         searchTerms.push(searchPattern[1].trim());
       }
     });
-    
+
     if (searchTerms.length > 0) {
       onSuggestion(searchTerms[0]);
     }
@@ -95,22 +95,32 @@ function AISearchHelper({ onSuggestion }) {
               disabled={!inputMessage.trim() || isLoading}
               className={styles.sendButton}
             >
-              {isLoading ? <Loader2 className={styles.spinning} size={16} /> : <Send size={16} />}
+              {isLoading ? (
+                <Loader2 className={styles.spinning} size={16} />
+              ) : (
+                <Send size={16} />
+              )}
             </button>
           </div>
 
           {lastSuggestion && (
             <div className={styles.suggestionResult}>
               <div className={styles.suggestionText}>
-                {lastSuggestion.startsWith('Error:') ? (
+                {lastSuggestion.startsWith("Error:") ? (
                   lastSuggestion
                 ) : (
                   <div className={styles.markdown}>
-                    <ReactMarkdown 
+                    <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        p: ({children}) => <p style={{margin: '4px 0'}}>{children}</p>,
-                        li: ({children}) => <li style={{margin: '2px 0'}}>{children}</li>
+                        // Improve paragraph spacing
+                        p: ({ node, ...props }) => (
+                          <p style={{ marginBottom: "0.6em" }} {...props} />
+                        ),
+                        // Make lists more readable
+                        li: ({ node, ...props }) => (
+                          <li style={{ marginBottom: "0.1em" }} {...props} />
+                        ),
                       }}
                     >
                       {lastSuggestion}
@@ -118,7 +128,7 @@ function AISearchHelper({ onSuggestion }) {
                   </div>
                 )}
               </div>
-              {!lastSuggestion.startsWith('Error:') && (
+              {!lastSuggestion.startsWith("Error:") && (
                 <button
                   className={styles.applyButton}
                   onClick={() => applySuggestionAsSearch(lastSuggestion)}

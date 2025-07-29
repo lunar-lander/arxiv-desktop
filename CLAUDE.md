@@ -22,6 +22,10 @@ A desktop application for browsing, searching, and managing academic papers from
   - Paper suggestion and search assistance
   - Multi-service AI support (OpenAI, Anthropic, Ollama, custom endpoints)
   - Enhanced paper context with metadata and abstracts
+  - **Automatic chat session saving** - conversations are automatically saved after a few messages
+  - **Chat history management** - browse, search, delete, and export previous conversations
+  - **Persistent UI settings** - sidebar sizes and visibility states remembered across restarts
+  - **Multiple export formats** - save chats as JSON, Text, or Markdown files
 
 ## Project Structure
 
@@ -54,11 +58,16 @@ arxiv-desktop/
 │   ├── context/            # React context for state management
 │   │   ├── PaperContext.js # Paper state management
 │   │   └── ThemeContext.js # Theme state management
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useAIChat.js    # AI chat functionality and settings management
+│   │   ├── useUISettings.js # Persistent UI settings management
+│   │   └── useChatHistory.js # Chat session management and history
 │   └── services/           # API and storage services
 │       ├── arxivService.js # arXiv and bioRxiv API integration
 │       ├── authService.js  # Authentication service
 │       ├── aiService.js    # AI chat service with multi-provider support
-│       └── storageService.js # Local storage management
+│       ├── storageService.js # Local storage management
+│       └── settingsService.js # Persistent settings and chat history storage
 ├── public/                 # Static assets
 ├── build/                  # Production build output
 └── package.json           # Dependencies and scripts
@@ -173,12 +182,36 @@ The app includes an intelligent AI assistant to help with research tasks and pap
 - "Compare the approaches in these open papers"
 - "What research directions should I explore for computer vision?"
 
+### Chat Session Management
+- **Automatic Saving**: Conversations are automatically saved after reaching 3+ messages
+- **Session Naming**: Auto-generated names based on the first user message
+- **New Chat**: Start fresh conversations with the "+" button
+- **Chat History**: Browse all saved sessions with search functionality
+- **Export Options**: Download conversations in JSON, TXT, or Markdown formats
+- **Bulk Operations**: Select multiple sessions for batch export
+- **Storage Management**: Monitor storage usage and manage old sessions
+
+### Persistent UI Settings
+- **Chat Sidebar Width**: Resizable sidebar that remembers its size across restarts
+- **Left Sidebar Visibility**: Hidden/shown state persists between sessions
+- **Chat Window State**: Whether the AI chat is open or closed is remembered
+- **Automatic Restore**: All UI customizations are restored when the app starts
+
 ## Local Storage
 
 Papers and app data are stored locally:
 - **Papers**: `~/ArxivDesktop/papers/` (PDF files with sanitized filenames)
 - **App Data**: `~/ArxivDesktop/app-data.json` (bookmarks, starred papers, settings)
 - **PDF State**: Zoom levels, page positions, and view preferences per paper
+- **Chat History**: Browser localStorage for chat sessions and temporary conversations
+- **UI Settings**: Browser localStorage for sidebar sizes, visibility states, and preferences
+- **AI Settings**: Browser localStorage for API keys, service configurations, and model preferences
+
+### Storage Management
+- **Automatic Cleanup**: Old chat sessions are limited to 50 most recent
+- **Export Capability**: All data can be exported for backup or transfer
+- **Storage Monitoring**: Built-in storage usage tracking
+- **Privacy**: All data stored locally, no cloud synchronization
 
 ## Implementation Status
 
@@ -197,6 +230,11 @@ Papers and app data are stored locally:
 - [x] AI Research Assistant with multi-service support (OpenAI, Anthropic, Ollama, custom)
 - [x] Contextual AI chat with paper metadata and abstracts
 - [x] AI-powered search suggestions and research guidance
+- [x] Automatic chat session saving and management
+- [x] Chat history with search, export, and organization features
+- [x] Persistent UI settings (sidebar sizes, visibility states)
+- [x] Streaming chat responses with real-time text appearance
+- [x] New chat functionality with automatic session creation
 
 ### 🚧 TODO
 - [ ] Add paper annotations and highlighting
@@ -224,6 +262,12 @@ Papers and app data are stored locally:
 - Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-30**: Added automatic chat session saving - conversations are saved without user intervention
+- **2025-07-30**: Implemented "New Chat" functionality with automatic session management
+- **2025-07-30**: Added comprehensive chat history management with search, export, and organization
+- **2025-07-30**: Implemented persistent UI settings - sidebar sizes and visibility remembered across restarts
+- **2025-07-30**: Enhanced chat export with multiple formats (JSON, TXT, Markdown)
+- **2025-07-30**: Added streaming text improvements with better markdown rendering and spacing
 - **2025-07-29**: Added AI Research Assistant with multi-service support (OpenAI, Anthropic, Ollama, Custom)
 - **2025-07-29**: Implemented contextual AI chat with paper metadata and abstract analysis
 - **2025-07-29**: Added AI search helper for intelligent paper suggestions and research guidance

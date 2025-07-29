@@ -60,6 +60,7 @@
   gap: 8px;
 }
 
+.newChatButton,
 .historyButton,
 .settingsButton,
 .closeButton {
@@ -72,6 +73,7 @@
   transition: all 0.2s;
 }
 
+.newChatButton:hover,
 .historyButton:hover,
 .settingsButton:hover,
 .closeButton:hover {
@@ -234,7 +236,6 @@
 
 .messageText {
   font-size: 14px;
-  white-space: pre-wrap;
   color: inherit;
 }
 

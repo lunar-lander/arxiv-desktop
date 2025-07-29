@@ -88,15 +88,12 @@
 
 .suggestionText {
   font-size: 14px;
-  line-height: 1.5;
   color: var(--text);
-  white-space: pre-wrap;
   margin-bottom: 8px;
 }
 
 .markdown {
   font-size: 14px;
-  line-height: 1.5;
   color: inherit;
 }
 
@@ -134,14 +131,13 @@
 }
 
 .markdown li {
-  margin: 4px 0;
 }
 
 .markdown code {
   background-color: var(--secondary);
   padding: 2px 4px;
   border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 12px;
 }
 
@@ -173,10 +169,12 @@
 }
 
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }
