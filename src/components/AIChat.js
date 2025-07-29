@@ -1,26 +1,35 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Settings, Loader2 } from "lucide-react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { AIService } from "../services/aiService";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { useAIChat } from "../hooks/useAIChat";
 import { usePapers } from "../context/PaperContext";
 import styles from "./AIChat.module.css";
 
 function AIChat({ isVisible, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [selectedPapers, setSelectedPapers] = useState(new Set());
-  const [serviceType, setServiceType] = useState("openai");
-  const [endpoint, setEndpoint] = useState("https://api.openai.com/v1/chat/completions");
-  const [model, setModel] = useState("gpt-3.5-turbo");
   const [sidebarWidth, setSidebarWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
   const messagesEndRef = useRef(null);
   const resizeRef = useRef(null);
   const { state } = usePapers();
+  const {
+    apiKey,
+    setApiKey,
+    serviceType,
+    setServiceType,
+    endpoint,
+    setEndpoint,
+    model,
+    setModel,
+    handleServiceTypeChange,
+    saveSettings,
+    isLoading,
+    chatWithPaperContextStream,
+  } = useAIChat();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,11 +43,11 @@ function AIChat({ isVisible, onClose }) {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isResizing) return;
-      
+
       const newWidth = window.innerWidth - e.clientX;
       const minWidth = 300;
       const maxWidth = window.innerWidth * 0.8;
-      
+
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setSidebarWidth(newWidth);
       }
@@ -49,17 +58,17 @@ function AIChat({ isVisible, onClose }) {
     };
 
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
     };
   }, [isResizing]);
 
@@ -68,89 +77,39 @@ function AIChat({ isVisible, onClose }) {
     setIsResizing(true);
   };
 
-  useEffect(() => {
-    // Load settings from localStorage
-    const savedApiKey = localStorage.getItem("ai_api_key");
-    const savedServiceType = localStorage.getItem("ai_service_type");
-    const savedEndpoint = localStorage.getItem("ai_endpoint");
-    const savedModel = localStorage.getItem("ai_model");
-    
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
-      AIService.setApiKey(savedApiKey);
-    }
-    if (savedServiceType) {
-      setServiceType(savedServiceType);
-      AIService.setServiceType(savedServiceType);
-    }
-    if (savedEndpoint) {
-      setEndpoint(savedEndpoint);
-      AIService.setEndpoint(savedEndpoint);
-    }
-    if (savedModel) {
-      setModel(savedModel);
-      AIService.setModel(savedModel);
-    }
-  }, []);
-
   const handleSaveSettings = () => {
-    localStorage.setItem("ai_api_key", apiKey);
-    localStorage.setItem("ai_service_type", serviceType);
-    localStorage.setItem("ai_endpoint", endpoint);
-    localStorage.setItem("ai_model", model);
-    
-    AIService.setApiKey(apiKey);
-    AIService.setServiceType(serviceType);
-    AIService.setEndpoint(endpoint);
-    AIService.setModel(model);
-    
+    saveSettings();
     setShowSettings(false);
-  };
-
-  const handleServiceTypeChange = (newServiceType) => {
-    setServiceType(newServiceType);
-    
-    // Set default endpoints and models based on service type
-    if (newServiceType === "openai") {
-      setEndpoint("https://api.openai.com/v1/chat/completions");
-      setModel("gpt-3.5-turbo");
-    } else if (newServiceType === "anthropic") {
-      setEndpoint("https://api.anthropic.com/v1/messages");
-      setModel("claude-3-sonnet-20240229");
-    } else if (newServiceType === "ollama") {
-      setEndpoint("http://localhost:11434/v1/chat/completions");
-      setModel("llama2");
-    }
   };
 
   const getContextPapers = () => {
     const allPapers = [
       ...(state.openPapers || []),
-      ...(state.starredPapers || [])
+      ...(state.starredPapers || []),
     ];
-    
+
     // Remove duplicates based on paper ID
-    const uniquePapers = allPapers.filter((paper, index, arr) => 
-      arr.findIndex(p => p.id === paper.id) === index
+    const uniquePapers = allPapers.filter(
+      (paper, index, arr) => arr.findIndex((p) => p.id === paper.id) === index
     );
-    
-    return uniquePapers.filter(paper => selectedPapers.has(paper.id));
+
+    return uniquePapers.filter((paper) => selectedPapers.has(paper.id));
   };
 
   const getAllAvailablePapers = () => {
     const allPapers = [
       ...(state.openPapers || []),
-      ...(state.starredPapers || [])
+      ...(state.starredPapers || []),
     ];
-    
+
     // Remove duplicates based on paper ID
-    return allPapers.filter((paper, index, arr) => 
-      arr.findIndex(p => p.id === paper.id) === index
+    return allPapers.filter(
+      (paper, index, arr) => arr.findIndex((p) => p.id === paper.id) === index
     );
   };
 
   const togglePaperSelection = (paperId) => {
-    setSelectedPapers(prev => {
+    setSelectedPapers((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(paperId)) {
         newSet.delete(paperId);
@@ -163,7 +122,7 @@ function AIChat({ isVisible, onClose }) {
 
   const selectAllPapers = () => {
     const allPapers = getAllAvailablePapers();
-    setSelectedPapers(new Set(allPapers.map(p => p.id)));
+    setSelectedPapers(new Set(allPapers.map((p) => p.id)));
   };
 
   const deselectAllPapers = () => {
@@ -175,42 +134,66 @@ function AIChat({ isVisible, onClose }) {
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
-    setIsLoading(true);
 
     // Add user message to chat
     const newUserMessage = {
       id: Date.now(),
       type: "user",
       content: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, newUserMessage]);
+    setMessages((prev) => [...prev, newUserMessage]);
+
+    // Add placeholder AI message for streaming
+    const aiMessageId = Date.now() + 1;
+    const aiMessage = {
+      id: aiMessageId,
+      type: "ai",
+      content: "",
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+
+    setMessages((prev) => [...prev, aiMessage]);
 
     try {
       const contextPapers = getContextPapers();
-      const response = await AIService.chatWithPaperContext(userMessage, contextPapers);
+      let streamedContent = "";
 
-      // Add AI response to chat
-      const aiMessage = {
-        id: Date.now() + 1,
-        type: "ai",
-        content: response,
-        timestamp: new Date()
-      };
+      await chatWithPaperContextStream(
+        userMessage,
+        contextPapers,
+        (chunk, fullContent) => {
+          streamedContent = fullContent;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageId
+                ? { ...msg, content: streamedContent, isStreaming: true }
+                : msg
+            )
+          );
+        }
+      );
 
-      setMessages(prev => [...prev, aiMessage]);
+      // Mark streaming as complete
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMessageId ? { ...msg, isStreaming: false } : msg
+        )
+      );
     } catch (error) {
       const errorMessage = {
-        id: Date.now() + 1,
+        id: Date.now() + 2,
         type: "error",
         content: error.message,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      // Remove the streaming message and add error
+      setMessages((prev) =>
+        prev.filter((msg) => msg.id !== aiMessageId).concat(errorMessage)
+      );
     }
-
-    setIsLoading(false);
   };
 
   const handleKeyPress = (e) => {
@@ -223,11 +206,8 @@ function AIChat({ isVisible, onClose }) {
   if (!isVisible) return null;
 
   return (
-    <div 
-      className={styles.aiChatContainer}
-      style={{ width: sidebarWidth }}
-    >
-      <div 
+    <div className={styles.aiChatContainer} style={{ width: sidebarWidth }}>
+      <div
         className={styles.resizeHandle}
         onMouseDown={handleResizeStart}
         ref={resizeRef}
@@ -287,19 +267,22 @@ function AIChat({ isVisible, onClose }) {
               className={styles.endpointInput}
             />
           </div>
-          
+
           <div className={styles.settingGroup}>
             <label>API Key:</label>
             <input
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={serviceType === "ollama" ? "Not required for Ollama" : "Enter your API key"}
+              placeholder={
+                serviceType === "ollama"
+                  ? "Not required for Ollama"
+                  : "Enter your API key"
+              }
               className={styles.apiKeyInput}
               disabled={serviceType === "ollama"}
             />
           </div>
-          
 
           <button onClick={handleSaveSettings} className={styles.saveButton}>
             Save Settings
@@ -319,8 +302,15 @@ function AIChat({ isVisible, onClose }) {
               <li>Finding research directions</li>
               <li>Comparing approaches between papers</li>
             </ul>
-            <p><strong>Note:</strong> I work with paper abstracts and metadata. For detailed content analysis, copy and paste specific text from the PDF viewer.</p>
-            <p>Select papers above and configure your API key in settings to get started.</p>
+            <p>
+              <strong>Note:</strong> I work with paper abstracts and metadata.
+              For detailed content analysis, copy and paste specific text from
+              the PDF viewer.
+            </p>
+            <p>
+              Select papers above and configure your API key in settings to get
+              started.
+            </p>
           </div>
         )}
 
@@ -342,9 +332,24 @@ function AIChat({ isVisible, onClose }) {
               <div className={styles.messageText}>
                 {message.type === "ai" ? (
                   <div className={styles.markdown}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // Improve paragraph spacing
+                        p: ({ node, ...props }) => (
+                          <p style={{ marginBottom: "0.6em" }} {...props} />
+                        ),
+                        // Make lists more readable
+                        li: ({ node, ...props }) => (
+                          <li style={{ marginBottom: "0.1em" }} {...props} />
+                        ),
+                      }}
+                    >
                       {message.content}
                     </ReactMarkdown>
+                    {message.isStreaming && (
+                      <span className={styles.streamingCursor}>▌</span>
+                    )}
                   </div>
                 ) : (
                   message.content
@@ -357,17 +362,6 @@ function AIChat({ isVisible, onClose }) {
           </div>
         ))}
 
-        {isLoading && (
-          <div className={`${styles.message} ${styles.ai}`}>
-            <div className={styles.messageIcon}>
-              <Loader2 className={styles.spinning} size={16} />
-            </div>
-            <div className={styles.messageContent}>
-              <div className={styles.messageText}>Thinking...</div>
-            </div>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
@@ -378,15 +372,15 @@ function AIChat({ isVisible, onClose }) {
               Context Papers ({getContextPapers().length} selected)
             </span>
             <div className={styles.paperSelectionControls}>
-              <button 
-                onClick={selectAllPapers} 
+              <button
+                onClick={selectAllPapers}
                 className={styles.selectAllButton}
                 disabled={getAllAvailablePapers().length === 0}
               >
                 All
               </button>
-              <button 
-                onClick={deselectAllPapers} 
+              <button
+                onClick={deselectAllPapers}
                 className={styles.selectAllButton}
                 disabled={selectedPapers.size === 0}
               >
@@ -394,7 +388,7 @@ function AIChat({ isVisible, onClose }) {
               </button>
             </div>
           </div>
-          
+
           {getAllAvailablePapers().length > 0 && (
             <div className={styles.paperTags}>
               {getAllAvailablePapers().map((paper) => (
@@ -407,22 +401,22 @@ function AIChat({ isVisible, onClose }) {
                   title={paper.title}
                 >
                   <span className={styles.paperTagText}>
-                    {paper.title.length > 40 
-                      ? `${paper.title.substring(0, 40)}...` 
-                      : paper.title
-                    }
+                    {paper.title.length > 40
+                      ? `${paper.title.substring(0, 40)}...`
+                      : paper.title}
                   </span>
                   <span className={styles.paperTagSource}>
-                    {paper.source || 'arXiv'}
+                    {paper.source || "arXiv"}
                   </span>
                 </button>
               ))}
             </div>
           )}
-          
+
           {getAllAvailablePapers().length === 0 && (
             <div className={styles.noPapersMessage}>
-              No papers available. Open or star some papers to use them as context.
+              No papers available. Open or star some papers to use them as
+              context.
             </div>
           )}
         </div>

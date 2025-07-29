@@ -176,6 +176,7 @@
   display: flex;
   gap: 8px;
   align-items: flex-start;
+  width: 100%;
 }
 
 .message.user {
@@ -185,21 +186,23 @@
 .message.user .messageContent {
   background-color: var(--primary);
   color: white;
-  margin-left: 40px;
+  margin-left: 8px;
 }
 
 .message.ai .messageContent {
   background-color: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  margin-right: 40px;
+  margin-right: 8px;
+  width: 100%;
 }
 
 .message.error .messageContent {
   background-color: var(--error-bg, #fee);
   border: 1px solid var(--error-border, #fcc);
   color: var(--error-text, #c33);
-  margin-right: 40px;
+  margin-right: 8px;
+  width: 100%;
 }
 
 .messageIcon {
@@ -222,7 +225,6 @@
 }
 
 .messageContent {
-  max-width: 280px;
   padding: 12px;
   border-radius: 12px;
   word-wrap: break-word;
@@ -230,14 +232,12 @@
 
 .messageText {
   font-size: 14px;
-  line-height: 1.4;
   white-space: pre-wrap;
   color: inherit;
 }
 
 .markdown {
   font-size: 14px;
-  line-height: 1.5;
   color: inherit;
 }
 
@@ -265,24 +265,24 @@
 }
 
 .markdown p {
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .markdown ul,
 .markdown ol {
-  margin: 8px 0;
+  margin: 4px 0;
   padding-left: 20px;
 }
 
 .markdown li {
-  margin: 4px 0;
+  margin: 2px 0;
 }
 
 .markdown code {
   background-color: var(--secondary);
   padding: 2px 4px;
   border-radius: 3px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 12px;
 }
 
@@ -331,11 +331,20 @@
   color: var(--primary);
 }
 
+.streamingCursor {
+  animation: blink 1s ease-in-out infinite;
+  color: var(--primary);
+  font-weight: bold;
+  margin-left: 2px;
+}
+
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }

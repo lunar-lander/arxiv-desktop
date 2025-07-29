@@ -2,27 +2,37 @@ import React, { useState } from "react";
 import { Bot, Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { AIService } from "../services/aiService";
+import { useAIChat } from "../hooks/useAIChat";
 import styles from "./AISearchHelper.module.css";
 
 function AISearchHelper({ onSuggestion }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [lastSuggestion, setLastSuggestion] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const { isLoading, sendStreamingPaperSuggestion } = useAIChat();
 
   const handleGetSuggestion = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
-    setIsLoading(true);
+    setIsStreaming(true);
+    setLastSuggestion("");
+    
     try {
-      const suggestion = await AIService.suggestPapers(inputMessage.trim());
-      setLastSuggestion(suggestion);
+      let streamedContent = "";
+      await sendStreamingPaperSuggestion(
+        inputMessage.trim(),
+        {},
+        (chunk, fullContent) => {
+          streamedContent = fullContent;
+          setLastSuggestion(streamedContent);
+        }
+      );
     } catch (error) {
       setLastSuggestion(`Error: ${error.message}`);
+    } finally {
+      setIsStreaming(false);
     }
-    setIsLoading(false);
   };
 
   const handleKeyPress = (e) => {
@@ -96,7 +106,13 @@ function AISearchHelper({ onSuggestion }) {
                   lastSuggestion
                 ) : (
                   <div className={styles.markdown}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({children}) => <p style={{margin: '4px 0'}}>{children}</p>,
+                        li: ({children}) => <li style={{margin: '2px 0'}}>{children}</li>
+                      }}
+                    >
                       {lastSuggestion}
                     </ReactMarkdown>
                   </div>
