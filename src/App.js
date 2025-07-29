@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import HomePage from "./components/HomePage";
 import Sidebar from "./components/Sidebar";
 import PaperViewer from "./components/PaperViewer";
+import AIChat from "./components/AIChat";
 import { PaperProvider } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import styles from "./components/App.module.css";
@@ -11,6 +12,7 @@ function AppContent() {
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [lastSearchQuery, setLastSearchQuery] = useState("");
+  const [isAIChatVisible, setIsAIChatVisible] = useState(false);
   const { currentTheme } = useTheme();
 
   // Handle menu actions from Electron
@@ -44,6 +46,8 @@ function AppContent() {
         onNavigate={setCurrentView}
         onPaperSelect={setSelectedPaper}
         currentView={currentView}
+        onToggleAIChat={() => setIsAIChatVisible(!isAIChatVisible)}
+        isAIChatVisible={isAIChatVisible}
       />
       <div className={styles.mainContent}>
         {currentView === "home" && (
@@ -62,6 +66,10 @@ function AppContent() {
           <PaperViewer paper={selectedPaper} />
         )}
       </div>
+      <AIChat
+        isVisible={isAIChatVisible}
+        onClose={() => setIsAIChatVisible(false)}
+      />
     </div>
   );
 }
