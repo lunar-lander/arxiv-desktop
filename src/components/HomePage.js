@@ -4,6 +4,7 @@ import { ArxivService } from "../services/arxivService";
 import { usePapers } from "../context/PaperContext";
 import SearchFilters from "./SearchFilters";
 import MathJaxRenderer from "./MathJaxRenderer";
+import AISearchHelper from "./AISearchHelper";
 import styles from "./HomePage.module.css";
 
 function HomePage({
@@ -222,6 +223,12 @@ function HomePage({
     onSearchResults(sorted);
   };
 
+  const handleAISuggestion = (suggestion) => {
+    setSearchQuery(suggestion);
+    // Optionally trigger search immediately
+    // handleSearch();
+  };
+
   return (
     <div className={styles.homeContainer} ref={homeContainerRef}>
       <div className={styles.header}>
@@ -277,6 +284,8 @@ function HomePage({
         onFiltersChange={setSearchFilters}
         source={selectedSource}
       />
+
+      <AISearchHelper onSuggestion={handleAISuggestion} />
 
       {isLoading && (
         <div className={styles.loadingSpinner}>Searching for papers...</div>
