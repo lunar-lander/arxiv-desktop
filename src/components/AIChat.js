@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Settings, Loader2 } from "lucide-react";
+import { Send, Bot, User, Settings, Loader2, History, Save } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useAIChat } from "../hooks/useAIChat";
+import { useUISettings } from "../hooks/useUISettings";
+import { useChatHistory } from "../hooks/useChatHistory";
 import { usePapers } from "../context/PaperContext";
+import ChatHistory from "./ChatHistory";
 import styles from "./AIChat.module.css";
 
 function AIChat({ isVisible, onClose }) {
@@ -11,11 +14,18 @@ function AIChat({ isVisible, onClose }) {
   const [inputMessage, setInputMessage] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [selectedPapers, setSelectedPapers] = useState(new Set());
-  const [sidebarWidth, setSidebarWidth] = useState(400);
   const [isResizing, setIsResizing] = useState(false);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   const messagesEndRef = useRef(null);
   const resizeRef = useRef(null);
   const { state } = usePapers();
+  const { settings, updateSetting } = useUISettings();
+  const { 
+    currentMessages, 
+    setCurrentMessages, 
+    loadTemporaryHistory,
+    saveChatSession 
+  } = useChatHistory();
   const {
     apiKey,
     setApiKey,
@@ -30,10 +40,28 @@ function AIChat({ isVisible, onClose }) {
     isLoading,
     chatWithPaperContextStream,
   } = useAIChat();
+  
+  const sidebarWidth = settings.chatSidebarWidth;
+  const setSidebarWidth = (width) => updateSetting('chatSidebarWidth', width);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Load temporary chat history on mount
+  useEffect(() => {
+    const tempHistory = loadTemporaryHistory();
+    if (tempHistory.length > 0) {
+      setMessages(tempHistory);
+    }
+  }, [loadTemporaryHistory]);
+
+  // Auto-save messages to temporary storage
+  useEffect(() => {
+    if (messages.length > 0) {
+      setCurrentMessages(messages);
+    }
+  }, [messages, setCurrentMessages]);
 
   useEffect(() => {
     scrollToBottom();
@@ -218,6 +246,13 @@ function AIChat({ isVisible, onClose }) {
           <h3>AI Research Assistant</h3>
         </div>
         <div className={styles.headerRight}>
+          <button
+            className={styles.historyButton}
+            onClick={() => setShowChatHistory(true)}
+            title="Chat History"
+          >
+            <History size={18} />
+          </button>
           <button
             className={styles.settingsButton}
             onClick={() => setShowSettings(!showSettings)}
@@ -438,6 +473,16 @@ function AIChat({ isVisible, onClose }) {
           </button>
         </div>
       </div>
+      
+      <ChatHistory
+        isVisible={showChatHistory}
+        onClose={() => setShowChatHistory(false)}
+        onLoadSession={(session) => {
+          setMessages(session.messages);
+          setShowChatHistory(false);
+        }}
+        currentMessages={messages}
+      />
     </div>
   );
 }

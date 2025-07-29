@@ -5,6 +5,7 @@ import PaperViewer from "./components/PaperViewer";
 import AIChat from "./components/AIChat";
 import { PaperProvider, usePapers } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { useUISettings } from "./hooks/useUISettings";
 import styles from "./components/App.module.css";
 
 function AppContent() {
@@ -12,10 +13,14 @@ function AppContent() {
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [lastSearchQuery, setLastSearchQuery] = useState("");
-  const [isAIChatVisible, setIsAIChatVisible] = useState(false);
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const { currentTheme } = useTheme();
   const { dispatch } = usePapers();
+  const { settings, updateSetting } = useUISettings();
+  
+  const isAIChatVisible = settings.chatVisible;
+  const setIsAIChatVisible = (visible) => updateSetting('chatVisible', visible);
+  const isSidebarVisible = !settings.leftSidebarHidden;
+  const setIsSidebarVisible = (visible) => updateSetting('leftSidebarHidden', !visible);
 
   // Handle menu actions from Electron
   useEffect(() => {
