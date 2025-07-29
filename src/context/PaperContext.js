@@ -9,6 +9,7 @@ const initialState = {
   starredPapers: [],
   searchHistory: [],
   currentUser: null,
+  currentPaper: null,
   isLoading: false,
 };
 
@@ -19,6 +20,9 @@ function paperReducer(state, action) {
 
     case "SET_USER":
       return { ...state, currentUser: action.payload };
+
+    case "SET_CURRENT_PAPER":
+      return { ...state, currentPaper: action.payload };
 
     case "ADD_OPEN_PAPER":
       const exists = state.openPapers.find((p) => p.id === action.payload.id);

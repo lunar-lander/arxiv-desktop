@@ -17,6 +17,11 @@ A desktop application for browsing, searching, and managing academic papers from
 - **Multiple Themes**: Choose from 30 different themes with system preference detection and visual theme cycling
 - **Sidebar Navigation**: Easy access to open papers, bookmarks, and starred papers
 - **Offline Reading**: Papers are cached locally for offline access
+- **AI Research Assistant**: Intelligent chat assistant for paper analysis and research guidance
+  - Contextual chat with current, open, or starred papers
+  - Paper suggestion and search assistance
+  - Multi-service AI support (OpenAI, Anthropic, Ollama, custom endpoints)
+  - Enhanced paper context with metadata and abstracts
 
 ## Project Structure
 
@@ -41,6 +46,10 @@ arxiv-desktop/
 │   │   ├── LoginModal.module.css
 │   │   ├── SearchFilters.js # Advanced search filters
 │   │   ├── SearchFilters.module.css
+│   │   ├── AIChat.js       # AI chat sidebar component
+│   │   ├── AIChat.module.css
+│   │   ├── AISearchHelper.js # AI search assistance component
+│   │   ├── AISearchHelper.module.css
 │   │   └── ThemeToggle.js  # Dark/light mode toggle
 │   ├── context/            # React context for state management
 │   │   ├── PaperContext.js # Paper state management
@@ -48,6 +57,7 @@ arxiv-desktop/
 │   └── services/           # API and storage services
 │       ├── arxivService.js # arXiv and bioRxiv API integration
 │       ├── authService.js  # Authentication service
+│       ├── aiService.js    # AI chat service with multi-provider support
 │       └── storageService.js # Local storage management
 ├── public/                 # Static assets
 ├── build/                  # Production build output
@@ -110,6 +120,59 @@ make dev            # Start full development (React + Electron)
 - JSON format responses
 - Date-based filtering with search capabilities
 
+## AI Research Assistant
+
+The app includes an intelligent AI assistant to help with research tasks and paper analysis.
+
+### Features
+- **Multi-service Support**: Compatible with OpenAI, Anthropic, Ollama, and custom OpenAI-compatible endpoints
+- **Contextual Chat**: Discuss papers with AI using context from:
+  - Current paper being viewed
+  - All open papers
+  - Starred papers
+  - No context (general research discussion)
+- **Search Assistance**: Get intelligent suggestions for paper searches
+- **Paper Analysis**: Ask questions about paper content, methodology, and implications
+
+### Supported AI Services
+
+#### OpenAI
+- **Endpoint**: `https://api.openai.com/v1/chat/completions`
+- **Default Model**: `gpt-3.5-turbo`
+- **Authentication**: API key required
+
+#### Anthropic
+- **Endpoint**: `https://api.anthropic.com/v1/messages`
+- **Default Model**: `claude-3-sonnet-20240229`
+- **Authentication**: API key required
+
+#### Ollama (Local)
+- **Endpoint**: `http://localhost:11434/v1/chat/completions`
+- **Default Model**: `llama2`
+- **Authentication**: Not required (local deployment)
+
+#### Custom Endpoints
+- Support for any OpenAI-compatible API
+- Configurable endpoint URL and model
+- Bearer token authentication
+
+### Configuration
+1. Click the "AI Assistant" button in the sidebar
+2. Click the settings gear icon
+3. Configure:
+   - AI Service (OpenAI, Anthropic, Ollama, Custom)
+   - API Endpoint URL
+   - Model name
+   - API Key (if required)
+   - Context Mode (None, Current Paper, Open Papers, Starred Papers)
+
+### Usage Examples
+- "Explain the methodology used in this paper"
+- "What are the key findings of these starred papers?"
+- "Suggest papers related to transformer architectures"
+- "Compare the approaches in these open papers"
+- "What research directions should I explore for computer vision?"
+
 ## Local Storage
 
 Papers and app data are stored locally:
@@ -131,16 +194,21 @@ Papers and app data are stored locally:
 - [x] Multiple theme support (30 themes including Light, Dark, Cyberpunk, Brogrammer, Bearded, Neon, Forest, Ocean, Sunset, Midnight, Matrix, Vampire, Synthwave, Terminal, Arctic, Autumn, Cherry, Galaxy, Vintage, Monochrome, Pastel, Coffee, Lavender, Emerald, Ruby, Copper, Slate, Coral, Ninja, Royal) with system preference detection
 - [x] User authentication framework (local storage)
 - [x] Persistent state management with automatic saving
+- [x] AI Research Assistant with multi-service support (OpenAI, Anthropic, Ollama, custom)
+- [x] Contextual AI chat with paper metadata and abstracts
+- [x] AI-powered search suggestions and research guidance
 
 ### 🚧 TODO
 - [ ] Add paper annotations and highlighting
 - [ ] Implement paper collections/folders
 - [ ] Add automatic paper updates notification
-- [ ] Implement paper recommendation system
 - [ ] Enhanced PDF search within documents
 - [ ] Export/import of bookmarks and settings
-- [ ] Full-text search across cached papers
+- [ ] Full-text PDF content extraction for enhanced AI context
 - [ ] Paper sharing and collaboration features
+- [ ] AI-powered paper recommendations based on reading history
+- [ ] Voice-to-text support for AI chat
+- [ ] Advanced AI features (summarization, key points extraction)
 
 ## Current Status
 
@@ -152,8 +220,14 @@ Papers and app data are stored locally:
 - Citation export in multiple formats
 - Theme switching and persistent state
 - Local paper caching for offline access
+- AI Research Assistant with multi-service support
+- Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-29**: Added AI Research Assistant with multi-service support (OpenAI, Anthropic, Ollama, Custom)
+- **2025-07-29**: Implemented contextual AI chat with paper metadata and abstract analysis
+- **2025-07-29**: Added AI search helper for intelligent paper suggestions and research guidance
+- **2025-07-29**: Enhanced paper context management for AI interactions
 - **2025-01-18**: Expanded theme collection to 30 themes including Neon, Forest, Ocean, Sunset, Midnight, Matrix, Vampire, Synthwave, Terminal, Arctic, Autumn, Cherry, Galaxy, Vintage, Monochrome, Pastel, Coffee, Lavender, Emerald, Ruby, Copper, Slate, Coral, Ninja, and Royal themes
 - **2025-01-07**: Added publish/update dates to search results and fixed text color issues in dark themes
 - **2025-01-07**: Added text selection and copy functionality to PDF viewer with floating copy button

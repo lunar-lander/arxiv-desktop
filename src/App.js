@@ -3,7 +3,7 @@ import HomePage from "./components/HomePage";
 import Sidebar from "./components/Sidebar";
 import PaperViewer from "./components/PaperViewer";
 import AIChat from "./components/AIChat";
-import { PaperProvider } from "./context/PaperContext";
+import { PaperProvider, usePapers } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import styles from "./components/App.module.css";
 
@@ -14,6 +14,7 @@ function AppContent() {
   const [lastSearchQuery, setLastSearchQuery] = useState("");
   const [isAIChatVisible, setIsAIChatVisible] = useState(false);
   const { currentTheme } = useTheme();
+  const { dispatch } = usePapers();
 
   // Handle menu actions from Electron
   useEffect(() => {
@@ -40,11 +41,17 @@ function AppContent() {
     }
   }, []);
 
+  const handlePaperSelect = (paper) => {
+    setSelectedPaper(paper);
+    dispatch({ type: "SET_CURRENT_PAPER", payload: paper });
+    setCurrentView("paper");
+  };
+
   return (
     <div className={`${styles.appContainer} ${styles[currentTheme]}`}>
       <Sidebar
         onNavigate={setCurrentView}
-        onPaperSelect={setSelectedPaper}
+        onPaperSelect={handlePaperSelect}
         currentView={currentView}
         onToggleAIChat={() => setIsAIChatVisible(!isAIChatVisible)}
         isAIChatVisible={isAIChatVisible}
@@ -52,10 +59,7 @@ function AppContent() {
       <div className={styles.mainContent}>
         {currentView === "home" && (
           <HomePage
-            onPaperOpen={(paper) => {
-              setSelectedPaper(paper);
-              setCurrentView("paper");
-            }}
+            onPaperOpen={handlePaperSelect}
             searchResults={searchResults}
             onSearchResults={setSearchResults}
             lastSearchQuery={lastSearchQuery}

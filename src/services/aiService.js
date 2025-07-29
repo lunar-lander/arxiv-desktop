@@ -97,14 +97,62 @@ export class AIService {
     let context = "";
     
     if (papers.length > 0) {
-      context = "Available papers for context:\n";
+      context = `Available papers for reference (${papers.length} papers):\n\n`;
       papers.forEach((paper, index) => {
-        context += `${index + 1}. Title: ${paper.title}\n`;
-        context += `   Authors: ${paper.authors?.join(", ") || "Unknown"}\n`;
-        context += `   Abstract: ${paper.summary || "No abstract available"}\n\n`;
+        context += `Paper ${index + 1}:\n`;
+        context += `Title: ${paper.title}\n`;
+        context += `Authors: ${paper.authors?.join(", ") || "Unknown"}\n`;
+        context += `Published: ${paper.published || paper.date || "Unknown date"}\n`;
+        context += `Source: ${paper.source || "Unknown"}\n`;
+        
+        if (paper.categories && paper.categories.length > 0) {
+          context += `Categories: ${paper.categories.join(", ")}\n`;
+        }
+        
+        if (paper.summary) {
+          context += `Abstract: ${paper.summary}\n`;
+        }
+        
+        if (paper.doi) {
+          context += `DOI: ${paper.doi}\n`;
+        }
+        
+        if (paper.arxivId) {
+          context += `ArXiv ID: ${paper.arxivId}\n`;
+        }
+        
+        context += "\n---\n\n";
       });
+      
+      context += `Instructions: Use the above papers as context for your response. You can reference specific papers by their titles or by "Paper X" (where X is the number). If the user asks about content not covered in the abstracts, mention that you would need the full paper text for more detailed analysis.`;
     }
     
     return await this.sendMessage(message, context);
+  }
+  
+  static async extractKeywords(papers = []) {
+    if (papers.length === 0) return [];
+    
+    const titles = papers.map(p => p.title).join(" ");
+    const abstracts = papers.map(p => p.summary || "").join(" ");
+    const text = `${titles} ${abstracts}`;
+    
+    // Simple keyword extraction (can be enhanced with NLP libraries later)
+    const words = text.toLowerCase()
+      .replace(/[^\w\s]/g, " ")
+      .split(/\s+/)
+      .filter(word => word.length > 3)
+      .filter(word => !["the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "this", "that", "these", "those", "they", "their", "them", "from", "into", "through", "during", "before", "after", "above", "below", "between", "among", "under", "over", "about", "against", "within", "without", "upon", "across", "behind", "beyond", "since", "until", "while", "where", "when", "what", "which", "who", "whom", "whose", "why", "how", "paper", "papers", "study", "studies", "research", "using", "used", "based", "approach", "method", "methods", "results", "analysis", "show", "shows", "present", "presents", "propose", "proposed", "develop", "developed", "model", "models", "data", "dataset", "datasets", "algorithm", "algorithms", "performance", "evaluation", "experimental", "experiments"].includes(word));
+    
+    // Count frequency and return top keywords
+    const frequency = {};
+    words.forEach(word => {
+      frequency[word] = (frequency[word] || 0) + 1;
+    });
+    
+    return Object.entries(frequency)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 10)
+      .map(([word]) => word);
   }
 }
