@@ -280,6 +280,7 @@ Papers and app data are stored locally:
 - Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-30**: Fixed critical AI chat network error bug by properly delegating to AI service
 - **2025-07-30**: Implemented full PDF content extraction for comprehensive paper analysis
 - **2025-07-30**: Added automatic PDF text processing with smart caching and visual status indicators
 - **2025-07-30**: Enhanced AI context with complete paper content (beyond just abstracts)
