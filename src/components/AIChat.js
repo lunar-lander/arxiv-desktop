@@ -26,6 +26,8 @@ function AIChat({ isVisible, onClose }) {
   const [selectedPapers, setSelectedPapers] = useState(new Set());
   const [isResizing, setIsResizing] = useState(false);
   const [showChatHistory, setShowChatHistory] = useState(false);
+  const [paperContextSet, setPaperContextSet] = useState(false);
+  const [lastPaperSelection, setLastPaperSelection] = useState(new Set());
   const messagesEndRef = useRef(null);
   const resizeRef = useRef(null);
   const { state, dispatch } = usePapers();
@@ -86,6 +88,20 @@ function AIChat({ isVisible, onClose }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Reset paper context when selection changes
+  useEffect(() => {
+    const currentSelection = new Set(selectedPapers);
+    const hasChanged = currentSelection.size !== lastPaperSelection.size || 
+      [...currentSelection].some(id => !lastPaperSelection.has(id));
+    
+    if (hasChanged && messages.length > 0) {
+      // Paper selection changed mid-conversation, reset context
+      setPaperContextSet(false);
+    }
+    
+    setLastPaperSelection(currentSelection);
+  }, [selectedPapers, lastPaperSelection, messages.length]);
 
   // Resize functionality
   useEffect(() => {
@@ -258,22 +274,29 @@ function AIChat({ isVisible, onClose }) {
     try {
       const contextPapers = getContextPapers();
 
-      // Prepare PDF content map for context
-      const pdfContentMap = new Map();
-      contextPapers.forEach((paper) => {
-        const paperId = paper.id || paper.arxivId;
-        const pdfContent = getPDFContent(paperId);
-        if (pdfContent) {
-          pdfContentMap.set(paperId, pdfContent);
-        }
-      });
+      // Only prepare PDF content if context hasn't been set or papers changed
+      let pdfContentMap = new Map();
+      let shouldIncludePaperContext = false;
+      
+      if (!paperContextSet || messages.length === 0) {
+        // First message or context needs to be established
+        contextPapers.forEach((paper) => {
+          const paperId = paper.id || paper.arxivId;
+          const pdfContent = getPDFContent(paperId);
+          if (pdfContent) {
+            pdfContentMap.set(paperId, pdfContent);
+          }
+        });
+        shouldIncludePaperContext = true;
+        setPaperContextSet(true);
+      }
 
       let streamedContent = "";
 
       await chatWithPaperContextStream(
         userMessage,
-        contextPapers,
-        pdfContentMap,
+        shouldIncludePaperContext ? contextPapers : [],
+        shouldIncludePaperContext ? pdfContentMap : new Map(),
         messages, // Pass conversation history
         (chunk, fullContent) => {
           streamedContent = fullContent;
@@ -340,8 +363,12 @@ function AIChat({ isVisible, onClose }) {
               ) {
                 startNewChat();
                 setMessages([]);
+                setPaperContextSet(false); // Reset paper context for new chat
+                setLastPaperSelection(new Set());
               } else if (messages.length === 0) {
                 startNewChat();
+                setPaperContextSet(false); // Reset paper context for new chat
+                setLastPaperSelection(new Set());
               }
             }}
             title="New Chat"
@@ -509,6 +536,9 @@ function AIChat({ isVisible, onClose }) {
           <div className={styles.paperSelectionHeader}>
             <span className={styles.paperSelectionTitle}>
               Context Papers ({getContextPapers().length} selected)
+              {paperContextSet && messages.length > 0 && (
+                <span className={styles.contextStatus}> - Context Set ✓</span>
+              )}
             </span>
             <div className={styles.paperSelectionControls}>
               <button
@@ -591,6 +621,8 @@ function AIChat({ isVisible, onClose }) {
         onClose={() => setShowChatHistory(false)}
         onLoadSession={(session) => {
           setMessages(session.messages);
+          setPaperContextSet(false); // Reset context when loading old session
+          setLastPaperSelection(new Set());
           setShowChatHistory(false);
         }}
         currentMessages={messages}

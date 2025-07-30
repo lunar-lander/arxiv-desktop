@@ -362,6 +362,13 @@ Please let them know that you only have access to the abstract and metadata, and
   static async chatWithPaperContextStream(message, papers = [], pdfContentMap = null, conversationHistory = [], onChunk = null) {
     let context = "";
     
+    // Only build context if papers are provided (optimization: avoid rebuilding context on each message)
+    if (papers.length > 0) {
+      console.log(`Building paper context for ${papers.length} papers`);
+    } else {
+      console.log('No papers provided - using conversation history only');
+    }
+    
     if (papers.length > 0) {
       context = `Available papers for reference (${papers.length} papers):\n\n`;
       
