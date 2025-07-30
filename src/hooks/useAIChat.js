@@ -73,18 +73,6 @@ export function useAIChat() {
     }
   };
 
-  const sendStreamingPaperSuggestion = async (query, preferences = {}, onChunk = null) => {
-    setIsLoading(true);
-    try {
-      const response = await AIService.suggestPapersStream(query, preferences, onChunk);
-      return response;
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const chatWithPaperContextStream = async (message, papers = [], pdfContentMap = null, conversationHistory = [], onChunk = null) => {
     setIsLoading(true);
     try {
@@ -115,7 +103,6 @@ export function useAIChat() {
     
     // Methods
     sendStreamingMessage,
-    sendStreamingPaperSuggestion,
     chatWithPaperContextStream,
   };
 }
