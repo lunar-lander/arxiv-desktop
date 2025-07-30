@@ -28,7 +28,7 @@ function AIChat({ isVisible, onClose }) {
   const [showChatHistory, setShowChatHistory] = useState(false);
   const messagesEndRef = useRef(null);
   const resizeRef = useRef(null);
-  const { state } = usePapers();
+  const { state, dispatch } = usePapers();
   const { settings, updateSetting } = useUISettings();
   const {
     currentMessages,
@@ -153,16 +153,36 @@ function AIChat({ isVisible, onClose }) {
         const status = getExtractionStatus(paperId);
 
         // Only extract if not already extracted or in progress
-        if (status === "not_started" && paper.localPath) {
+        if (status === "not_started") {
           console.log(`Starting PDF extraction for: ${paper.title}`);
-          console.log(`PDF path: ${paper.localPath}`);
+          
           try {
+            // Download PDF if localPath is missing
+            if (!paper.localPath) {
+              console.log(`No local PDF path, downloading PDF for: ${paper.title}`);
+              const storageService = (await import('../services/storageService')).default;
+              const localPath = await storageService.downloadAndCachePdf(paper);
+              
+              if (localPath) {
+                paper.localPath = localPath;
+                console.log(`PDF downloaded successfully: ${localPath}`);
+                
+                // Update the paper in context state with the localPath
+                await dispatch({
+                  type: "UPDATE_PAPER_LOCAL_PATH",
+                  payload: { paperId: paper.id, localPath }
+                });
+              } else {
+                console.error(`Failed to download PDF for: ${paper.title}`);
+                return;
+              }
+            }
+
+            console.log(`PDF path: ${paper.localPath}`);
             await extractPDFContent(paper, { maxPages: 30 }); // Limit for LLM context
           } catch (error) {
             console.error(`Failed to extract PDF for ${paper.title}:`, error);
           }
-        } else if (status === "not_started") {
-          console.log(`No local PDF path for: ${paper.title}`);
         }
       });
     }
