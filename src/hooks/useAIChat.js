@@ -85,55 +85,10 @@ export function useAIChat() {
     }
   };
 
-  const chatWithPaperContextStream = async (message, papers = [], onChunk = null) => {
+  const chatWithPaperContextStream = async (message, papers = [], pdfContentMap = null, onChunk = null) => {
     setIsLoading(true);
     try {
-      let context = "";
-      
-      if (papers.length > 0) {
-        context = `Available papers for reference (${papers.length} papers):\n\n`;
-        papers.forEach((paper, index) => {
-          context += `Paper ${index + 1}:\n`;
-          context += `Title: ${paper.title}\n`;
-          context += `Authors: ${paper.authors?.join(", ") || "Unknown"}\n`;
-          context += `Published: ${paper.published || paper.date || "Unknown date"}\n`;
-          context += `Source: ${paper.source || "Unknown"}\n`;
-          
-          if (paper.categories && paper.categories.length > 0) {
-            context += `Categories: ${paper.categories.join(", ")}\n`;
-          }
-          
-          if (paper.summary) {
-            context += `Abstract: ${paper.summary}\n`;
-          }
-          
-          if (paper.doi) {
-            context += `DOI: ${paper.doi}\n`;
-          }
-          
-          if (paper.arxivId) {
-            context += `ArXiv ID: ${paper.arxivId}\n`;
-          }
-          
-          context += "\n---\n\n";
-        });
-        
-        context += `Instructions: Use the above papers as context for your response. You can reference specific papers by their titles or by "Paper X" (where X is the number). 
-
-IMPORTANT: You currently only have access to the paper metadata and abstracts. If the user asks about:
-- Specific methodological details not in the abstract
-- Experimental results beyond what's summarized
-- Detailed mathematical derivations
-- Specific figures, tables, or equations
-- Full paper content analysis
-
-Please let them know that you only have access to the abstract and metadata, and suggest they can:
-1. Copy and paste specific text from the PDF viewer into the chat for detailed discussion
-2. Ask questions about the general concepts, implications, or relationships between papers
-3. Request paper recommendations or research directions based on the abstracts`;
-      }
-      
-      const response = await AIService.sendMessageStream(message, context, onChunk);
+      const response = await AIService.chatWithPaperContextStream(message, papers, pdfContentMap, onChunk);
       return response;
     } catch (error) {
       throw error;
