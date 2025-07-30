@@ -294,6 +294,16 @@ ipcMain.handle("read-file", async (event, filePath) => {
   }
 });
 
+ipcMain.handle("read-file-as-buffer", async (event, filePath) => {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    return buffer.buffer; // Return the underlying ArrayBuffer
+  } catch (error) {
+    console.error("Error reading file as buffer:", error);
+    throw new Error(`Failed to read file: ${error.message}`);
+  }
+});
+
 ipcMain.handle("file-exists", async (event, filePath) => {
   return fs.existsSync(filePath);
 });

@@ -45,7 +45,18 @@ export function usePDFContent() {
         ...options
       };
 
-      const content = await PDFExtractionService.extractText(paper.localPath, defaultOptions);
+      // Try to extract from local path first, fallback to URL if that fails
+      let content;
+      try {
+        content = await PDFExtractionService.extractText(paper.localPath, defaultOptions);
+      } catch (localError) {
+        console.warn(`Local PDF extraction failed for ${paper.title}, trying URL:`, localError.message);
+        if (paper.pdfUrl) {
+          content = await PDFExtractionService.extractText(paper.pdfUrl, defaultOptions);
+        } else {
+          throw localError;
+        }
+      }
       
       const extractedData = {
         paperId,

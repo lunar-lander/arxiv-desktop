@@ -38,8 +38,30 @@ export class PDFExtractionService {
     try {
       console.log('Attempting to extract PDF text from:', filePath);
       
+      // For local files, we need to read them as ArrayBuffer via Electron
+      let pdfSource;
+      if (filePath.startsWith('/') || filePath.includes(':\\')) {
+        // Local file path - read as ArrayBuffer via Electron API
+        console.log('Reading local PDF file via Electron API...');
+        if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.readFileAsBuffer) {
+          try {
+            const arrayBuffer = await window.electronAPI.readFileAsBuffer(filePath);
+            pdfSource = new Uint8Array(arrayBuffer);
+            console.log('PDF file loaded as ArrayBuffer, size:', arrayBuffer.byteLength);
+          } catch (readError) {
+            console.error('Failed to read PDF file via Electron:', readError);
+            throw new Error(`Cannot read PDF file: ${readError.message}`);
+          }
+        } else {
+          throw new Error('Electron API not available for reading local files');
+        }
+      } else {
+        // URL - use directly
+        pdfSource = filePath;
+      }
+      
       // Load the PDF document
-      const loadingTask = pdfjsLib.getDocument(filePath);
+      const loadingTask = pdfjsLib.getDocument(pdfSource);
       const pdf = await loadingTask.promise;
       
       console.log(`PDF loaded successfully. Pages: ${pdf.numPages}`);
@@ -111,7 +133,22 @@ export class PDFExtractionService {
       
     } catch (error) {
       console.error('Error extracting PDF text:', error);
-      throw new Error(`Failed to extract text from PDF: ${error.message}`);
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      
+      // Provide more specific error messages based on error type
+      if (error.message.includes('Invalid PDF structure')) {
+        throw new Error('PDF file appears to be corrupted or not a valid PDF');
+      } else if (error.message.includes('Cannot read PDF file')) {
+        throw new Error('Unable to access PDF file - it may be locked or corrupted');
+      } else if (error.message.includes('Electron API not available')) {
+        throw new Error('Cannot access local PDF files - Electron integration issue');
+      } else {
+        throw new Error(`Failed to extract text from PDF: ${error.message}`);
+      }
     }
   }
   

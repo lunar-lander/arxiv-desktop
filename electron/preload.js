@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ensureDirectory: (dirPath) => ipcRenderer.invoke('ensure-directory', dirPath),
   writeFile: (filePath, data) => ipcRenderer.invoke('write-file', filePath, data),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  readFileAsBuffer: (filePath) => ipcRenderer.invoke('read-file-as-buffer', filePath),
   fileExists: (filePath) => ipcRenderer.invoke('file-exists', filePath),
   
   // External operations
