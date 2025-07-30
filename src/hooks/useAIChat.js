@@ -85,10 +85,10 @@ export function useAIChat() {
     }
   };
 
-  const chatWithPaperContextStream = async (message, papers = [], pdfContentMap = null, onChunk = null) => {
+  const chatWithPaperContextStream = async (message, papers = [], pdfContentMap = null, conversationHistory = [], onChunk = null) => {
     setIsLoading(true);
     try {
-      const response = await AIService.chatWithPaperContextStream(message, papers, pdfContentMap, onChunk);
+      const response = await AIService.chatWithPaperContextStream(message, papers, pdfContentMap, conversationHistory, onChunk);
       return response;
     } catch (error) {
       throw error;

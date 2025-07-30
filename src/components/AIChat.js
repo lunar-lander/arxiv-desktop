@@ -274,6 +274,7 @@ function AIChat({ isVisible, onClose }) {
         userMessage,
         contextPapers,
         pdfContentMap,
+        messages, // Pass conversation history
         (chunk, fullContent) => {
           streamedContent = fullContent;
           setMessages((prev) =>

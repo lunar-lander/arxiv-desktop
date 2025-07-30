@@ -87,7 +87,41 @@ export class AIService {
     }
   }
 
-  static async sendMessageStream(message, context = null, onChunk = null) {
+  static async sendAnthropicWithHistory(conversationMessages, context = null) {
+    try {
+      let systemPrompt = "You are an AI assistant helping with academic research. You can help users understand papers, suggest research directions, and answer questions about academic content.";
+      
+      if (context) {
+        systemPrompt += `\n\nContext: ${context}`;
+      }
+
+      const requestBody = {
+        model: this.model,
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: conversationMessages
+      };
+
+      const headers = {
+        "Content-Type": "application/json",
+        "x-api-key": this.apiKey,
+        "anthropic-version": "2023-06-01"
+      };
+
+      const response = await axios.post(this.apiEndpoint, requestBody, { headers });
+      return response.data.content[0].text;
+    } catch (error) {
+      console.error("Anthropic API error:", error);
+      if (error.response?.status === 401) {
+        throw new Error("Invalid API key. Please check your credentials.");
+      } else if (error.response?.status === 429) {
+        throw new Error("Rate limit exceeded. Please try again later.");
+      }
+      throw new Error("Failed to get AI response. Please check your settings and try again.");
+    }
+  }
+
+  static async sendMessageStream(message, context = null, conversationHistory = [], onChunk = null) {
     if (!this.apiKey && this.serviceType !== "ollama") {
       throw new Error("AI API key not configured. Please set your API key in settings.");
     }
@@ -99,21 +133,41 @@ export class AIService {
         systemPrompt += `\n\nContext: ${context}`;
       }
       
+      // Build messages array with conversation history
+      const messages = [
+        {
+          role: "system",
+          content: systemPrompt
+        }
+      ];
+
+      // Add conversation history (excluding system messages and the current message)
+      conversationHistory.forEach(msg => {
+        if (msg.type === "user") {
+          messages.push({
+            role: "user",
+            content: msg.content
+          });
+        } else if (msg.type === "ai" && !msg.isStreaming) {
+          messages.push({
+            role: "assistant",
+            content: msg.content
+          });
+        }
+      });
+
+      // Add the current message
+      messages.push({
+        role: "user",
+        content: message
+      });
+      
       // OpenAI-compatible format with streaming
       const requestBody = {
         model: this.model,
         max_tokens: 1000,
         stream: true,
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ]
+        messages: messages
       };
       
       // Headers for different services
@@ -125,8 +179,33 @@ export class AIService {
       if (this.serviceType === "openai") {
         headers["Authorization"] = `Bearer ${this.apiKey}`;
       } else if (this.serviceType === "anthropic") {
-        // For Anthropic, simulate streaming by chunking the response
-        const response = await this.sendMessage(message, context);
+        // For Anthropic, we need to handle conversation history differently
+        // Build the conversation for Anthropic format
+        let conversationMessages = [];
+        
+        // Add conversation history
+        conversationHistory.forEach(msg => {
+          if (msg.type === "user") {
+            conversationMessages.push({
+              role: "user",
+              content: msg.content
+            });
+          } else if (msg.type === "ai" && !msg.isStreaming) {
+            conversationMessages.push({
+              role: "assistant", 
+              content: msg.content
+            });
+          }
+        });
+        
+        // Add current message
+        conversationMessages.push({
+          role: "user",
+          content: message
+        });
+        
+        // Call Anthropic with conversation history
+        const response = await this.sendAnthropicWithHistory(conversationMessages, context);
         if (onChunk) {
           // Simulate streaming by sending chunks with delay
           const words = response.split(' ');
@@ -280,7 +359,7 @@ Please let them know that you only have access to the abstract and metadata, and
     return await this.sendMessage(message, context);
   }
 
-  static async chatWithPaperContextStream(message, papers = [], pdfContentMap = null, onChunk = null) {
+  static async chatWithPaperContextStream(message, papers = [], pdfContentMap = null, conversationHistory = [], onChunk = null) {
     let context = "";
     
     if (papers.length > 0) {
@@ -350,7 +429,7 @@ When referencing content, please cite it as "Paper X" where X is the paper numbe
       }
     }
     
-    return await this.sendMessageStream(message, context, onChunk);
+    return await this.sendMessageStream(message, context, conversationHistory, onChunk);
   }
   
   static async extractKeywords(papers = []) {
