@@ -4,7 +4,9 @@ import { AIService } from "../services/aiService";
 export function useAIChat() {
   const [apiKey, setApiKey] = useState("");
   const [serviceType, setServiceType] = useState("openai");
-  const [endpoint, setEndpoint] = useState("https://api.openai.com/v1/chat/completions");
+  const [endpoint, setEndpoint] = useState(
+    "https://api.openai.com/v1/chat/completions"
+  );
   const [model, setModel] = useState("gpt-3.5-turbo");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -14,7 +16,7 @@ export function useAIChat() {
     const savedServiceType = localStorage.getItem("ai_service_type");
     const savedEndpoint = localStorage.getItem("ai_endpoint");
     const savedModel = localStorage.getItem("ai_model");
-    
+
     if (savedApiKey) {
       setApiKey(savedApiKey);
       AIService.setApiKey(savedApiKey);
@@ -35,7 +37,7 @@ export function useAIChat() {
 
   const handleServiceTypeChange = (newServiceType) => {
     setServiceType(newServiceType);
-    
+
     // Set default endpoints and models based on service type
     if (newServiceType === "openai") {
       setEndpoint("https://api.openai.com/v1/chat/completions");
@@ -54,17 +56,25 @@ export function useAIChat() {
     localStorage.setItem("ai_service_type", serviceType);
     localStorage.setItem("ai_endpoint", endpoint);
     localStorage.setItem("ai_model", model);
-    
+
     AIService.setApiKey(apiKey);
     AIService.setServiceType(serviceType);
     AIService.setEndpoint(endpoint);
     AIService.setModel(model);
   };
 
-  const sendStreamingMessage = async (message, context = null, onChunk = null) => {
+  const sendStreamingMessage = async (
+    message,
+    context = null,
+    onChunk = null
+  ) => {
     setIsLoading(true);
     try {
-      const response = await AIService.sendMessageStream(message, context, onChunk);
+      const response = await AIService.sendMessageStream(
+        message,
+        context,
+        onChunk
+      );
       return response;
     } catch (error) {
       throw error;
@@ -73,10 +83,22 @@ export function useAIChat() {
     }
   };
 
-  const chatWithPaperContextStream = async (message, papers = [], pdfContentMap = null, conversationHistory = [], onChunk = null) => {
+  const chatWithPaperContextStream = async (
+    message,
+    papers = [],
+    pdfContentMap = null,
+    conversationHistory = [],
+    onChunk = null
+  ) => {
     setIsLoading(true);
     try {
-      const response = await AIService.chatWithPaperContextStream(message, papers, pdfContentMap, conversationHistory, onChunk);
+      const response = await AIService.chatWithPaperContextStream(
+        message,
+        papers,
+        pdfContentMap,
+        conversationHistory,
+        onChunk
+      );
       return response;
     } catch (error) {
       throw error;
@@ -97,10 +119,10 @@ export function useAIChat() {
     setModel,
     handleServiceTypeChange,
     saveSettings,
-    
+
     // State
     isLoading,
-    
+
     // Methods
     sendStreamingMessage,
     chatWithPaperContextStream,

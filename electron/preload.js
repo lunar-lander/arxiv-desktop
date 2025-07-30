@@ -1,45 +1,49 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require("electron");
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge.exposeInMainWorld("electronAPI", {
   // File system operations
-  getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
-  ensureDirectory: (dirPath) => ipcRenderer.invoke('ensure-directory', dirPath),
-  writeFile: (filePath, data) => ipcRenderer.invoke('write-file', filePath, data),
-  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
-  readFileAsBuffer: (filePath) => ipcRenderer.invoke('read-file-as-buffer', filePath),
-  fileExists: (filePath) => ipcRenderer.invoke('file-exists', filePath),
-  
+  getAppDataPath: () => ipcRenderer.invoke("get-app-data-path"),
+  ensureDirectory: (dirPath) => ipcRenderer.invoke("ensure-directory", dirPath),
+  writeFile: (filePath, data) =>
+    ipcRenderer.invoke("write-file", filePath, data),
+  readFile: (filePath) => ipcRenderer.invoke("read-file", filePath),
+  readFileAsBuffer: (filePath) =>
+    ipcRenderer.invoke("read-file-as-buffer", filePath),
+  fileExists: (filePath) => ipcRenderer.invoke("file-exists", filePath),
+
   // External operations
-  openExternal: (url) => ipcRenderer.invoke('open-external', url),
-  downloadFile: (url, filename) => ipcRenderer.invoke('download-file', url, filename),
-  showItemInFolder: (filePath) => ipcRenderer.invoke('show-item-in-folder', filePath),
-  
+  openExternal: (url) => ipcRenderer.invoke("open-external", url),
+  downloadFile: (url, filename) =>
+    ipcRenderer.invoke("download-file", url, filename),
+  showItemInFolder: (filePath) =>
+    ipcRenderer.invoke("show-item-in-folder", filePath),
+
   // Dialog operations
-  showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
-  showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
-  showMessageBox: (options) => ipcRenderer.invoke('show-message-box', options),
-  
+  showSaveDialog: (options) => ipcRenderer.invoke("show-save-dialog", options),
+  showOpenDialog: (options) => ipcRenderer.invoke("show-open-dialog", options),
+  showMessageBox: (options) => ipcRenderer.invoke("show-message-box", options),
+
   // Menu event listeners
   onMenuAction: (callback) => {
-    ipcRenderer.on('menu-action', (event, action, data) => {
+    ipcRenderer.on("menu-action", (event, action, data) => {
       callback(action, data);
     });
   },
-  
+
   // Remove menu event listeners
   removeMenuActionListener: () => {
-    ipcRenderer.removeAllListeners('menu-action');
+    ipcRenderer.removeAllListeners("menu-action");
   },
-  
+
   // Platform detection
   platform: process.platform,
-  
+
   // App info
   versions: {
     node: process.versions.node,
     chrome: process.versions.chrome,
-    electron: process.versions.electron
-  }
+    electron: process.versions.electron,
+  },
 });

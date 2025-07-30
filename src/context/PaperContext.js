@@ -68,13 +68,13 @@ function paperReducer(state, action) {
     case "UPDATE_PAPER_LOCAL_PATH":
       return {
         ...state,
-        openPapers: state.openPapers.map(p => 
-          p.id === action.payload.paperId 
+        openPapers: state.openPapers.map((p) =>
+          p.id === action.payload.paperId
             ? { ...p, localPath: action.payload.localPath }
             : p
         ),
-        starredPapers: state.starredPapers.map(p => 
-          p.id === action.payload.paperId 
+        starredPapers: state.starredPapers.map((p) =>
+          p.id === action.payload.paperId
             ? { ...p, localPath: action.payload.localPath }
             : p
         ),
@@ -117,7 +117,10 @@ export function PaperProvider({ children }) {
       case "UPDATE_PAPER_LOCAL_PATH":
         dispatch(action);
         // Update both opened and starred papers in storage
-        await storageService.updatePaperLocalPath(action.payload.paperId, action.payload.localPath);
+        await storageService.updatePaperLocalPath(
+          action.payload.paperId,
+          action.payload.localPath
+        );
         break;
       default:
         dispatch(action);

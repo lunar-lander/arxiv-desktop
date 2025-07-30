@@ -16,11 +16,12 @@ function AppContent() {
   const { currentTheme } = useTheme();
   const { dispatch } = usePapers();
   const { settings, updateSetting } = useUISettings();
-  
+
   const isAIChatVisible = settings.chatVisible;
-  const setIsAIChatVisible = (visible) => updateSetting('chatVisible', visible);
+  const setIsAIChatVisible = (visible) => updateSetting("chatVisible", visible);
   const isSidebarVisible = !settings.leftSidebarHidden;
-  const setIsSidebarVisible = (visible) => updateSetting('leftSidebarHidden', !visible);
+  const setIsSidebarVisible = (visible) =>
+    updateSetting("leftSidebarHidden", !visible);
 
   // Handle menu actions from Electron
   useEffect(() => {
@@ -65,9 +66,11 @@ function AppContent() {
           onToggleSidebar={() => setIsSidebarVisible(false)}
         />
       )}
-      <div className={`${styles.mainContent} ${!isSidebarVisible ? styles.fullWidth : ''}`}>
+      <div
+        className={`${styles.mainContent} ${!isSidebarVisible ? styles.fullWidth : ""}`}
+      >
         {!isSidebarVisible && (
-          <button 
+          <button
             className={styles.showSidebarButton}
             onClick={() => setIsSidebarVisible(true)}
             title="Show sidebar"

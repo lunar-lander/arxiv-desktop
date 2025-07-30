@@ -296,7 +296,7 @@ function PaperViewer({ paper }) {
             {new Date(paper.published).getFullYear()}
           </div>
         </div>
-        
+
         <div className={styles.allControls}>
           {!isLoading && !error && (
             <div className={styles.pdfControls}>
@@ -327,7 +327,7 @@ function PaperViewer({ paper }) {
                   <ChevronRight size={16} />
                 </button>
               </div>
-              
+
               <div className={styles.zoomControls}>
                 <button
                   className={styles.controlButton}
@@ -370,7 +370,7 @@ function PaperViewer({ paper }) {
               </div>
             </div>
           )}
-          
+
           <div className={styles.viewerActions}>
             <button className={styles.actionButton} onClick={handleStar}>
               <Star size={16} fill={isStarred ? "#f39c12" : "none"} />

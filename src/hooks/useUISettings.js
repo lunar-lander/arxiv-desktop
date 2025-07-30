@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { SettingsService } from "../services/settingsService";
 
 export function useUISettings() {
-  const [settings, setSettings] = useState(SettingsService.getDefaultUISettings());
+  const [settings, setSettings] = useState(
+    SettingsService.getDefaultUISettings()
+  );
 
   // Load settings on mount
   useEffect(() => {
@@ -36,6 +38,6 @@ export function useUISettings() {
     settings,
     updateSetting,
     updateSettings,
-    resetSettings
+    resetSettings,
   };
 }

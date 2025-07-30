@@ -19,7 +19,7 @@ export class SettingsService {
       chatSidebarWidth: 400,
       leftSidebarHidden: false,
       chatVisible: false,
-      lastSavedAt: new Date().toISOString()
+      lastSavedAt: new Date().toISOString(),
     };
   }
 
@@ -29,7 +29,7 @@ export class SettingsService {
       const newSettings = {
         ...currentSettings,
         ...settings,
-        lastSavedAt: new Date().toISOString()
+        lastSavedAt: new Date().toISOString(),
       };
       localStorage.setItem(this.UI_SETTINGS_KEY, JSON.stringify(newSettings));
       return newSettings;
@@ -98,11 +98,11 @@ export class SettingsService {
         context: context,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        messageCount: messages.length
+        messageCount: messages.length,
       };
 
       sessions.unshift(newSession); // Add to beginning
-      
+
       // Keep only last 50 sessions to prevent storage bloat
       if (sessions.length > 50) {
         sessions.splice(50);
@@ -119,17 +119,19 @@ export class SettingsService {
   static updateChatSession(sessionId, messages, context = {}) {
     try {
       const sessions = this.getChatSessions();
-      const sessionIndex = sessions.findIndex(session => session.id === sessionId);
-      
+      const sessionIndex = sessions.findIndex(
+        (session) => session.id === sessionId
+      );
+
       if (sessionIndex !== -1) {
         sessions[sessionIndex] = {
           ...sessions[sessionIndex],
           messages: messages,
           context: context,
           updatedAt: new Date().toISOString(),
-          messageCount: messages.length
+          messageCount: messages.length,
         };
-        
+
         localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
         return sessions[sessionIndex];
       }
@@ -142,21 +144,21 @@ export class SettingsService {
 
   static generateAutoSessionName(messages) {
     if (messages.length === 0) return "New Chat";
-    
+
     // Use the first user message as session name (truncated)
-    const firstUserMessage = messages.find(msg => msg.type === 'user');
+    const firstUserMessage = messages.find((msg) => msg.type === "user");
     if (firstUserMessage && firstUserMessage.content) {
       const name = firstUserMessage.content.trim();
       return name.length > 50 ? `${name.substring(0, 50)}...` : name;
     }
-    
+
     return `Chat ${new Date().toLocaleDateString()}`;
   }
 
   static loadChatSession(sessionId) {
     try {
       const sessions = this.getChatSessions();
-      return sessions.find(session => session.id === sessionId) || null;
+      return sessions.find((session) => session.id === sessionId) || null;
     } catch (error) {
       console.error("Error loading chat session:", error);
       return null;
@@ -166,8 +168,13 @@ export class SettingsService {
   static deleteChatSession(sessionId) {
     try {
       const sessions = this.getChatSessions();
-      const filteredSessions = sessions.filter(session => session.id !== sessionId);
-      localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(filteredSessions));
+      const filteredSessions = sessions.filter(
+        (session) => session.id !== sessionId
+      );
+      localStorage.setItem(
+        this.CHAT_SESSIONS_KEY,
+        JSON.stringify(filteredSessions)
+      );
       return true;
     } catch (error) {
       console.error("Error deleting chat session:", error);
@@ -175,37 +182,37 @@ export class SettingsService {
     }
   }
 
-  static exportChatSession(sessionId, format = 'json') {
+  static exportChatSession(sessionId, format = "json") {
     try {
       const session = this.loadChatSession(sessionId);
       if (!session) return null;
 
-      const fileName = `${session.name.replace(/[^a-z0-9]/gi, '_')}_${sessionId}`;
-      
+      const fileName = `${session.name.replace(/[^a-z0-9]/gi, "_")}_${sessionId}`;
+
       switch (format.toLowerCase()) {
-        case 'json':
+        case "json":
           return {
             fileName: `${fileName}.json`,
             content: JSON.stringify(session, null, 2),
-            mimeType: 'application/json'
+            mimeType: "application/json",
           };
-        
-        case 'txt':
+
+        case "txt":
           const textContent = this.formatSessionAsText(session);
           return {
             fileName: `${fileName}.txt`,
             content: textContent,
-            mimeType: 'text/plain'
+            mimeType: "text/plain",
           };
-        
-        case 'md':
+
+        case "md":
           const markdownContent = this.formatSessionAsMarkdown(session);
           return {
             fileName: `${fileName}.md`,
             content: markdownContent,
-            mimeType: 'text/markdown'
+            mimeType: "text/markdown",
           };
-        
+
         default:
           throw new Error(`Unsupported export format: ${format}`);
       }
@@ -219,12 +226,17 @@ export class SettingsService {
     let content = `Chat Session: ${session.name}\n`;
     content += `Created: ${new Date(session.createdAt).toLocaleString()}\n`;
     content += `Messages: ${session.messageCount}\n`;
-    content += `${'='.repeat(50)}\n\n`;
+    content += `${"=".repeat(50)}\n\n`;
 
     session.messages.forEach((message, index) => {
       const timestamp = new Date(message.timestamp).toLocaleString();
-      const speaker = message.type === 'user' ? 'User' : message.type === 'ai' ? 'AI Assistant' : 'System';
-      
+      const speaker =
+        message.type === "user"
+          ? "User"
+          : message.type === "ai"
+            ? "AI Assistant"
+            : "System";
+
       content += `[${timestamp}] ${speaker}:\n`;
       content += `${message.content}\n\n`;
     });
@@ -240,8 +252,13 @@ export class SettingsService {
 
     session.messages.forEach((message, index) => {
       const timestamp = new Date(message.timestamp).toLocaleString();
-      const speaker = message.type === 'user' ? '👤 **User**' : message.type === 'ai' ? '🤖 **AI Assistant**' : '⚠️ **System**';
-      
+      const speaker =
+        message.type === "user"
+          ? "👤 **User**"
+          : message.type === "ai"
+            ? "🤖 **AI Assistant**"
+            : "⚠️ **System**";
+
       content += `## ${speaker}\n`;
       content += `*${timestamp}*\n\n`;
       content += `${message.content}\n\n`;
@@ -251,19 +268,19 @@ export class SettingsService {
     return content;
   }
 
-  static exportAllChatSessions(format = 'json') {
+  static exportAllChatSessions(format = "json") {
     try {
       const sessions = this.getChatSessions();
       const timestamp = new Date().toISOString().slice(0, 10);
-      
+
       switch (format.toLowerCase()) {
-        case 'json':
+        case "json":
           return {
             fileName: `arxiv_chat_sessions_${timestamp}.json`,
             content: JSON.stringify(sessions, null, 2),
-            mimeType: 'application/json'
+            mimeType: "application/json",
           };
-        
+
         default:
           throw new Error(`Unsupported export format: ${format}`);
       }
@@ -275,15 +292,15 @@ export class SettingsService {
 
   static getStorageUsage() {
     try {
-      const uiSettings = localStorage.getItem(this.UI_SETTINGS_KEY) || '';
-      const chatHistory = localStorage.getItem(this.CHAT_HISTORY_KEY) || '';
-      const chatSessions = localStorage.getItem(this.CHAT_SESSIONS_KEY) || '';
-      
+      const uiSettings = localStorage.getItem(this.UI_SETTINGS_KEY) || "";
+      const chatHistory = localStorage.getItem(this.CHAT_HISTORY_KEY) || "";
+      const chatSessions = localStorage.getItem(this.CHAT_SESSIONS_KEY) || "";
+
       return {
         uiSettings: new Blob([uiSettings]).size,
         chatHistory: new Blob([chatHistory]).size,
         chatSessions: new Blob([chatSessions]).size,
-        total: new Blob([uiSettings + chatHistory + chatSessions]).size
+        total: new Blob([uiSettings + chatHistory + chatSessions]).size,
       };
     } catch (error) {
       console.error("Error calculating storage usage:", error);

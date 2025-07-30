@@ -170,25 +170,21 @@ class StorageService {
 
   async updatePaperLocalPath(paperId, localPath) {
     const data = await this.loadData();
-    
+
     // Update localPath in opened papers
     if (data.openPapers) {
-      data.openPapers = data.openPapers.map(paper => 
-        paper.id === paperId 
-          ? { ...paper, localPath }
-          : paper
+      data.openPapers = data.openPapers.map((paper) =>
+        paper.id === paperId ? { ...paper, localPath } : paper
       );
     }
-    
+
     // Update localPath in starred papers
     if (data.starredPapers) {
-      data.starredPapers = data.starredPapers.map(paper => 
-        paper.id === paperId 
-          ? { ...paper, localPath }
-          : paper
+      data.starredPapers = data.starredPapers.map((paper) =>
+        paper.id === paperId ? { ...paper, localPath } : paper
       );
     }
-    
+
     await this.saveData(data);
   }
 

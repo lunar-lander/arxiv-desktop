@@ -92,14 +92,15 @@ function AIChat({ isVisible, onClose }) {
   // Reset paper context when selection changes
   useEffect(() => {
     const currentSelection = new Set(selectedPapers);
-    const hasChanged = currentSelection.size !== lastPaperSelection.size || 
-      [...currentSelection].some(id => !lastPaperSelection.has(id));
-    
+    const hasChanged =
+      currentSelection.size !== lastPaperSelection.size ||
+      [...currentSelection].some((id) => !lastPaperSelection.has(id));
+
     if (hasChanged && messages.length > 0) {
       // Paper selection changed mid-conversation, reset context
       setPaperContextSet(false);
     }
-    
+
     setLastPaperSelection(currentSelection);
   }, [selectedPapers, lastPaperSelection, messages.length]);
 
@@ -171,22 +172,26 @@ function AIChat({ isVisible, onClose }) {
         // Only extract if not already extracted or in progress
         if (status === "not_started") {
           console.log(`Starting PDF extraction for: ${paper.title}`);
-          
+
           try {
             // Download PDF if localPath is missing
             if (!paper.localPath) {
-              console.log(`No local PDF path, downloading PDF for: ${paper.title}`);
-              const storageService = (await import('../services/storageService')).default;
+              console.log(
+                `No local PDF path, downloading PDF for: ${paper.title}`
+              );
+              const storageService = (
+                await import("../services/storageService")
+              ).default;
               const localPath = await storageService.downloadAndCachePdf(paper);
-              
+
               if (localPath) {
                 paper.localPath = localPath;
                 console.log(`PDF downloaded successfully: ${localPath}`);
-                
+
                 // Update the paper in context state with the localPath
                 await dispatch({
                   type: "UPDATE_PAPER_LOCAL_PATH",
-                  payload: { paperId: paper.id, localPath }
+                  payload: { paperId: paper.id, localPath },
                 });
               } else {
                 console.error(`Failed to download PDF for: ${paper.title}`);
@@ -275,9 +280,9 @@ function AIChat({ isVisible, onClose }) {
       const contextPapers = getContextPapers();
 
       // Only prepare PDF content if context hasn't been set or papers changed
-      let pdfContentMap = new Map();
+      const pdfContentMap = new Map();
       let shouldIncludePaperContext = false;
-      
+
       if (!paperContextSet || messages.length === 0) {
         // First message or context needs to be established
         contextPapers.forEach((paper) => {

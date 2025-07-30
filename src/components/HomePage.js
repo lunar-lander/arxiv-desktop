@@ -38,10 +38,10 @@ function HomePage({
     const handleScroll = () => {
       console.log("Scroll event fired");
       if (!homeContainerRef.current || isLoadingMore || !hasMoreResults) {
-        console.log("Early return:", { 
-          hasContainer: !!homeContainerRef.current, 
-          isLoadingMore, 
-          hasMoreResults 
+        console.log("Early return:", {
+          hasContainer: !!homeContainerRef.current,
+          isLoadingMore,
+          hasMoreResults,
         });
         return;
       }
@@ -55,7 +55,7 @@ function HomePage({
         scrollHeight,
         clientHeight,
         scrollPercentage,
-        hasSearchParams: !!currentSearchParams
+        hasSearchParams: !!currentSearchParams,
       });
 
       // Load more when scrolled to 90% of the container
@@ -126,8 +126,8 @@ function HomePage({
 
       if (append) {
         // Filter out duplicates when appending results
-        const existingIds = new Set(searchResults.map(p => p.id));
-        const newPapers = results.papers.filter(p => !existingIds.has(p.id));
+        const existingIds = new Set(searchResults.map((p) => p.id));
+        const newPapers = results.papers.filter((p) => !existingIds.has(p.id));
         onSearchResults([...searchResults, ...newPapers]);
       } else {
         onSearchResults(results.papers);
@@ -203,13 +203,19 @@ function HomePage({
     const sorted = [...results];
     switch (sortType) {
       case "date-desc":
-        return sorted.sort((a, b) => new Date(b.published) - new Date(a.published));
+        return sorted.sort(
+          (a, b) => new Date(b.published) - new Date(a.published)
+        );
       case "date-asc":
-        return sorted.sort((a, b) => new Date(a.published) - new Date(b.published));
+        return sorted.sort(
+          (a, b) => new Date(a.published) - new Date(b.published)
+        );
       case "title":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
       case "author":
-        return sorted.sort((a, b) => a.authors[0]?.localeCompare(b.authors[0]) || 0);
+        return sorted.sort(
+          (a, b) => a.authors[0]?.localeCompare(b.authors[0]) || 0
+        );
       case "relevance":
       default:
         return sorted;
@@ -221,7 +227,6 @@ function HomePage({
     const sorted = sortResults(searchResults, newSortBy);
     onSearchResults(sorted);
   };
-
 
   return (
     <div className={styles.homeContainer} ref={homeContainerRef}>
@@ -244,7 +249,7 @@ function HomePage({
             className={styles.searchInput}
           />
         </div>
-        
+
         <div className={styles.sourceSelector}>
           <button
             className={`${styles.sourceButton} ${
@@ -324,9 +329,7 @@ function HomePage({
                 onClick={() => handlePaperClick(paper)}
               >
                 <h3 className={styles.paperTitle}>
-                  <MathJaxRenderer inline={true}>
-                    {paper.title}
-                  </MathJaxRenderer>
+                  <MathJaxRenderer inline={true}>{paper.title}</MathJaxRenderer>
                 </h3>
                 <p className={styles.paperAuthors}>
                   {paper.authors.slice(0, 3).join(", ")}

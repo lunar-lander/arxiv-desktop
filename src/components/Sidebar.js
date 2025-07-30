@@ -1,12 +1,29 @@
 import React, { useState } from "react";
-import { Home, FileText, Star, User, X, LogIn, LogOut, Bot, PanelLeftClose } from "lucide-react";
+import {
+  Home,
+  FileText,
+  Star,
+  User,
+  X,
+  LogIn,
+  LogOut,
+  Bot,
+  PanelLeftClose,
+} from "lucide-react";
 import { usePapers } from "../context/PaperContext";
 import { AuthService } from "../services/authService";
 import LoginModal from "./LoginModal";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleAIChat, isAIChatVisible, onToggleSidebar }) {
+function Sidebar({
+  onNavigate,
+  onPaperSelect,
+  currentView,
+  onToggleAIChat,
+  isAIChatVisible,
+  onToggleSidebar,
+}) {
   const { state, dispatch } = usePapers();
   const [showLoginModal, setShowLoginModal] = useState(false);
 

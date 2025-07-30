@@ -110,7 +110,7 @@ export class ArxivService {
       : `${CORS_PROXY}${encodeURIComponent(`${ARXIV_API_BASE}?${params}`)}`;
 
     const response = await axios.get(apiUrl);
-    let results = this.parseArxivXML(response.data);
+    const results = this.parseArxivXML(response.data);
 
     // Apply date filters (arXiv API doesn't support date filtering directly)
     if (filters.dateFrom || filters.dateTo) {
@@ -163,12 +163,14 @@ export class ArxivService {
         papers: paginatedPapers.map((paper, index) => {
           // Extract article ID from DOI (format: 10.1101/YYYY.MM.DD.XXXXXX)
           const doi = paper.doi;
-          const articleId = doi ? doi.split('/')[1] : `${paper.server || 'biorxiv'}.${Date.now()}`;
-          const version = paper.version || '1';
-          const server = paper.server || 'biorxiv';
-          
+          const articleId = doi
+            ? doi.split("/")[1]
+            : `${paper.server || "biorxiv"}.${Date.now()}`;
+          const version = paper.version || "1";
+          const server = paper.server || "biorxiv";
+
           console.log("URL components:", { server, articleId, version, doi }); // Debug log
-          
+
           return {
             id: doi,
             title: paper.title,
@@ -258,12 +260,19 @@ export class ArxivService {
       papers: paginatedPapers.map((paper, index) => {
         // Extract article ID from DOI (format: 10.1101/YYYY.MM.DD.XXXXXX)
         const doi = paper.doi;
-        const articleId = doi ? doi.split('/')[1] : `${paper.server || 'biorxiv'}.${Date.now()}`;
-        const version = paper.version || '1';
-        const server = paper.server || 'biorxiv';
-        
-        console.log("URL components (filters):", { server, articleId, version, doi }); // Debug log
-        
+        const articleId = doi
+          ? doi.split("/")[1]
+          : `${paper.server || "biorxiv"}.${Date.now()}`;
+        const version = paper.version || "1";
+        const server = paper.server || "biorxiv";
+
+        console.log("URL components (filters):", {
+          server,
+          articleId,
+          version,
+          doi,
+        }); // Debug log
+
         return {
           id: doi,
           title: paper.title,
@@ -290,7 +299,7 @@ export class ArxivService {
     const entries = xmlDoc.getElementsByTagName("entry");
     const papers = [];
 
-    for (let entry of entries) {
+    for (const entry of entries) {
       const id = entry.getElementsByTagName("id")[0]?.textContent || "";
       const arxivId = id.split("/").pop();
 
@@ -305,21 +314,21 @@ export class ArxivService {
 
       const authors = [];
       const authorElements = entry.getElementsByTagName("author");
-      for (let author of authorElements) {
+      for (const author of authorElements) {
         const name = author.getElementsByTagName("name")[0]?.textContent;
         if (name) authors.push(name);
       }
 
       const categories = [];
       const categoryElements = entry.getElementsByTagName("category");
-      for (let category of categoryElements) {
+      for (const category of categoryElements) {
         const term = category.getAttribute("term");
         if (term) categories.push(term);
       }
 
       const links = entry.getElementsByTagName("link");
       let pdfUrl = "";
-      for (let link of links) {
+      for (const link of links) {
         if (link.getAttribute("type") === "application/pdf") {
           pdfUrl = link.getAttribute("href");
           break;
@@ -348,7 +357,7 @@ export class ArxivService {
 
   static async downloadPaper(paper) {
     try {
-      let pdfUrl = paper.pdfUrl;
+      const pdfUrl = paper.pdfUrl;
       const urlsToTry = [pdfUrl];
 
       // For bioRxiv papers, add alternative URL formats to try
@@ -358,12 +367,12 @@ export class ArxivService {
       }
 
       let lastError = null;
-      
+
       // Try each URL format until one works
       for (const url of urlsToTry) {
         try {
           console.log(`Attempting to download PDF from: ${url}`);
-          
+
           const response = await axios.get(url, {
             responseType: "arraybuffer",
             headers: {
@@ -403,7 +412,6 @@ export class ArxivService {
 
       // If all URLs failed, throw the last error
       throw lastError || new Error("No valid PDF URLs found");
-      
     } catch (error) {
       console.error("Download failed for all attempted URLs:", error);
       return {
