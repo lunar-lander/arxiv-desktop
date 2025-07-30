@@ -18,6 +18,7 @@ A desktop application for browsing, searching, and managing academic papers from
 - **Sidebar Navigation**: Easy access to open papers, bookmarks, and starred papers
 - **Offline Reading**: Papers are cached locally for offline access
 - **AI Research Assistant**: Intelligent chat assistant for paper analysis and research guidance
+  - **Conversation Context Maintenance** - maintains context across multiple messages for meaningful discussions
   - Contextual chat with current, open, or starred papers
   - **Full PDF content extraction** - automatically extracts and analyzes complete paper text
   - Paper suggestion and search assistance
@@ -281,6 +282,7 @@ Papers and app data are stored locally:
 - Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-30**: **CRITICAL FIX** - AI chat now maintains conversation context across multiple messages, enabling proper continuous discussions instead of treating each message as a new conversation
 - **2025-07-30**: Enhanced PDF extraction workflow - AI chat now auto-downloads PDFs for immediate analysis without requiring papers to be opened first
 - **2025-07-30**: Fixed critical AI chat network error bug by properly delegating to AI service
 - **2025-07-30**: Implemented full PDF content extraction for comprehensive paper analysis
