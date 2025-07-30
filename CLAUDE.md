@@ -196,13 +196,14 @@ The app includes an intelligent AI assistant to help with research tasks and pap
 - **Storage Management**: Monitor storage usage and manage old sessions
 
 ### PDF Content Extraction
-- **Automatic Extraction**: Full PDF text is extracted when papers are selected for AI context
+- **Automatic Download & Extraction**: Full PDF text is extracted when papers are selected for AI context, automatically downloading PDFs if not already cached
 - **Smart Caching**: Extracted content is cached to avoid re-processing
 - **Visual Indicators**: 📄✓ (extracted), 📄... (extracting), 📄✗ (error) status icons
 - **Content Limits**: Extracts up to 30 pages per paper to optimize LLM performance
 - **Metadata Inclusion**: PDF title, author, creation date, and page count included
 - **Error Handling**: Graceful fallback to abstract-only analysis if extraction fails
 - **Performance Optimized**: Background extraction with progress indicators
+- **No Pre-Opening Required**: Papers can be analyzed immediately after starring without opening in PaperViewer first
 
 ### Persistent UI Settings
 - **Chat Sidebar Width**: Resizable sidebar that remembers its size across restarts
@@ -280,6 +281,7 @@ Papers and app data are stored locally:
 - Contextual AI chat and search assistance
 
 ### Recent Updates
+- **2025-07-30**: Enhanced PDF extraction workflow - AI chat now auto-downloads PDFs for immediate analysis without requiring papers to be opened first
 - **2025-07-30**: Fixed critical AI chat network error bug by properly delegating to AI service
 - **2025-07-30**: Implemented full PDF content extraction for comprehensive paper analysis
 - **2025-07-30**: Added automatic PDF text processing with smart caching and visual status indicators
