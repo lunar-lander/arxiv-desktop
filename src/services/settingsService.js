@@ -87,6 +87,11 @@ export class SettingsService {
     }
   }
 
+  static sessionExists(sessionName) {
+    const sessions = this.getChatSessions();
+    return sessions.some((session) => session.name === sessionName);
+  }
+
   static saveChatSession(sessionName, messages, context = {}) {
     try {
       const sessions = this.getChatSessions();

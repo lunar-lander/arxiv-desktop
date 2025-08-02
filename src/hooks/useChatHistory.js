@@ -89,13 +89,18 @@ export function useChatHistory() {
       setCurrentMessages(messages);
       SettingsService.saveChatHistory(messages);
 
-      // Auto-save to session after 1 message
-      if (messages.length >= 1 && !currentSessionId) {
+      // Auto-save to session
+      if (!currentSessionId && messages.length > 0) {
         const autoName = SettingsService.generateAutoSessionName(messages);
-        const newSession = SettingsService.saveChatSession(autoName, messages);
-        if (newSession) {
-          setCurrentSessionId(newSession.id);
-          setChatSessions((prev) => [newSession, ...prev]);
+        if (!SettingsService.sessionExists(autoName)) {
+          const newSession = SettingsService.saveChatSession(
+            autoName,
+            messages
+          );
+          if (newSession) {
+            setCurrentSessionId(newSession.id);
+            setChatSessions((prev) => [newSession, ...prev]);
+          }
         }
       } else if (currentSessionId && messages.length > 0) {
         // Update existing session
