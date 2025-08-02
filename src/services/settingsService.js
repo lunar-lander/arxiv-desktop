@@ -101,53 +101,43 @@ export class SettingsService {
     try {
       const sessions = this.getChatSessions();
       const newSessionId = sessionId || `session_${Date.now()}`;
-      const newSession = {
-        id: newSessionId,
-        name: sessionName || `Chat ${new Date().toLocaleString()}`,
-        messages: messages,
-        context: context,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messageCount: messages.length,
-      };
-
-      sessions.unshift(newSession); // Add to beginning
-
-      // Keep only last 50 sessions to prevent storage bloat
-      if (sessions.length > 50) {
-        sessions.splice(50);
-      }
-
-      localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
-      return newSession;
-    } catch (error) {
-      console.error("Error saving chat session:", error);
-      return null;
-    }
-  }
-
-  static updateChatSession(sessionId, messages, context = {}) {
-    try {
-      const sessions = this.getChatSessions();
       const sessionIndex = sessions.findIndex(
-        (session) => session.id === sessionId
+        (session) => session.id === newSessionId
       );
 
       if (sessionIndex !== -1) {
+        // Update existing session
         sessions[sessionIndex] = {
           ...sessions[sessionIndex],
+          name: sessionName || sessions[sessionIndex].name,
           messages: messages,
           context: context,
           updatedAt: new Date().toISOString(),
           messageCount: messages.length,
         };
-
         localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
         return sessions[sessionIndex];
+      } else {
+        // Create new session
+        const newSession = {
+          id: newSessionId,
+          name: sessionName || `Chat ${new Date().toLocaleString()}`,
+          messages: messages,
+          context: context,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messageCount: messages.length,
+        };
+        sessions.unshift(newSession);
+        // Keep only last 50 sessions to prevent storage bloat
+        if (sessions.length > 50) {
+          sessions.splice(50);
+        }
+        localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
+        return newSession;
       }
-      return null;
     } catch (error) {
-      console.error("Error updating chat session:", error);
+      console.error("Error saving chat session:", error);
       return null;
     }
   }

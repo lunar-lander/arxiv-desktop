@@ -90,30 +90,20 @@ export function useChatHistory() {
 
       // Auto-save to session
       if (messages.length > 0) {
-        const sessionExists = SettingsService.sessionExists(currentSessionId);
-
-        if (!sessionExists) {
-          const autoName = SettingsService.generateAutoSessionName(messages);
-          const newSession = SettingsService.saveChatSession(
-            autoName,
-            messages,
-            {},
-            currentSessionId
-          );
-          if (newSession) {
-            setChatSessions((prev) => [newSession, ...prev]);
-          }
-        } else {
-          // Update existing session
-          const updatedSession = SettingsService.updateChatSession(
-            currentSessionId,
-            messages
-          );
-          if (updatedSession) {
+        const autoName = SettingsService.generateAutoSessionName(messages);
+        const session = SettingsService.saveChatSession(
+          autoName,
+          messages,
+          {},
+          currentSessionId
+        );
+        if (session) {
+          // Update local state if it's a new session
+          if (!chatSessions.some((s) => s.id === session.id)) {
+            setChatSessions((prev) => [session, ...prev]);
+          } else {
             setChatSessions((prev) =>
-              prev.map((session) =>
-                session.id === currentSessionId ? updatedSession : session
-              )
+              prev.map((s) => (s.id === session.id ? session : s))
             );
           }
         }
