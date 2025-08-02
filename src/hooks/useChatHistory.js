@@ -89,8 +89,8 @@ export function useChatHistory() {
       setCurrentMessages(messages);
       SettingsService.saveChatHistory(messages);
 
-      // Auto-save to session after 3 messages (user + AI + user)
-      if (messages.length >= 3 && !currentSessionId) {
+      // Auto-save to session after 1 message
+      if (messages.length >= 1 && !currentSessionId) {
         const autoName = SettingsService.generateAutoSessionName(messages);
         const newSession = SettingsService.saveChatSession(autoName, messages);
         if (newSession) {
