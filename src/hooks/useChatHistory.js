@@ -79,7 +79,7 @@ export function useChatHistory() {
   // Start a new chat session
   const startNewChat = useCallback(() => {
     setCurrentMessages([]);
-    setCurrentSessionId(null);
+    setCurrentSessionId(`session_${Date.now()}`);
   }, []);
 
   // Auto-save current messages to both temporary storage and session
@@ -89,30 +89,33 @@ export function useChatHistory() {
       SettingsService.saveChatHistory(messages);
 
       // Auto-save to session
-      if (!currentSessionId && messages.length > 0) {
-        const autoName = SettingsService.generateAutoSessionName(messages);
-        if (!SettingsService.sessionExists(autoName)) {
+      if (messages.length > 0) {
+        const sessionExists = SettingsService.sessionExists(currentSessionId);
+
+        if (!sessionExists) {
+          const autoName = SettingsService.generateAutoSessionName(messages);
           const newSession = SettingsService.saveChatSession(
             autoName,
-            messages
+            messages,
+            {},
+            currentSessionId
           );
           if (newSession) {
-            setCurrentSessionId(newSession.id);
             setChatSessions((prev) => [newSession, ...prev]);
           }
-        }
-      } else if (currentSessionId && messages.length > 0) {
-        // Update existing session
-        const updatedSession = SettingsService.updateChatSession(
-          currentSessionId,
-          messages
-        );
-        if (updatedSession) {
-          setChatSessions((prev) =>
-            prev.map((session) =>
-              session.id === currentSessionId ? updatedSession : session
-            )
+        } else {
+          // Update existing session
+          const updatedSession = SettingsService.updateChatSession(
+            currentSessionId,
+            messages
           );
+          if (updatedSession) {
+            setChatSessions((prev) =>
+              prev.map((session) =>
+                session.id === currentSessionId ? updatedSession : session
+              )
+            );
+          }
         }
       }
     },

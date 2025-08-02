@@ -87,17 +87,22 @@ export class SettingsService {
     }
   }
 
-  static sessionExists(sessionName) {
+  static sessionExists(sessionId) {
     const sessions = this.getChatSessions();
-    return sessions.some((session) => session.name === sessionName);
+    return sessions.some((session) => session.id === sessionId);
   }
 
-  static saveChatSession(sessionName, messages, context = {}) {
+  static saveChatSession(
+    sessionName,
+    messages,
+    context = {},
+    sessionId = null
+  ) {
     try {
       const sessions = this.getChatSessions();
-      const sessionId = `session_${Date.now()}`;
+      const newSessionId = sessionId || `session_${Date.now()}`;
       const newSession = {
-        id: sessionId,
+        id: newSessionId,
         name: sessionName || `Chat ${new Date().toLocaleString()}`,
         messages: messages,
         context: context,
