@@ -102,7 +102,7 @@ function AIChat({ isVisible, onClose }) {
     }
 
     setLastPaperSelection(currentSelection);
-  }, [selectedPapers, lastPaperSelection, messages.length]);
+  }, [selectedPapers, messages.length]); // Removed lastPaperSelection from dependencies
 
   // Resize functionality
   useEffect(() => {
@@ -207,13 +207,7 @@ function AIChat({ isVisible, onClose }) {
         }
       });
     }
-  }, [
-    selectedPapers,
-    state.openPapers,
-    state.starredPapers,
-    extractPDFContent,
-    getExtractionStatus,
-  ]);
+  }, [selectedPapers]); // Simplified dependencies to avoid infinite loops
 
   const getAllAvailablePapers = () => {
     const allPapers = [
