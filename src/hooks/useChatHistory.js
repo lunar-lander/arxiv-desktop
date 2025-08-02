@@ -80,7 +80,6 @@ export function useChatHistory() {
   const startNewChat = useCallback(() => {
     setCurrentMessages([]);
     setCurrentSessionId(null);
-    SettingsService.clearChatHistory();
   }, []);
 
   // Auto-save current messages to both temporary storage and session
