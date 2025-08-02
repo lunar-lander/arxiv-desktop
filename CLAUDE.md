@@ -90,6 +90,24 @@ arxiv-desktop/
 
 ## Development Commands
 
+- **Run all tests:** `npm test`
+- **Run tests in a specific file:** `npm test -- <path_to_file>`
+- **Lint all files:** `npm run lint`
+- **Build the application:** `npm run build`
+
+## Code Style Guidelines
+
+- **Formatting:** Code is formatted with Prettier using the project's `.prettierrc` configuration. Key settings include a print width of 80 characters, 2-space indentation, and the use of semicolons.
+- **Linting:** ESLint is used for linting, with rules defined in `eslint.config.js`. It enforces modern JavaScript standards, such as preferring `const` over `let` and disallowing `var`.
+- **Imports:** Follow a standard import order, grouping imports from external libraries, project components, and local files.
+- **Components:** Components should be functional and utilize hooks for state and side effects. All components must have an associated CSS module for styling.
+- **Styling:** Use CSS modules for component-level styling to avoid global scope conflicts.
+- **Naming Conventions:**
+  - Components: `PascalCase` (e.g., `PaperViewer.js`)
+  - CSS Modules: `PascalCase` with `.module.css` extension (e.g., `PaperViewer.module.css`)
+  - Functions/Variables: `camelCase`
+- **Error Handling:** Implement proper error handling for all asynchronous operations, API calls, and file system interactions to prevent application crashes.
+
 ### Using Makefile (Recommended)
 ```bash
 make help           # Show all available commands
