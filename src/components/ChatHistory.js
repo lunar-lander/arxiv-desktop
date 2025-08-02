@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   History,
   Save,
@@ -24,7 +24,14 @@ function ChatHistory({ isVisible, onClose, onLoadSession, currentMessages }) {
     exportAndDownloadAllSessions,
     isLoading,
     getStorageUsage,
+    refreshChatSessions,
   } = useChatHistory();
+
+  useEffect(() => {
+    if (isVisible) {
+      refreshChatSessions();
+    }
+  }, [isVisible, refreshChatSessions]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);

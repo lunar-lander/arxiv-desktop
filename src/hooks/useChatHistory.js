@@ -175,6 +175,12 @@ export function useChatHistory() {
     return SettingsService.getStorageUsage();
   }, []);
 
+  // Refresh chat sessions from storage
+  const refreshChatSessions = useCallback(() => {
+    const sessions = SettingsService.getChatSessions();
+    setChatSessions(sessions);
+  }, []);
+
   return {
     // Current chat state
     currentMessages,
@@ -189,6 +195,7 @@ export function useChatHistory() {
     saveChatSession,
     loadChatSession,
     deleteChatSession,
+    refreshChatSessions,
 
     // Export functionality
     exportChatSession,
