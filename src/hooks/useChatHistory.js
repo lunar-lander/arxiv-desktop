@@ -44,6 +44,7 @@ export function useChatHistory() {
   const loadChatSession = useCallback((sessionId) => {
     const session = SettingsService.loadChatSession(sessionId);
     if (session) {
+      setCurrentSessionId(sessionId); // Set the session ID to prevent duplicate creation
       setCurrentMessages(session.messages);
       return session;
     }

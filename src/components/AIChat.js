@@ -39,6 +39,7 @@ function AIChat({ isVisible, onClose }) {
     startNewChat,
     currentSessionId,
     saveChatSession,
+    loadChatSession,
   } = useChatHistory();
   const {
     extractPDFContent,
@@ -619,12 +620,13 @@ function AIChat({ isVisible, onClose }) {
         isVisible={showChatHistory}
         onClose={() => setShowChatHistory(false)}
         onLoadSession={(session) => {
-          setMessages(session.messages);
+          loadChatSession(session.id);
+          setMessages(session.messages); // Sync local messages state
           setPaperContextSet(false); // Reset context when loading old session
           setLastPaperSelection(new Set());
           setShowChatHistory(false);
         }}
-        currentMessages={messages}
+        currentMessages={currentMessages}
       />
     </div>
   );
