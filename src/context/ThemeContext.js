@@ -62,26 +62,23 @@ export function ThemeProvider({ children }) {
       if (window.electronAPI) {
         const appDataPath = await window.electronAPI.getAppDataPath();
         const themeFile = `${appDataPath}/theme.json`;
-        const exists = await window.electronAPI.fileExists(themeFile);
+        const themeFileExists = await window.electronAPI.fileExists(themeFile);
 
-        if (exists) {
+        if (themeFileExists) {
           const result = await window.electronAPI.readFile(themeFile);
           if (result.success) {
             try {
               // Handle different data formats like in storage service
               let dataStr;
               if (result.data instanceof ArrayBuffer) {
-                dataStr = new TextDecoder().decode(result.data);
+                dataStr = new TextDecoder().decode(result.data).trim();
               } else if (result.data instanceof Uint8Array) {
-                dataStr = new TextDecoder().decode(result.data);
+                dataStr = new TextDecoder().decode(result.data).trim();
               } else if (typeof result.data === "string") {
-                dataStr = result.data;
+                dataStr = result.data.trim();
               } else {
-                dataStr = result.data.toString();
+                dataStr = result.data.toString().trim();
               }
-
-              // Clean any BOM or whitespace
-              dataStr = dataStr.trim();
 
               const themeData = JSON.parse(dataStr);
               setCurrentTheme(themeData.theme || "light");
@@ -89,24 +86,25 @@ export function ThemeProvider({ children }) {
               return;
             } catch (parseError) {
               console.error("Failed to parse theme file:", parseError);
-              // Continue with fallback logic
             }
           }
         }
       }
-
-      // Fallback to localStorage for development
-      const savedTheme = localStorage.getItem("arxiv-theme");
-      const validThemes = availableThemes.map((t) => t.id);
-      if (savedTheme && validThemes.includes(savedTheme)) {
-        setCurrentTheme(savedTheme);
-      } else {
-        // Detect system preference
-        const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-        setCurrentTheme(prefersDark ? "dark" : "light");
-      }
+      // NOTE: this is for testing only
+      // else {
+      //   // Fallback to localStorage for development
+      //   const savedTheme = localStorage.getItem("arxiv-theme");
+      //   const validThemes = availableThemes.map((t) => t.id);
+      //   if (savedTheme && validThemes.includes(savedTheme)) {
+      //     setCurrentTheme(savedTheme);
+      //   } else {
+      //     // Detect system preference
+      //     const prefersDark = window.matchMedia(
+      //       "(prefers-color-scheme: dark)"
+      //     ).matches;
+      //     setCurrentTheme(prefersDark ? "dark" : "light");
+      //   }
+      // }
       setIsInitialized(true);
     } catch (error) {
       console.error("Failed to load theme preference:", error);
@@ -131,10 +129,12 @@ export function ThemeProvider({ children }) {
             2
           )
         );
-      } else {
-        // Fallback to localStorage for development
-        localStorage.setItem("arxiv-theme", currentTheme);
       }
+      // NOTE: this is for testing only
+      // else {
+      //   // Fallback to localStorage for development
+      //   localStorage.setItem("arxiv-theme", currentTheme);
+      // }
     } catch (error) {
       console.error("Failed to save theme preference:", error);
     }
@@ -162,7 +162,6 @@ export function ThemeProvider({ children }) {
         toggleTheme,
         setTheme,
         availableThemes,
-        isDark: currentTheme === "dark",
       }}
     >
       {children}
