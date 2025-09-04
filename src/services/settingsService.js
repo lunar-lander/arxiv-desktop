@@ -58,7 +58,17 @@ export class SettingsService {
 
   static saveChatHistory(messages) {
     try {
-      localStorage.setItem(this.CHAT_HISTORY_KEY, JSON.stringify(messages));
+      // Validate and deduplicate messages
+      if (!Array.isArray(messages)) {
+        console.error("Messages must be an array");
+        return false;
+      }
+
+      const deduplicatedMessages = this.deduplicateMessages(messages);
+      localStorage.setItem(
+        this.CHAT_HISTORY_KEY,
+        JSON.stringify(deduplicatedMessages)
+      );
       return true;
     } catch (error) {
       console.error("Error saving chat history:", error);
@@ -80,9 +90,21 @@ export class SettingsService {
   static getChatSessions() {
     try {
       const sessions = localStorage.getItem(this.CHAT_SESSIONS_KEY);
-      return sessions ? JSON.parse(sessions) : [];
+      const parsedSessions = sessions ? JSON.parse(sessions) : [];
+
+      // Validate and sanitize sessions
+      const validSessions = parsedSessions.filter((session) => {
+        return session.id && Array.isArray(session.messages);
+      });
+
+      // Sort by lastUpdated timestamp (newest first)
+      validSessions.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+
+      return validSessions;
     } catch (error) {
       console.error("Error loading chat sessions:", error);
+      // Return empty array and clear corrupted data
+      localStorage.removeItem(this.CHAT_SESSIONS_KEY);
       return [];
     }
   }
@@ -99,51 +121,100 @@ export class SettingsService {
     sessionId = null
   ) {
     try {
+      // Validate messages input
+      if (!Array.isArray(messages)) {
+        console.error("Messages must be an array");
+        return null;
+      }
+
+      // Deduplicate messages to prevent corruption
+      const deduplicatedMessages = this.deduplicateMessages(messages);
+
       const sessions = this.getChatSessions();
       const newSessionId = sessionId || `session_${Date.now()}`;
+      const timestamp = Date.now();
+
       const sessionIndex = sessions.findIndex(
         (session) => session.id === newSessionId
       );
 
       if (sessionIndex !== -1) {
-        // Update existing session
+        // Update existing session - preserve original createdAt
+        const existingSession = sessions[sessionIndex];
         sessions[sessionIndex] = {
-          ...sessions[sessionIndex],
-          name: sessionName || sessions[sessionIndex].name,
-          messages: messages,
+          ...existingSession,
+          name: sessionName || existingSession.name,
+          messages: deduplicatedMessages,
           context: context,
-          updatedAt: new Date().toISOString(),
-          messageCount: messages.length,
+          updatedAt: new Date(timestamp).toISOString(),
+          lastUpdated: timestamp,
+          messageCount: deduplicatedMessages.length,
         };
-        localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
-        return sessions[sessionIndex];
       } else {
         // Create new session
         const newSession = {
           id: newSessionId,
-          name: sessionName || `Chat ${new Date().toLocaleString()}`,
-          messages: messages,
+          name:
+            sessionName || this.generateAutoSessionName(deduplicatedMessages),
+          messages: deduplicatedMessages,
           context: context,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          messageCount: messages.length,
+          createdAt: new Date(timestamp).toISOString(),
+          updatedAt: new Date(timestamp).toISOString(),
+          lastUpdated: timestamp,
+          messageCount: deduplicatedMessages.length,
         };
-        sessions.unshift(newSession);
-        // Keep only last 50 sessions to prevent storage bloat
-        if (sessions.length > 50) {
-          sessions.splice(50);
-        }
-        localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
-        return newSession;
+        sessions.unshift(newSession); // Add newest first
       }
+
+      // Sort sessions by lastUpdated timestamp (newest first)
+      sessions.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+
+      // Keep only last 50 sessions to prevent storage bloat
+      if (sessions.length > 50) {
+        sessions.splice(50);
+      }
+
+      // Atomic save operation
+      localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
+
+      // Verify the save was successful
+      const savedSessions = this.getChatSessions();
+      const savedSession = savedSessions.find((s) => s.id === newSessionId);
+
+      if (!savedSession) {
+        console.error("Failed to verify session save");
+        return null;
+      }
+
+      return savedSession;
     } catch (error) {
       console.error("Error saving chat session:", error);
       return null;
     }
   }
 
+  static deduplicateMessages(messages) {
+    if (!Array.isArray(messages)) return [];
+
+    const seen = new Set();
+    return messages.filter((msg) => {
+      if (!msg.id) {
+        // Generate ID for messages without one
+        msg.id = `${msg.type}_${msg.timestamp || Date.now()}_${Math.random()}`;
+      }
+
+      if (seen.has(msg.id)) {
+        console.warn(`Duplicate message ${msg.id} detected, skipping`);
+        return false;
+      }
+
+      seen.add(msg.id);
+      return true;
+    });
+  }
+
   static generateAutoSessionName(messages) {
-    if (messages.length === 0) return "New Chat";
+    if (!Array.isArray(messages) || messages.length === 0) return "New Chat";
 
     // Use the first user message as session name (truncated)
     const firstUserMessage = messages.find((msg) => msg.type === "user");

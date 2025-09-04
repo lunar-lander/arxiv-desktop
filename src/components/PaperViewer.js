@@ -106,43 +106,86 @@ function PaperViewer({ paper }) {
     }
   }, [paper, scale, pageNumber, viewMode]);
 
-  // Handle text selection
+  // Handle text selection with improved detection and positioning
   useEffect(() => {
-    const handleTextSelection = () => {
-      const selection = window.getSelection();
-      if (selection && selection.toString().trim().length > 0) {
-        const selectedText = selection.toString();
-        setSelectedText(selectedText);
+    let selectionTimeout = null;
 
-        // Get selection position for copy button
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setCopyButtonPosition({
-          x: rect.left + rect.width / 2,
-          y: rect.top - 40,
-        });
-        setShowCopyButton(true);
-      } else {
-        setSelectedText("");
-        setShowCopyButton(false);
-      }
+    const handleTextSelection = () => {
+      // Debounce selection handling to avoid excessive updates
+      if (selectionTimeout) clearTimeout(selectionTimeout);
+
+      selectionTimeout = setTimeout(() => {
+        const selection = window.getSelection();
+        const text = selection?.toString().trim();
+
+        if (text && text.length > 0 && selection.rangeCount > 0) {
+          setSelectedText(text);
+
+          try {
+            // Get selection position for copy button
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+
+            // Calculate position relative to viewport, accounting for scroll
+            const x = rect.left + rect.width / 2;
+            const y = Math.max(rect.top - 45, 10); // Ensure button stays in viewport
+
+            setCopyButtonPosition({ x, y });
+            setShowCopyButton(true);
+          } catch (error) {
+            console.warn("Could not get selection position:", error);
+            // Fallback to center of screen
+            setCopyButtonPosition({
+              x: window.innerWidth / 2,
+              y: 50,
+            });
+            setShowCopyButton(true);
+          }
+        } else {
+          setSelectedText("");
+          setShowCopyButton(false);
+        }
+      }, 100); // 100ms debounce
     };
 
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".react-pdf__Page__textContent")) {
+      // Hide copy button when clicking outside PDF content
+      if (
+        !event.target.closest(".react-pdf__Page") &&
+        !event.target.closest(".copyButton")
+      ) {
         setShowCopyButton(false);
         setSelectedText("");
+        // Clear text selection
+        if (window.getSelection) {
+          window.getSelection().removeAllRanges();
+        }
       }
     };
 
+    const handleKeyDown = (event) => {
+      // Hide copy button on Escape key
+      if (event.key === "Escape") {
+        setShowCopyButton(false);
+        setSelectedText("");
+        if (window.getSelection) {
+          window.getSelection().removeAllRanges();
+        }
+      }
+    };
+
+    // Use mouseup and selectionchange for better text selection detection
     document.addEventListener("mouseup", handleTextSelection);
     document.addEventListener("selectionchange", handleTextSelection);
     document.addEventListener("click", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      if (selectionTimeout) clearTimeout(selectionTimeout);
       document.removeEventListener("mouseup", handleTextSelection);
       document.removeEventListener("selectionchange", handleTextSelection);
       document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
@@ -256,27 +299,78 @@ function PaperViewer({ paper }) {
   };
 
   const handleCopySelectedText = async () => {
-    if (selectedText) {
-      try {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(selectedText);
-        } else {
-          // Fallback for older browsers
-          const textArea = document.createElement("textarea");
-          textArea.value = selectedText;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand("copy");
-          document.body.removeChild(textArea);
+    if (!selectedText || selectedText.trim().length === 0) {
+      console.warn("No text selected to copy");
+      return;
+    }
+
+    try {
+      // Modern clipboard API (preferred)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(selectedText);
+        console.log("Text copied to clipboard via Clipboard API");
+      } else {
+        // Fallback for older browsers or non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = selectedText;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (!successful) {
+          throw new Error("execCommand copy failed");
         }
-        setShowCopyButton(false);
-        setSelectedText("");
-        // Clear selection
-        if (window.getSelection) {
-          window.getSelection().removeAllRanges();
+        console.log("Text copied to clipboard via execCommand");
+      }
+
+      // Success feedback
+      setShowCopyButton(false);
+      setSelectedText("");
+
+      // Clear selection
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+      }
+
+      // Show brief success indication
+      const originalText = document.querySelector(".copyButton")?.textContent;
+      const copyButton = document.querySelector(".copyButton");
+      if (copyButton) {
+        copyButton.textContent = "✓ Copied!";
+        setTimeout(() => {
+          copyButton.textContent = originalText || "📋 Copy";
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+
+      // Try Electron's clipboard if available
+      if (window.electronAPI && window.electronAPI.writeClipboard) {
+        try {
+          await window.electronAPI.writeClipboard(selectedText);
+          console.log("Text copied via Electron clipboard");
+
+          setShowCopyButton(false);
+          setSelectedText("");
+          if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+          }
+        } catch (electronError) {
+          console.error("Electron clipboard also failed:", electronError);
+          alert(
+            "Failed to copy text to clipboard. Please try selecting and copying manually with Ctrl+C."
+          );
         }
-      } catch (error) {
-        console.error("Failed to copy text:", error);
+      } else {
+        alert(
+          "Failed to copy text to clipboard. Please try selecting and copying manually with Ctrl+C."
+        );
       }
     }
   };
@@ -454,20 +548,22 @@ function PaperViewer({ paper }) {
         paper={paper}
       />
 
-      {showCopyButton && (
-        <div
+      {showCopyButton && selectedText && (
+        <button
           className={styles.copyButton}
           style={{
-            left: copyButtonPosition.x,
+            left: copyButtonPosition.x - 35, // Center the button
             top: copyButtonPosition.y,
             position: "fixed",
-            zIndex: 1000,
+            zIndex: 1001,
+            transform: "translateX(-50%)", // Center horizontally
           }}
           onClick={handleCopySelectedText}
+          title={`Copy "${selectedText.substring(0, 50)}${selectedText.length > 50 ? "..." : ""}"`}
         >
-          <Copy size={14} />
+          <Copy size={14} style={{ marginRight: "4px" }} />
           Copy
-        </div>
+        </button>
       )}
     </div>
   );

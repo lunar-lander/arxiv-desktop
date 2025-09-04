@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   showOpenDialog: (options) => ipcRenderer.invoke("show-open-dialog", options),
   showMessageBox: (options) => ipcRenderer.invoke("show-message-box", options),
 
+  // Clipboard operations
+  writeClipboard: (text) => ipcRenderer.invoke("write-clipboard", text),
+  readClipboard: () => ipcRenderer.invoke("read-clipboard"),
+
   // Menu event listeners
   onMenuAction: (callback) => {
     ipcRenderer.on("menu-action", (event, action, data) => {

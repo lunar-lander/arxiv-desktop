@@ -250,28 +250,49 @@
 /* Floating copy button */
 .copyButton {
   position: fixed;
-  background: var(--primary);
+  background: var(--primary, #007bff);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateX(-50%);
-  transition: all 0.2s;
-  z-index: 1000;
+  gap: 0.35rem;
+  box-shadow:
+    0 4px 16px rgba(0, 123, 255, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  z-index: 1001;
+  max-width: 200px;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .copyButton:hover {
-  background: var(--primary-hover);
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background: var(--primary-hover, #0056b3);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow:
+    0 6px 20px rgba(0, 123, 255, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .copyButton:active {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    0 2px 8px rgba(0, 123, 255, 0.3),
+    0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.copyButton:focus {
+  outline: none;
+  box-shadow:
+    0 4px 16px rgba(0, 123, 255, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 3px rgba(0, 123, 255, 0.2);
 }

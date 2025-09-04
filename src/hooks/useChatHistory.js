@@ -6,6 +6,7 @@ export function useChatHistory() {
   const [chatSessions, setChatSessions] = useState([]);
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Load chat sessions on mount
   useEffect(() => {
@@ -40,13 +41,23 @@ export function useChatHistory() {
     [currentMessages]
   );
 
-  // Load a chat session
+  // Load a chat session with proper state synchronization
   const loadChatSession = useCallback((sessionId) => {
-    const session = SettingsService.loadChatSession(sessionId);
-    if (session) {
-      setCurrentSessionId(sessionId); // Set the session ID to prevent duplicate creation
-      setCurrentMessages(session.messages);
-      return session;
+    try {
+      const session = SettingsService.loadChatSession(sessionId);
+      if (session && Array.isArray(session.messages)) {
+        // Update all related state atomically
+        setCurrentSessionId(sessionId);
+        setCurrentMessages(session.messages);
+        setIsAutoSaving(false);
+
+        // Update temporary storage with loaded messages
+        SettingsService.saveChatHistory(session.messages);
+
+        return session;
+      }
+    } catch (error) {
+      console.error("Error loading chat session:", error);
     }
     return null;
   }, []);
@@ -77,40 +88,85 @@ export function useChatHistory() {
     setCurrentMessages([]);
   }, []);
 
-  // Start a new chat session
+  // Start a new chat session with proper cleanup
   const startNewChat = useCallback(() => {
+    // Clear current state
     setCurrentMessages([]);
-    setCurrentSessionId(`session_${Date.now()}`);
+    setCurrentSessionId(null); // Let it be set when first message is sent
+    setIsAutoSaving(false);
+
+    // Clear temporary storage
+    SettingsService.clearChatHistory();
   }, []);
 
-  // Auto-save current messages to both temporary storage and session
+  // Auto-save current messages with proper state synchronization
   const saveCurrentMessages = useCallback(
-    (messages) => {
-      setCurrentMessages(messages);
-      SettingsService.saveChatHistory(messages);
+    async (messages) => {
+      try {
+        // Update UI state immediately to avoid race conditions
+        setCurrentMessages(messages);
 
-      // Auto-save to session
-      if (messages.length > 0) {
-        const autoName = SettingsService.generateAutoSessionName(messages);
-        const session = SettingsService.saveChatSession(
-          autoName,
-          messages,
-          {},
-          currentSessionId
-        );
-        if (session) {
-          // Update local state if it's a new session
-          if (!chatSessions.some((s) => s.id === session.id)) {
-            setChatSessions((prev) => [session, ...prev]);
-          } else {
-            setChatSessions((prev) =>
-              prev.map((s) => (s.id === session.id ? session : s))
-            );
+        // Save to temporary storage immediately
+        SettingsService.saveChatHistory(messages);
+
+        // Auto-save to session only if we have meaningful content
+        if (messages.length >= 2 && !isAutoSaving) {
+          // At least user + AI message
+          setIsAutoSaving(true);
+
+          const autoName = SettingsService.generateAutoSessionName(messages);
+          const sessionIdToUse = currentSessionId || `session_${Date.now()}`;
+
+          // Ensure we have a session ID set
+          if (!currentSessionId) {
+            setCurrentSessionId(sessionIdToUse);
           }
+
+          const session = SettingsService.saveChatSession(
+            autoName,
+            messages,
+            {},
+            sessionIdToUse
+          );
+
+          if (session) {
+            // Update local state with proper synchronization
+            setChatSessions((prevSessions) => {
+              const existingIndex = prevSessions.findIndex(
+                (s) => s.id === session.id
+              );
+
+              if (existingIndex !== -1) {
+                // Update existing session
+                const updatedSessions = [...prevSessions];
+                updatedSessions[existingIndex] = session;
+                // Re-sort by lastUpdated
+                return updatedSessions.sort(
+                  (a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0)
+                );
+              } else {
+                // Add new session at the beginning
+                return [session, ...prevSessions];
+              }
+            });
+          } else {
+            console.warn("Failed to save session, reloading from storage");
+            // Fallback: reload sessions from storage
+            const sessions = SettingsService.getChatSessions();
+            setChatSessions(sessions);
+          }
+
+          setIsAutoSaving(false);
         }
+      } catch (error) {
+        console.error("Error in saveCurrentMessages:", error);
+        setIsAutoSaving(false);
+        // Fallback: reload from storage
+        const sessions = SettingsService.getChatSessions();
+        setChatSessions(sessions);
       }
     },
-    [currentSessionId]
+    [currentSessionId, isAutoSaving, chatSessions]
   );
 
   // Load temporary chat history
@@ -176,10 +232,15 @@ export function useChatHistory() {
     return SettingsService.getStorageUsage();
   }, []);
 
-  // Refresh chat sessions from storage
+  // Refresh chat sessions from storage with error handling
   const refreshChatSessions = useCallback(() => {
-    const sessions = SettingsService.getChatSessions();
-    setChatSessions(sessions);
+    try {
+      const sessions = SettingsService.getChatSessions();
+      setChatSessions(sessions);
+    } catch (error) {
+      console.error("Error refreshing chat sessions:", error);
+      setChatSessions([]);
+    }
   }, []);
 
   return {
@@ -190,6 +251,7 @@ export function useChatHistory() {
     startNewChat,
     loadTemporaryHistory,
     currentSessionId,
+    isAutoSaving,
 
     // Chat sessions
     chatSessions,

@@ -40,6 +40,7 @@ function AIChat({ isVisible, onClose }) {
     currentSessionId,
     saveChatSession,
     loadChatSession,
+    isAutoSaving,
   } = useChatHistory();
   const {
     extractPDFContent,
@@ -79,10 +80,15 @@ function AIChat({ isVisible, onClose }) {
   //   }
   // }, [loadTemporaryHistory]);
 
-  // Auto-save messages to temporary storage
+  // Auto-save messages with debouncing to prevent excessive saves
   useEffect(() => {
     if (messages.length > 0) {
-      setCurrentMessages(messages);
+      // Debounce auto-saving to prevent race conditions
+      const timeoutId = setTimeout(() => {
+        setCurrentMessages(messages);
+      }, 500); // 500ms debounce
+
+      return () => clearTimeout(timeoutId);
     }
   }, [messages, setCurrentMessages]);
 
@@ -249,23 +255,27 @@ function AIChat({ isVisible, onClose }) {
     const userMessage = inputMessage.trim();
     setInputMessage("");
 
+    // Generate unique message IDs to prevent conflicts
+    const timestamp = Date.now();
+    const userMessageId = `user_${timestamp}_${Math.random().toString(36).substr(2, 9)}`;
+    const aiMessageId = `ai_${timestamp + 1}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Add user message to chat
     const newUserMessage = {
-      id: Date.now(),
+      id: userMessageId,
       type: "user",
       content: userMessage,
-      timestamp: new Date(),
+      timestamp: new Date(timestamp),
     };
 
     setMessages((prev) => [...prev, newUserMessage]);
 
     // Add placeholder AI message for streaming
-    const aiMessageId = Date.now() + 1;
     const aiMessage = {
       id: aiMessageId,
       type: "ai",
       content: "",
-      timestamp: new Date(),
+      timestamp: new Date(timestamp + 1),
       isStreaming: true,
     };
 
@@ -317,10 +327,12 @@ function AIChat({ isVisible, onClose }) {
         )
       );
     } catch (error) {
+      const errorMessageId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const errorMessage = {
-        id: Date.now() + 2,
+        id: errorMessageId,
         type: "error",
-        content: error.message,
+        content:
+          error.message || "An error occurred while processing your message",
         timestamp: new Date(),
       };
       // Remove the streaming message and add error
@@ -355,25 +367,33 @@ function AIChat({ isVisible, onClose }) {
           <button
             className={styles.newChatButton}
             onClick={() => {
-              if (
-                messages.length > 0 &&
-                window.confirm(
+              if (messages.length > 0) {
+                const shouldProceed = window.confirm(
                   "Start a new chat? Current conversation will be saved automatically."
-                )
-              ) {
+                );
+
+                if (shouldProceed) {
+                  startNewChat();
+                  setMessages([]);
+                  setPaperContextSet(false);
+                  setLastPaperSelection(new Set());
+                }
+              } else {
+                // Just reset state for empty chat
                 startNewChat();
                 setMessages([]);
-                setPaperContextSet(false); // Reset paper context for new chat
-                setLastPaperSelection(new Set());
-              } else if (messages.length === 0) {
-                startNewChat();
-                setPaperContextSet(false); // Reset paper context for new chat
+                setPaperContextSet(false);
                 setLastPaperSelection(new Set());
               }
             }}
             title="New Chat"
+            disabled={isAutoSaving}
           >
-            <Plus size={18} />
+            {isAutoSaving ? (
+              <Loader2 size={18} className={styles.spinning} />
+            ) : (
+              <Plus size={18} />
+            )}
           </button>
           <button
             className={styles.historyButton}

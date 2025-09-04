@@ -5,6 +5,7 @@ const {
   dialog,
   shell,
   Menu,
+  clipboard,
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -424,6 +425,25 @@ ipcMain.handle("show-item-in-folder", async (event, filePath) => {
   try {
     shell.showItemInFolder(filePath);
     return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Clipboard operations
+ipcMain.handle("write-clipboard", async (event, text) => {
+  try {
+    clipboard.writeText(text);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle("read-clipboard", async () => {
+  try {
+    const text = clipboard.readText();
+    return { success: true, text };
   } catch (error) {
     return { success: false, error: error.message };
   }
