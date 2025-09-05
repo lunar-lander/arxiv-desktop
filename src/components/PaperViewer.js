@@ -500,7 +500,7 @@ function PaperViewer({ paper }) {
       </div>
 
       <div className={styles.pdfContainer} ref={containerRef}>
-        {isLoading && <div className={styles.loadingState}>Loading PDF...</div>}
+        {isLoading && <div className={styles.loadingState}></div>}
 
         {error && (
           <div className={styles.errorState}>

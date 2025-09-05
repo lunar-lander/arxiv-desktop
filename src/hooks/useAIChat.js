@@ -17,19 +17,19 @@ export function useAIChat() {
     const savedEndpoint = localStorage.getItem("ai_endpoint");
     const savedModel = localStorage.getItem("ai_model");
 
-    if (savedApiKey) {
+    if (savedApiKey && savedApiKey.trim()) {
       setApiKey(savedApiKey);
       AIService.setApiKey(savedApiKey);
     }
-    if (savedServiceType) {
+    if (savedServiceType && savedServiceType.trim()) {
       setServiceType(savedServiceType);
       AIService.setServiceType(savedServiceType);
     }
-    if (savedEndpoint) {
+    if (savedEndpoint && savedEndpoint.trim()) {
       setEndpoint(savedEndpoint);
       AIService.setEndpoint(savedEndpoint);
     }
-    if (savedModel) {
+    if (savedModel && savedModel.trim()) {
       setModel(savedModel);
       AIService.setModel(savedModel);
     }
@@ -61,7 +61,12 @@ export function useAIChat() {
       );
       localStorage.setItem("ai_model", model || "gpt-3.5-turbo");
 
-      AIService.setApiKey(apiKey);
+      // Only set API key if it's not empty
+      if (apiKey && apiKey.trim()) {
+        AIService.setApiKey(apiKey);
+      } else {
+        AIService.clearApiKey();
+      }
       AIService.setServiceType(serviceType);
       AIService.setEndpoint(endpoint);
       AIService.setModel(model);

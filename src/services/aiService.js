@@ -241,11 +241,16 @@ export class AIService {
     conversationHistory = [],
     onChunk = null
   ) {
-    if (!this.apiKey && this.serviceType !== "ollama") {
+    if (!aiConfig.isValid()) {
       throw new Error(
         "AI API key not configured. Please set your API key in settings."
       );
     }
+
+    const apiKey = aiConfig.getApiKey();
+    const serviceType = aiConfig.getServiceType();
+    const model = aiConfig.getModel();
+    const apiEndpoint = aiConfig.getEndpoint();
 
     try {
       let systemPrompt =
@@ -286,7 +291,7 @@ export class AIService {
 
       // OpenAI-compatible format with streaming
       const requestBody = {
-        model: this.model,
+        model: model,
         max_tokens: 1000,
         stream: true,
         messages: messages,
@@ -298,9 +303,9 @@ export class AIService {
         Accept: "text/event-stream",
       };
 
-      if (this.serviceType === "openai") {
-        headers["Authorization"] = `Bearer ${this.apiKey}`;
-      } else if (this.serviceType === "anthropic") {
+      if (serviceType === "openai") {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      } else if (serviceType === "anthropic") {
         // For Anthropic, we need to handle conversation history differently
         // Build the conversation for Anthropic format
         const conversationMessages = [];
@@ -342,11 +347,11 @@ export class AIService {
           }
         }
         return response;
-      } else if (aiConfig.getApiKey()) {
-        headers["Authorization"] = `Bearer ${aiConfig.getApiKey()}`;
+      } else {
+        headers["Authorization"] = `Bearer ${apiKey}`;
       }
 
-      const response = await fetch(aiConfig.getEndpoint(), {
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),
