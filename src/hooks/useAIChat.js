@@ -44,7 +44,7 @@ export function useAIChat() {
       setModel("gpt-3.5-turbo");
     } else if (newServiceType === "anthropic") {
       setEndpoint("https://api.anthropic.com/v1/messages");
-      setModel("claude-3-sonnet-20240229");
+      setModel("claude-sonnet-4-20250514");
     } else if (newServiceType === "ollama") {
       setEndpoint("http://localhost:11434/v1/chat/completions");
       setModel("llama2");

@@ -471,6 +471,13 @@ export class AIService {
           "Invalid request. The content might be too long or malformed."
         );
       } else if (
+        error.message.includes("404") ||
+        (error.response && error.response.status === 404)
+      ) {
+        throw new Error(
+          "Model not found. Please check your model name in settings. Try 'claude-sonnet-4-20250514' for Claude 4 or 'claude-3-5-sonnet-20241022' for Claude 3.5."
+        );
+      } else if (
         error.message.includes("500") ||
         (error.response && error.response.status >= 500)
       ) {
@@ -486,7 +493,23 @@ export class AIService {
 
       // For debugging, include the actual error message
       console.log("Full error details:", error);
-      throw new Error(`AI request failed: ${error.message || "Unknown error"}`);
+
+      // Try to get more specific error information from API response
+      let errorMessage = error.message || "Unknown error";
+      if (error.response?.data) {
+        try {
+          const responseData =
+            typeof error.response.data === "string"
+              ? error.response.data
+              : JSON.stringify(error.response.data);
+          console.log("API Response Data:", responseData);
+          errorMessage += ` (API Response: ${responseData})`;
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      throw new Error(`AI request failed: ${errorMessage}`);
     }
   }
 
