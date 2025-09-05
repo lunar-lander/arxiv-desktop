@@ -207,6 +207,10 @@ export class AIService {
   }
 
   static async sendAnthropicWithHistory(conversationMessages, context = null) {
+    const apiKey = aiConfig.getApiKey();
+    const model = aiConfig.getModel();
+    const apiEndpoint = aiConfig.getEndpoint();
+
     try {
       let systemPrompt =
         "You are an AI assistant helping with academic research. You can help users understand papers, suggest research directions, and answer questions about academic content.";
@@ -216,7 +220,7 @@ export class AIService {
       }
 
       const requestBody = {
-        model: this.model,
+        model: model,
         max_tokens: 1000,
         system: systemPrompt,
         messages: conversationMessages,
@@ -224,11 +228,11 @@ export class AIService {
 
       const headers = {
         "Content-Type": "application/json",
-        "x-api-key": this.apiKey,
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       };
 
-      const response = await axios.post(this.apiEndpoint, requestBody, {
+      const response = await axios.post(apiEndpoint, requestBody, {
         headers,
       });
       return response.data.content[0].text;
@@ -368,7 +372,7 @@ export class AIService {
         });
 
         // Call Anthropic with conversation history
-        const response = await this.sendAnthropicWithHistory(
+        const response = await AIService.sendAnthropicWithHistory(
           conversationMessages,
           context
         );
