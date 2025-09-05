@@ -150,9 +150,16 @@ function PaperViewer({ paper }) {
 
     const handleClickOutside = (event) => {
       // Hide copy button when clicking outside PDF content
+      // Exclude AI chat elements to prevent focus stealing from input
       if (
         !event.target.closest(".react-pdf__Page") &&
-        !event.target.closest(".copyButton")
+        !event.target.closest(".copyButton") &&
+        !event.target.closest("textarea") && // Exclude all textareas (AI chat input)
+        !event.target.matches("textarea") && // Exclude direct textarea clicks
+        !event.target.closest("[class*='messageInput']") && // Exclude messageInput class elements
+        !event.target.closest("[class*='AIChat']") && // Exclude entire AI chat component
+        !event.target.closest("[class*='inputRow']") && // Exclude input container
+        !event.target.closest("[class*='sendButton']") // Exclude send button
       ) {
         setShowCopyButton(false);
         setSelectedText("");
