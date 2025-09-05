@@ -63,9 +63,19 @@ class AIConfiguration {
 
   // Validate configuration before API calls
   isValid() {
-    return (
-      this._config.serviceType === "ollama" ||
-      (this._config.apiKey && this._config.apiEndpoint && this._config.model)
+    // Ollama doesn't require API key
+    if (this._config.serviceType === "ollama") {
+      return !!(this._config.apiEndpoint && this._config.model);
+    }
+
+    // Other services require API key, endpoint, and model
+    return !!(
+      this._config.apiKey &&
+      this._config.apiKey.trim() &&
+      this._config.apiEndpoint &&
+      this._config.apiEndpoint.trim() &&
+      this._config.model &&
+      this._config.model.trim()
     );
   }
 }
@@ -242,8 +252,24 @@ export class AIService {
     onChunk = null
   ) {
     if (!aiConfig.isValid()) {
+      const serviceType = aiConfig.getServiceType();
+      const apiKey = aiConfig.getApiKey();
+      const endpoint = aiConfig.getEndpoint();
+      const model = aiConfig.getModel();
+
+      const missingFields = [];
+      if (serviceType !== "ollama" && (!apiKey || !apiKey.trim())) {
+        missingFields.push("API Key");
+      }
+      if (!endpoint || !endpoint.trim()) {
+        missingFields.push("Endpoint URL");
+      }
+      if (!model || !model.trim()) {
+        missingFields.push("Model");
+      }
+
       throw new Error(
-        "AI API key not configured. Please set your API key in settings."
+        `AI configuration incomplete. Missing: ${missingFields.join(", ")}. Please check your settings.`
       );
     }
 
@@ -251,6 +277,16 @@ export class AIService {
     const serviceType = aiConfig.getServiceType();
     const model = aiConfig.getModel();
     const apiEndpoint = aiConfig.getEndpoint();
+
+    // Debug logging
+    console.log("AI Service Debug:", {
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey ? apiKey.length : 0,
+      serviceType,
+      model,
+      apiEndpoint,
+      isValid: aiConfig.isValid(),
+    });
 
     try {
       let systemPrompt =
@@ -404,6 +440,13 @@ export class AIService {
       return fullResponse;
     } catch (error) {
       console.error("AI streaming API error:", error);
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        stack: error.stack,
+      });
 
       // Check for specific HTTP status codes
       if (
