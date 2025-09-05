@@ -4,29 +4,53 @@ class StorageService {
     this.dataFile = null;
     this.papersDir = null;
     this.initialized = false;
+    this.initPromise = null;
+    this.operationQueue = [];
+    this.isProcessingQueue = false;
+    this.cache = new Map(); // Memory cache for frequently accessed data
   }
 
   async initialize() {
     if (this.initialized) return;
 
+    // Prevent multiple initialization attempts
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
+    this.initPromise = this._doInitialize();
+    await this.initPromise;
+  }
+
+  async _doInitialize() {
     try {
+      if (!window.electronAPI) {
+        throw new Error("Electron API not available");
+      }
+
       const appDataPath = await window.electronAPI.getAppDataPath();
       this.dataFile = `${appDataPath}/app-data.json`;
       this.papersDir = `${appDataPath}/papers`;
 
       // Ensure directories exist
-      await window.electronAPI.ensureDirectory(appDataPath);
-      await window.electronAPI.ensureDirectory(this.papersDir);
+      await Promise.all([
+        window.electronAPI.ensureDirectory(appDataPath),
+        window.electronAPI.ensureDirectory(this.papersDir),
+      ]);
 
       // Ensure the data file exists
       const exists = await window.electronAPI.fileExists(this.dataFile);
       if (!exists) {
-        await this.saveData(this.getDefaultData());
+        await this._saveDataDirect(this.getDefaultData());
       }
 
       this.initialized = true;
+      console.log("StorageService initialized successfully");
     } catch (error) {
       console.error("Failed to initialize storage:", error);
+      this.initialized = false;
+      this.initPromise = null;
+      throw error;
     }
   }
 
@@ -45,18 +69,30 @@ class StorageService {
   async loadData() {
     await this.initialize();
 
+    // Check memory cache first
+    const cacheKey = "app-data";
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey);
+      // Cache for 5 minutes
+      if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
+        return cached.data;
+      }
+      this.cache.delete(cacheKey);
+    }
+
     try {
       const exists = await window.electronAPI.fileExists(this.dataFile);
 
       if (!exists) {
         const defaultData = this.getDefaultData();
-        await this.saveData(defaultData);
+        await this._saveDataDirect(defaultData);
+        this.cache.set(cacheKey, { data: defaultData, timestamp: Date.now() });
         return defaultData;
       }
 
       const result = await window.electronAPI.readFile(this.dataFile);
 
-      if (result.success) {
+      if (result.success && result.data) {
         // Handle different data formats
         let text;
         if (result.data instanceof ArrayBuffer) {
@@ -70,29 +106,92 @@ class StorageService {
         }
 
         if (!text.trim()) {
-          const defaultData = this.getDefaultData();
-          await this.saveData(defaultData);
-          return defaultData;
+          throw new Error("Empty data file");
         }
 
-        const data = JSON.parse(text);
-        return data;
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw new Error(`JSON parse error: ${parseError.message}`);
+        }
+
+        // Validate data structure
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid data structure");
+        }
+
+        // Ensure required properties exist
+        const validatedData = {
+          ...this.getDefaultData(),
+          ...data,
+        };
+
+        this.cache.set(cacheKey, {
+          data: validatedData,
+          timestamp: Date.now(),
+        });
+        return validatedData;
+      } else {
+        throw new Error(
+          "Failed to read data file: " + (result.error || "Unknown error")
+        );
       }
     } catch (error) {
       console.error("Failed to load data:", error);
-    }
 
-    const defaultData = this.getDefaultData();
-    await this.saveData(defaultData);
-    return defaultData;
+      // Create backup and return default data
+      const defaultData = this.getDefaultData();
+      try {
+        await this._saveDataDirect(defaultData);
+      } catch (saveError) {
+        console.error("Failed to save default data:", saveError);
+      }
+
+      this.cache.set(cacheKey, { data: defaultData, timestamp: Date.now() });
+      return defaultData;
+    }
   }
 
   async saveData(data) {
+    return new Promise((resolve) => {
+      this.operationQueue.push(async () => {
+        try {
+          const result = await this._saveDataDirect(data);
+          resolve(result);
+        } catch (error) {
+          console.error("Queued save operation failed:", error);
+          resolve(false);
+        }
+      });
+
+      this.processQueue();
+    });
+  }
+
+  async _saveDataDirect(data) {
     await this.initialize();
 
     try {
-      data.lastUpdated = Date.now();
-      const jsonData = JSON.stringify(data, null, 2);
+      // Validate data before saving
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid data to save");
+      }
+
+      const dataToSave = {
+        ...data,
+        lastUpdated: Date.now(),
+        version: data.version || "1.0.0",
+      };
+
+      const jsonData = JSON.stringify(dataToSave, null, 2);
+
+      // Validate JSON size (prevent extremely large files)
+      if (jsonData.length > 50 * 1024 * 1024) {
+        // 50MB limit
+        throw new Error("Data file too large");
+      }
+
       const encoder = new TextEncoder();
       const uint8Array = encoder.encode(jsonData);
 
@@ -102,15 +201,38 @@ class StorageService {
       );
 
       if (result?.success) {
+        // Update cache
+        const cacheKey = "app-data";
+        this.cache.set(cacheKey, { data: dataToSave, timestamp: Date.now() });
         return true;
       } else {
-        console.error("Failed to save data:", result);
-        return false;
+        throw new Error(
+          `Write operation failed: ${result?.error || "Unknown error"}`
+        );
       }
     } catch (error) {
       console.error("Failed to save data:", error);
       return false;
     }
+  }
+
+  async processQueue() {
+    if (this.isProcessingQueue || this.operationQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    while (this.operationQueue.length > 0) {
+      const operation = this.operationQueue.shift();
+      try {
+        await operation();
+      } catch (error) {
+        console.error("Queue operation failed:", error);
+      }
+    }
+
+    this.isProcessingQueue = false;
   }
 
   // Paper management
@@ -258,45 +380,66 @@ class StorageService {
 
   // PDF caching methods
   sanitizeFilename(filename) {
+    if (!filename || typeof filename !== "string") {
+      return "unknown";
+    }
+
     // Remove or replace invalid characters for filenames
-    return filename
-      .replace(/[<>:"/\\|?*]/g, "_")
-      .replace(/\s+/g, "_")
-      .replace(/_{2,}/g, "_")
-      .trim();
+    return (
+      filename
+        .replace(/[<>:"/\\|?*]/g, "_")
+        .replace(/[^\u0020-\u007E]/g, "_") // Replace non-printable characters
+        .replace(/\s+/g, "_")
+        .replace(/_{2,}/g, "_")
+        .replace(/^[._]+|[._]+$/g, "") // Remove leading/trailing dots and underscores
+        .substring(0, 200) // Limit length
+        .trim() || "unknown"
+    );
   }
 
-  async downloadAndCachePdf(paper) {
+  async downloadAndCachePdf(paper, options = {}) {
     await this.initialize();
 
     try {
+      // Input validation
+      if (!paper || !paper.id || !paper.pdfUrl) {
+        throw new Error("Invalid paper object");
+      }
+
       const sanitizedId = this.sanitizeFilename(paper.id);
       const sanitizedTitle = this.sanitizeFilename(
-        paper.title.substring(0, 100)
+        (paper.title || "untitled").substring(0, 100)
       );
       const filename = `${sanitizedId}_${sanitizedTitle}.pdf`;
       const localPath = `${this.papersDir}/${filename}`;
 
       // Check if already cached
       const exists = await window.electronAPI.fileExists(localPath);
-      if (exists) {
+      if (exists && !options.force) {
         console.log("PDF already cached:", localPath);
         return localPath;
       }
 
+      // Validate PDF URL
+      if (!paper.pdfUrl.startsWith("http")) {
+        throw new Error("Invalid PDF URL");
+      }
+
       // Download the PDF
-      console.log("Downloading PDF:", paper.pdfUrl, "to", localPath);
+      console.log("Downloading PDF:", paper.pdfUrl, "to", filename);
+
       const result = await window.electronAPI.downloadFile(
         paper.pdfUrl,
         filename
       );
 
-      if (result.success) {
+      if (result && result.success) {
         console.log("PDF downloaded successfully:", result.path);
         return result.path;
       } else {
-        console.error("Failed to download PDF:", result.error);
-        return null;
+        const errorMsg = result?.error || "Unknown download error";
+        console.error("Failed to download PDF:", errorMsg);
+        throw new Error(`Download failed: ${errorMsg}`);
       }
     } catch (error) {
       console.error("Error downloading PDF:", error);

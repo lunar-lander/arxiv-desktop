@@ -169,11 +169,6 @@ export class SettingsService {
       // Sort sessions by lastUpdated timestamp (newest first)
       sessions.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
 
-      // Keep only last 50 sessions to prevent storage bloat
-      if (sessions.length > 50) {
-        sessions.splice(50);
-      }
-
       // Atomic save operation
       localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
 

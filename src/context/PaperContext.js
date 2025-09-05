@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { AuthService } from "../services/authService";
 import storageService from "../services/storageService";
 
@@ -87,74 +94,149 @@ function paperReducer(state, action) {
 
 export function PaperProvider({ children }) {
   const [state, dispatch] = useReducer(paperReducer, initialState);
+  const [isLoading, setIsLoading] = useState(false);
+  const abortControllerRef = useRef(null);
 
-  // Enhanced dispatch that handles async storage operations
+  // Enhanced dispatch that handles async storage operations with proper error handling
   const enhancedDispatch = async (action) => {
-    switch (action.type) {
-      case "TOGGLE_STAR":
-        const isStarred = state.starredPapers.find(
-          (p) => p.id === action.payload.id
-        );
-        dispatch(action);
-        if (isStarred) {
-          await storageService.removeStar(action.payload.id);
-        } else {
-          await storageService.addStar(action.payload);
+    // Prevent multiple concurrent operations
+    if (isLoading) {
+      console.warn(
+        "Storage operation already in progress, queueing action:",
+        action.type
+      );
+    }
+
+    setIsLoading(true);
+
+    try {
+      switch (action.type) {
+        case "TOGGLE_STAR": {
+          const isStarred = state.starredPapers.find(
+            (p) => p.id === action.payload.id
+          );
+          // Optimistic update
+          dispatch(action);
+
+          try {
+            if (isStarred) {
+              await storageService.removeStar(action.payload.id);
+            } else {
+              await storageService.addStar(action.payload);
+            }
+          } catch (error) {
+            console.error("Failed to persist star change:", error);
+            // Revert optimistic update
+            dispatch(action);
+            throw error;
+          }
+          break;
         }
-        break;
-      case "ADD_SEARCH":
-        dispatch(action);
-        await storageService.addSearchHistory(action.payload);
-        break;
-      case "ADD_OPEN_PAPER":
-        dispatch(action);
-        await storageService.addToOpenedPapers(action.payload);
-        break;
-      case "REMOVE_OPEN_PAPER":
-        dispatch(action);
-        await storageService.removeFromOpenedPapers(action.payload);
-        break;
-      case "UPDATE_PAPER_LOCAL_PATH":
-        dispatch(action);
-        // Update both opened and starred papers in storage
-        await storageService.updatePaperLocalPath(
-          action.payload.paperId,
-          action.payload.localPath
-        );
-        break;
-      default:
-        dispatch(action);
-        break;
+        case "ADD_SEARCH": {
+          dispatch(action);
+          try {
+            await storageService.addSearchHistory(action.payload);
+          } catch (error) {
+            console.error("Failed to persist search history:", error);
+          }
+          break;
+        }
+        case "ADD_OPEN_PAPER": {
+          dispatch(action);
+          try {
+            await storageService.addToOpenedPapers(action.payload);
+          } catch (error) {
+            console.error("Failed to persist opened paper:", error);
+          }
+          break;
+        }
+        case "REMOVE_OPEN_PAPER": {
+          dispatch(action);
+          try {
+            await storageService.removeFromOpenedPapers(action.payload);
+          } catch (error) {
+            console.error("Failed to remove opened paper:", error);
+          }
+          break;
+        }
+        case "UPDATE_PAPER_LOCAL_PATH": {
+          dispatch(action);
+          try {
+            await storageService.updatePaperLocalPath(
+              action.payload.paperId,
+              action.payload.localPath
+            );
+          } catch (error) {
+            console.error("Failed to update paper local path:", error);
+          }
+          break;
+        }
+        default:
+          dispatch(action);
+          break;
+      }
+    } catch (error) {
+      console.error("Enhanced dispatch error:", error);
+      // Don't throw to prevent UI crashes, just log
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadPersistedState();
-    loadCurrentUser();
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      try {
+        await Promise.all([
+          loadPersistedState(isMounted),
+          loadCurrentUser(isMounted),
+        ]);
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+      }
+    };
+
+    loadInitialData();
+
+    return () => {
+      isMounted = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   useEffect(() => {
     persistState();
   }, [state.starredPapers, state.searchHistory]);
 
-  const loadPersistedState = async () => {
+  const loadPersistedState = async (isMounted = true) => {
+    if (!isMounted) return;
+
     try {
+      abortControllerRef.current = new AbortController();
+
       const [starred, searchHistory, opened] = await Promise.all([
         storageService.getStarredPapers(),
         storageService.getSearchHistory(),
         storageService.getOpenedPapers(),
       ]);
 
+      if (!isMounted) return; // Check if component is still mounted
+
       dispatch({
         type: "LOAD_STATE",
         payload: {
-          starredPapers: starred,
-          searchHistory: searchHistory,
-          openPapers: opened,
+          starredPapers: starred || [],
+          searchHistory: searchHistory || [],
+          openPapers: opened || [],
         },
       });
     } catch (error) {
-      console.error("Failed to load persisted state:", error);
+      if (error.name !== "AbortError") {
+        console.error("Failed to load persisted state:", error);
+      }
     }
   };
 
@@ -163,19 +245,28 @@ export function PaperProvider({ children }) {
     // This function is kept for backward compatibility but no longer needed
   };
 
-  const loadCurrentUser = async () => {
+  const loadCurrentUser = async (isMounted = true) => {
+    if (!isMounted) return;
+
     try {
       const user = await AuthService.getCurrentUser();
-      if (user) {
+      if (user && isMounted) {
         dispatch({ type: "SET_USER", payload: user });
       }
     } catch (error) {
-      console.error("Failed to load current user:", error);
+      if (isMounted) {
+        console.error("Failed to load current user:", error);
+      }
     }
   };
 
   return (
-    <PaperContext.Provider value={{ state, dispatch: enhancedDispatch }}>
+    <PaperContext.Provider
+      value={{
+        state: { ...state, isLoading },
+        dispatch: enhancedDispatch,
+      }}
+    >
       {children}
     </PaperContext.Provider>
   );

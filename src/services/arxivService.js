@@ -13,6 +13,26 @@ export class ArxivService {
     maxResults = 20,
     source = "arxiv"
   ) {
+    // Input validation
+    if (!query || typeof query !== "string") {
+      throw new Error("Query must be a non-empty string");
+    }
+
+    if (query.length > 1000) {
+      throw new Error("Query too long. Maximum 1000 characters allowed.");
+    }
+
+    if (start < 0 || maxResults < 1 || maxResults > 100) {
+      throw new Error("Invalid pagination parameters");
+    }
+
+    const validSources = ["arxiv", "biorxiv"];
+    if (!validSources.includes(source)) {
+      throw new Error(
+        `Invalid source. Must be one of: ${validSources.join(", ")}`
+      );
+    }
+
     try {
       if (source === "arxiv") {
         return await this.searchArxiv(query, start, maxResults);
@@ -20,8 +40,26 @@ export class ArxivService {
         return await this.searchBiorxiv(query, start, maxResults);
       }
     } catch (error) {
-      console.error("Search failed:", error);
-      throw error;
+      console.error(`${source} search failed:`, error);
+
+      // Provide more specific error messages
+      if (error.code === "ENOTFOUND" || error.code === "ECONNREFUSED") {
+        throw new Error(
+          `Unable to connect to ${source}. Please check your internet connection.`
+        );
+      }
+
+      if (error.response?.status === 429) {
+        throw new Error(
+          `${source} rate limit exceeded. Please wait and try again.`
+        );
+      }
+
+      if (error.response?.status >= 500) {
+        throw new Error(`${source} server error. Please try again later.`);
+      }
+
+      throw new Error(`${source} search failed: ${error.message}`);
     }
   }
 
@@ -70,8 +108,26 @@ export class ArxivService {
       ? `${ARXIV_API_BASE}?${params}`
       : `${CORS_PROXY}${encodeURIComponent(`${ARXIV_API_BASE}?${params}`)}`;
 
-    const response = await axios.get(apiUrl);
-    return this.parseArxivXML(response.data);
+    try {
+      const response = await axios.get(apiUrl, {
+        timeout: 15000, // 15 second timeout
+        headers: {
+          "User-Agent": "ArxivDesktop/1.0.0",
+          Accept: "application/atom+xml, text/xml, application/xml",
+        },
+      });
+
+      if (!response.data) {
+        throw new Error("Empty response from arXiv API");
+      }
+
+      return this.parseArxivXML(response.data);
+    } catch (error) {
+      if (error.code === "ECONNABORTED") {
+        throw new Error("arXiv search timed out. Please try again.");
+      }
+      throw error;
+    }
   }
 
   static async searchArxivWithFilters(query, start, maxResults, filters) {
@@ -293,60 +349,92 @@ export class ArxivService {
   }
 
   static parseArxivXML(xmlString) {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+    if (!xmlString || typeof xmlString !== "string") {
+      throw new Error("Invalid XML response from arXiv");
+    }
+
+    let xmlDoc;
+    try {
+      const parser = new DOMParser();
+      xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+      // Check for XML parsing errors
+      const parseError = xmlDoc.querySelector("parsererror");
+      if (parseError) {
+        throw new Error("XML parsing failed: " + parseError.textContent);
+      }
+    } catch (error) {
+      throw new Error("Failed to parse arXiv XML response: " + error.message);
+    }
 
     const entries = xmlDoc.getElementsByTagName("entry");
     const papers = [];
 
     for (const entry of entries) {
-      const id = entry.getElementsByTagName("id")[0]?.textContent || "";
-      const arxivId = id.split("/").pop();
-
-      const title =
-        entry.getElementsByTagName("title")[0]?.textContent?.trim() || "";
-      const summary =
-        entry.getElementsByTagName("summary")[0]?.textContent?.trim() || "";
-      const published =
-        entry.getElementsByTagName("published")[0]?.textContent || "";
-      const updated =
-        entry.getElementsByTagName("updated")[0]?.textContent || "";
-
-      const authors = [];
-      const authorElements = entry.getElementsByTagName("author");
-      for (const author of authorElements) {
-        const name = author.getElementsByTagName("name")[0]?.textContent;
-        if (name) authors.push(name);
-      }
-
-      const categories = [];
-      const categoryElements = entry.getElementsByTagName("category");
-      for (const category of categoryElements) {
-        const term = category.getAttribute("term");
-        if (term) categories.push(term);
-      }
-
-      const links = entry.getElementsByTagName("link");
-      let pdfUrl = "";
-      for (const link of links) {
-        if (link.getAttribute("type") === "application/pdf") {
-          pdfUrl = link.getAttribute("href");
-          break;
+      try {
+        const id = entry.getElementsByTagName("id")[0]?.textContent || "";
+        if (!id) {
+          console.warn("Skipping entry without ID");
+          continue;
         }
-      }
 
-      papers.push({
-        id: arxivId,
-        title,
-        authors,
-        abstract: summary,
-        published,
-        updated,
-        source: "arxiv",
-        url: id,
-        pdfUrl: pdfUrl || id.replace("/abs/", "/pdf/") + ".pdf",
-        categories,
-      });
+        const arxivId = id.split("/").pop();
+        if (!arxivId) {
+          console.warn("Skipping entry with invalid ID format:", id);
+          continue;
+        }
+
+        const title =
+          entry.getElementsByTagName("title")[0]?.textContent?.trim() ||
+          "Untitled";
+        const summary =
+          entry.getElementsByTagName("summary")[0]?.textContent?.trim() || "";
+        const published =
+          entry.getElementsByTagName("published")[0]?.textContent || "";
+        const updated =
+          entry.getElementsByTagName("updated")[0]?.textContent || published;
+
+        const authors = [];
+        const authorElements = entry.getElementsByTagName("author");
+        for (const author of authorElements) {
+          const name = author
+            .getElementsByTagName("name")[0]
+            ?.textContent?.trim();
+          if (name) authors.push(name);
+        }
+
+        const categories = [];
+        const categoryElements = entry.getElementsByTagName("category");
+        for (const category of categoryElements) {
+          const term = category.getAttribute("term");
+          if (term) categories.push(term);
+        }
+
+        const links = entry.getElementsByTagName("link");
+        let pdfUrl = "";
+        for (const link of links) {
+          if (link.getAttribute("type") === "application/pdf") {
+            pdfUrl = link.getAttribute("href");
+            break;
+          }
+        }
+
+        papers.push({
+          id: arxivId,
+          title,
+          authors,
+          abstract: summary,
+          published,
+          updated,
+          source: "arxiv",
+          url: id,
+          pdfUrl: pdfUrl || id.replace("/abs/", "/pdf/") + ".pdf",
+          categories,
+        });
+      } catch (entryError) {
+        console.warn("Failed to parse arXiv entry:", entryError);
+        // Continue with next entry
+      }
     }
 
     return {

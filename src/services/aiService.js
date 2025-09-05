@@ -1,33 +1,110 @@
 import axios from "axios";
 
-export class AIService {
-  static apiKey = null;
-  static apiEndpoint = "https://api.openai.com/v1/chat/completions";
-  static serviceType = "openai"; // openai, anthropic, ollama, etc.
-  static model = "gpt-3.5-turbo";
+// Secure configuration management
+class AIConfiguration {
+  constructor() {
+    this._config = {
+      apiKey: null,
+      apiEndpoint: "https://api.openai.com/v1/chat/completions",
+      serviceType: "openai",
+      model: "gpt-3.5-turbo",
+    };
+  }
 
+  setApiKey(key) {
+    if (typeof key !== "string") {
+      throw new Error("API key must be a string");
+    }
+    this._config.apiKey = key;
+  }
+
+  getApiKey() {
+    return this._config.apiKey;
+  }
+
+  setEndpoint(endpoint) {
+    if (typeof endpoint !== "string" || !endpoint.startsWith("http")) {
+      throw new Error("Endpoint must be a valid HTTP/HTTPS URL");
+    }
+    this._config.apiEndpoint = endpoint;
+  }
+
+  getEndpoint() {
+    return this._config.apiEndpoint;
+  }
+
+  setServiceType(type) {
+    const validTypes = ["openai", "anthropic", "ollama", "custom"];
+    if (!validTypes.includes(type)) {
+      throw new Error(`Service type must be one of: ${validTypes.join(", ")}`);
+    }
+    this._config.serviceType = type;
+  }
+
+  getServiceType() {
+    return this._config.serviceType;
+  }
+
+  setModel(model) {
+    if (typeof model !== "string") {
+      throw new Error("Model must be a string");
+    }
+    this._config.model = model;
+  }
+
+  getModel() {
+    return this._config.model;
+  }
+
+  // Security: Clear sensitive data
+  clearApiKey() {
+    this._config.apiKey = null;
+  }
+
+  // Validate configuration before API calls
+  isValid() {
+    return (
+      this._config.serviceType === "ollama" ||
+      (this._config.apiKey && this._config.apiEndpoint && this._config.model)
+    );
+  }
+}
+
+// Singleton configuration instance
+const aiConfig = new AIConfiguration();
+
+export class AIService {
   static setApiKey(key) {
-    this.apiKey = key;
+    aiConfig.setApiKey(key);
   }
 
   static setEndpoint(endpoint) {
-    this.apiEndpoint = endpoint;
+    aiConfig.setEndpoint(endpoint);
   }
 
   static setServiceType(type) {
-    this.serviceType = type;
+    aiConfig.setServiceType(type);
   }
 
   static setModel(model) {
-    this.model = model;
+    aiConfig.setModel(model);
+  }
+
+  static clearApiKey() {
+    aiConfig.clearApiKey();
   }
 
   static async sendMessage(message, context = null) {
-    if (!this.apiKey && this.serviceType !== "ollama") {
+    if (!aiConfig.isValid()) {
       throw new Error(
-        "AI API key not configured. Please set your API key in settings."
+        "AI configuration invalid. Please configure your API settings."
       );
     }
+
+    const apiKey = aiConfig.getApiKey();
+    const serviceType = aiConfig.getServiceType();
+    const model = aiConfig.getModel();
+    const apiEndpoint = aiConfig.getEndpoint();
 
     try {
       let systemPrompt =
@@ -37,9 +114,18 @@ export class AIService {
         systemPrompt += `\n\nContext: ${context}`;
       }
 
+      // Validate input parameters
+      if (!message || typeof message !== "string") {
+        throw new Error("Message must be a non-empty string");
+      }
+
+      if (message.length > 50000) {
+        throw new Error("Message too long. Maximum 50,000 characters allowed.");
+      }
+
       // OpenAI-compatible format
       const requestBody = {
-        model: this.model,
+        model: model,
         max_tokens: 1000,
         messages: [
           {
@@ -58,27 +144,43 @@ export class AIService {
         "Content-Type": "application/json",
       };
 
-      if (this.serviceType === "openai") {
-        headers["Authorization"] = `Bearer ${this.apiKey}`;
-      } else if (this.serviceType === "anthropic") {
-        headers["x-api-key"] = this.apiKey;
+      if (serviceType === "openai") {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      } else if (serviceType === "anthropic") {
+        headers["x-api-key"] = apiKey;
         headers["anthropic-version"] = "2023-06-01";
         // Convert to Anthropic format if needed
         requestBody.system = systemPrompt;
         requestBody.messages = [{ role: "user", content: message }];
-      } else if (this.apiKey) {
-        headers["Authorization"] = `Bearer ${this.apiKey}`;
+      } else if (apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
       }
 
-      const response = await axios.post(this.apiEndpoint, requestBody, {
+      const response = await axios.post(apiEndpoint, requestBody, {
         headers,
+        timeout: 30000, // 30 second timeout
       });
 
+      // Validate response structure
+      if (!response.data) {
+        throw new Error("Invalid response from AI service");
+      }
+
       // Handle different response formats
-      if (this.serviceType === "anthropic") {
+      if (serviceType === "anthropic") {
+        if (!response.data.content || !response.data.content[0]) {
+          throw new Error("Invalid Anthropic response format");
+        }
         return response.data.content[0].text;
       } else {
         // OpenAI-compatible format
+        if (
+          !response.data.choices ||
+          !response.data.choices[0] ||
+          !response.data.choices[0].message
+        ) {
+          throw new Error("Invalid OpenAI response format");
+        }
         return response.data.choices[0].message.content;
       }
     } catch (error) {
@@ -240,11 +342,11 @@ export class AIService {
           }
         }
         return response;
-      } else if (this.apiKey) {
-        headers["Authorization"] = `Bearer ${this.apiKey}`;
+      } else if (aiConfig.getApiKey()) {
+        headers["Authorization"] = `Bearer ${aiConfig.getApiKey()}`;
       }
 
-      const response = await fetch(this.apiEndpoint, {
+      const response = await fetch(aiConfig.getEndpoint(), {
         method: "POST",
         headers,
         body: JSON.stringify(requestBody),

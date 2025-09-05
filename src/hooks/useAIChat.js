@@ -52,15 +52,25 @@ export function useAIChat() {
   };
 
   const saveSettings = () => {
-    localStorage.setItem("ai_api_key", apiKey);
-    localStorage.setItem("ai_service_type", serviceType);
-    localStorage.setItem("ai_endpoint", endpoint);
-    localStorage.setItem("ai_model", model);
+    try {
+      localStorage.setItem("ai_api_key", apiKey || "");
+      localStorage.setItem("ai_service_type", serviceType || "openai");
+      localStorage.setItem(
+        "ai_endpoint",
+        endpoint || "https://api.openai.com/v1/chat/completions"
+      );
+      localStorage.setItem("ai_model", model || "gpt-3.5-turbo");
 
-    AIService.setApiKey(apiKey);
-    AIService.setServiceType(serviceType);
-    AIService.setEndpoint(endpoint);
-    AIService.setModel(model);
+      AIService.setApiKey(apiKey);
+      AIService.setServiceType(serviceType);
+      AIService.setEndpoint(endpoint);
+      AIService.setModel(model);
+
+      console.log("AI settings saved successfully");
+    } catch (error) {
+      console.error("Failed to save AI settings:", error);
+      throw new Error("Failed to save settings. Please try again.");
+    }
   };
 
   const sendStreamingMessage = async (
@@ -68,15 +78,40 @@ export function useAIChat() {
     context = null,
     onChunk = null
   ) => {
+    if (isLoading) {
+      throw new Error("Another message is already being processed");
+    }
+
+    if (
+      !message ||
+      typeof message !== "string" ||
+      message.trim().length === 0
+    ) {
+      throw new Error("Message cannot be empty");
+    }
+
+    if (message.length > 50000) {
+      throw new Error(
+        "Message is too long. Maximum 50,000 characters allowed."
+      );
+    }
+
     setIsLoading(true);
     try {
       const response = await AIService.sendMessageStream(
         message,
         context,
+        [],
         onChunk
       );
+
+      if (!response || typeof response !== "string") {
+        throw new Error("Invalid response from AI service");
+      }
+
       return response;
     } catch (error) {
+      console.error("AI streaming message failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -90,6 +125,32 @@ export function useAIChat() {
     conversationHistory = [],
     onChunk = null
   ) => {
+    if (isLoading) {
+      throw new Error("Another message is already being processed");
+    }
+
+    if (
+      !message ||
+      typeof message !== "string" ||
+      message.trim().length === 0
+    ) {
+      throw new Error("Message cannot be empty");
+    }
+
+    if (message.length > 50000) {
+      throw new Error(
+        "Message is too long. Maximum 50,000 characters allowed."
+      );
+    }
+
+    if (!Array.isArray(papers)) {
+      throw new Error("Papers must be an array");
+    }
+
+    if (!Array.isArray(conversationHistory)) {
+      throw new Error("Conversation history must be an array");
+    }
+
     setIsLoading(true);
     try {
       const response = await AIService.chatWithPaperContextStream(
@@ -99,8 +160,14 @@ export function useAIChat() {
         conversationHistory,
         onChunk
       );
+
+      if (!response || typeof response !== "string") {
+        throw new Error("Invalid response from AI service");
+      }
+
       return response;
     } catch (error) {
+      console.error("AI chat with context failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
