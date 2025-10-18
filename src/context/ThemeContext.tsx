@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 interface ThemeContextType {
   currentTheme: string;
   setTheme: (theme: string) => void;
+  toggleTheme: () => void;
   cycleTheme: () => void;
   availableThemes: Array<{ id: string; name: string; icon: string }>;
 }

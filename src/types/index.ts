@@ -28,6 +28,9 @@ export interface PaperState {
   openPapers: Paper[];
   starredPapers: Paper[];
   currentUser: User | null;
+  searchHistory?: any[];
+  currentPaper?: Paper | null;
+  isLoading?: boolean;
 }
 
 export type PaperAction =

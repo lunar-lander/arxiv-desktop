@@ -1,13 +1,15 @@
 // Storage service for persistent data management
 class StorageService {
+  dataFile: string | null = null;
+  papersDir: string | null = null;
+  initialized: boolean = false;
+  initPromise: Promise<void> | null = null;
+  operationQueue: Array<() => Promise<any>> = [];
+  isProcessingQueue: boolean = false;
+  cache: Map<string, any> = new Map();
+
   constructor() {
-    this.dataFile = null;
-    this.papersDir = null;
-    this.initialized = false;
-    this.initPromise = null;
-    this.operationQueue = [];
-    this.isProcessingQueue = false;
-    this.cache = new Map(); // Memory cache for frequently accessed data
+    // Properties initialized above
   }
 
   async initialize() {
