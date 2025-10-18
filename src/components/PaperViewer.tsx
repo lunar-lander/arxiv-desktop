@@ -23,7 +23,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/$
 function PaperViewer({ paper }) {
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState("auto"); // Default to auto-fit
+  const [scale, setScale] = useState<number | "auto">("auto"); // Default to auto-fit
   const [viewMode, setViewMode] = useState("continuous"); // Default to continuous view
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);

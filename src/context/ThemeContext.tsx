@@ -1,8 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-const ThemeContext = createContext();
+interface ThemeContextType {
+  currentTheme: string;
+  setTheme: (theme: string) => void;
+  cycleTheme: () => void;
+  availableThemes: Array<{ id: string; name: string; icon: string }>;
+}
 
-export function ThemeProvider({ children }) {
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState(() => {
     // Initialize with system preference to avoid flash
     if (typeof window !== "undefined" && window.matchMedia) {
@@ -169,7 +176,7 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");

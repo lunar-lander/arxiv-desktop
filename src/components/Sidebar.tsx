@@ -7,7 +7,6 @@ import {
   X,
   LogIn,
   LogOut,
-  Bot,
   PanelLeftClose,
 } from "lucide-react";
 import { usePapers } from "../context/PaperContext";
@@ -16,14 +15,7 @@ import LoginModal from "./LoginModal";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({
-  onNavigate,
-  onPaperSelect,
-  currentView,
-  onToggleAIChat,
-  isAIChatVisible,
-  onToggleSidebar,
-}) {
+function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleSidebar }) {
   const { state, dispatch } = usePapers();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -82,15 +74,6 @@ function Sidebar({
         >
           <Home size={18} />
           Home
-        </button>
-        <button
-          className={`${styles.navItem} ${
-            isAIChatVisible ? styles.active : ""
-          }`}
-          onClick={onToggleAIChat}
-        >
-          <Bot size={18} />
-          AI Assistant
         </button>
       </div>
 

@@ -8,19 +8,22 @@ import React, {
 } from "react";
 import { AuthService } from "../services/authService";
 import storageService from "../services/storageService";
+import type { Paper, PaperState, PaperAction, User } from "../types";
 
-const PaperContext = createContext();
+interface PaperContextType {
+  state: PaperState;
+  dispatch: React.Dispatch<PaperAction>;
+}
 
-const initialState = {
+const PaperContext = createContext<PaperContextType | undefined>(undefined);
+
+const initialState: PaperState = {
   openPapers: [],
   starredPapers: [],
-  searchHistory: [],
   currentUser: null,
-  currentPaper: null,
-  isLoading: false,
 };
 
-function paperReducer(state, action) {
+function paperReducer(state: PaperState, action: PaperAction): PaperState {
   switch (action.type) {
     case "SET_LOADING":
       return { ...state, isLoading: action.payload };

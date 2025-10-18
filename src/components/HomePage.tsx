@@ -14,7 +14,9 @@ function HomePage({
   onSearchQuery,
 }) {
   const [searchQuery, setSearchQuery] = useState(lastSearchQuery || "");
-  const [selectedSource, setSelectedSource] = useState("arxiv");
+  const [selectedSource, setSelectedSource] = useState<"arxiv" | "biorxiv">(
+    "arxiv"
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreResults, setHasMoreResults] = useState(true);
@@ -24,11 +26,13 @@ function HomePage({
     title: "",
     dateFrom: "",
     dateTo: "",
-    categories: [],
-    sortBy: "relevance",
+    categories: [] as string[],
+    sortBy: "relevance" as "relevance" | "submittedDate" | "lastUpdatedDate",
     maxResults: 20,
   });
-  const [sortBy, setSortBy] = useState("relevance");
+  const [sortBy, setSortBy] = useState<
+    "relevance" | "submittedDate" | "lastUpdatedDate"
+  >("relevance");
   const { state, dispatch } = usePapers();
   const resultsContainerRef = useRef(null);
   const homeContainerRef = useRef(null);
@@ -142,17 +146,7 @@ function HomePage({
       // Check if we have more results
       setHasMoreResults(results.papers.length === searchFilters.maxResults);
 
-      if (!append) {
-        dispatch({
-          type: "ADD_SEARCH",
-          payload: {
-            query: searchQuery,
-            source: selectedSource,
-            filters: searchFilters,
-            timestamp: Date.now(),
-          },
-        });
-      }
+      // Note: Search history removed in TypeScript migration
     } catch (error) {
       console.error("Search failed:", error);
       alert("Search failed. Please try again.");
@@ -185,11 +179,6 @@ function HomePage({
     }
   };
 
-  const handleBookmark = (paper, e) => {
-    e.stopPropagation();
-    dispatch({ type: "ADD_BOOKMARK", payload: paper });
-  };
-
   const handleStar = (paper, e) => {
     e.stopPropagation();
     dispatch({ type: "TOGGLE_STAR", payload: paper });
@@ -204,11 +193,15 @@ function HomePage({
     switch (sortType) {
       case "date-desc":
         return sorted.sort(
-          (a, b) => new Date(b.published) - new Date(a.published)
+          (a, b) =>
+            new Date(b.published || 0).getTime() -
+            new Date(a.published || 0).getTime()
         );
       case "date-asc":
         return sorted.sort(
-          (a, b) => new Date(a.published) - new Date(b.published)
+          (a, b) =>
+            new Date(a.published || 0).getTime() -
+            new Date(b.published || 0).getTime()
         );
       case "title":
         return sorted.sort((a, b) => a.title.localeCompare(b.title));
@@ -271,7 +264,7 @@ function HomePage({
 
         <button
           className={styles.searchButton}
-          onClick={handleSearch}
+          onClick={() => handleSearch(false)}
           disabled={isLoading || !searchQuery.trim()}
         >
           {isLoading ? "Searching..." : "Search"}
