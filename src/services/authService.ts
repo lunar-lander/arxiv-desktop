@@ -1,4 +1,5 @@
 import axios from "axios";
+import { User, AuthData } from "../types";
 
 export class AuthService {
   static async loginToArxiv(username, password) {
@@ -7,9 +8,9 @@ export class AuthService {
       // This is a placeholder for future implementation
       // For now, we'll store user credentials locally for paper submission access
 
-      const userData = {
+      const userData: User = {
         username,
-        source: "arxiv",
+        source: "arxiv" as const,
         loggedIn: true,
         loginTime: Date.now(),
       };
@@ -47,9 +48,9 @@ export class AuthService {
       // bioRxiv also doesn't have public auth API
       // This is a placeholder for future implementation
 
-      const userData = {
+      const userData: User = {
         username,
-        source: "biorxiv",
+        source: "biorxiv" as const,
         loggedIn: true,
         loginTime: Date.now(),
       };
@@ -60,11 +61,11 @@ export class AuthService {
       const authFile = `${appDataPath}/auth.json`;
 
       // Read existing auth data
-      let authData = {};
+      let authData: AuthData = {};
       const exists = await window.electronAPI.fileExists(authFile);
       if (exists) {
         const result = await window.electronAPI.readFile(authFile);
-        if (result.success) {
+        if (result.success && result.data) {
           authData = JSON.parse(result.data.toString());
         }
       }
@@ -95,15 +96,20 @@ export class AuthService {
 
       if (exists) {
         const result = await window.electronAPI.readFile(authFile);
-        if (result.success) {
-          const authData = JSON.parse(result.data.toString());
+        if (result.success && result.data) {
+          const authData: AuthData = JSON.parse(result.data.toString());
 
           // Return the most recently logged in user
-          let latestUser = null;
+          let latestUser: User | null = null;
           let latestTime = 0;
 
           for (const [source, userData] of Object.entries(authData)) {
-            if (userData.loggedIn && userData.loginTime > latestTime) {
+            if (
+              userData &&
+              userData.loggedIn &&
+              userData.loginTime &&
+              userData.loginTime > latestTime
+            ) {
               latestUser = userData;
               latestTime = userData.loginTime;
             }
@@ -128,11 +134,11 @@ export class AuthService {
 
       if (exists) {
         const result = await window.electronAPI.readFile(authFile);
-        if (result.success) {
-          const authData = JSON.parse(result.data.toString());
+        if (result.success && result.data) {
+          const authData: AuthData = JSON.parse(result.data.toString());
 
           if (authData[source]) {
-            authData[source].loggedIn = false;
+            authData[source]!.loggedIn = false;
             await window.electronAPI.writeFile(
               authFile,
               JSON.stringify(authData, null, 2)
@@ -158,11 +164,13 @@ export class AuthService {
 
       if (exists) {
         const result = await window.electronAPI.readFile(authFile);
-        if (result.success) {
-          const authData = JSON.parse(result.data.toString());
+        if (result.success && result.data) {
+          const authData: AuthData = JSON.parse(result.data.toString());
 
           for (const source in authData) {
-            authData[source].loggedIn = false;
+            if (authData[source]) {
+              authData[source]!.loggedIn = false;
+            }
           }
 
           await window.electronAPI.writeFile(

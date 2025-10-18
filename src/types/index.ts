@@ -22,6 +22,14 @@ export interface User {
   username: string;
   source: "arxiv" | "biorxiv";
   token?: string;
+  loggedIn?: boolean;
+  loginTime?: number;
+}
+
+export interface AuthData {
+  arxiv?: User;
+  biorxiv?: User;
+  [key: string]: User | undefined;
 }
 
 export interface PaperState {

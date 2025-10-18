@@ -10,12 +10,22 @@ declare module "*.css" {
   export default content;
 }
 
+// File operation result interface
+interface FileOperationResult {
+  success: boolean;
+  data?: Buffer | string | ArrayBuffer | Uint8Array;
+  error?: string;
+}
+
 // Electron API types
 interface ElectronAPI {
   getAppDataPath(): Promise<string>;
   ensureDirectory(path: string): Promise<void>;
-  writeFile(path: string, data: Uint8Array | string): Promise<any>;
-  readFile(path: string): Promise<any>;
+  writeFile(
+    path: string,
+    data: Uint8Array | string
+  ): Promise<FileOperationResult>;
+  readFile(path: string): Promise<FileOperationResult>;
   readFileAsBuffer(path: string): Promise<ArrayBuffer>;
   onMenuAction(callback: (action: string, data: any) => void): void;
   removeMenuActionListener(): void;

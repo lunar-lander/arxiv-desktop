@@ -4,7 +4,6 @@ interface ThemeContextType {
   currentTheme: string;
   setTheme: (theme: string) => void;
   toggleTheme: () => void;
-  cycleTheme: () => void;
   availableThemes: Array<{ id: string; name: string; icon: string }>;
 }
 
@@ -77,15 +76,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           if (result.success) {
             try {
               // Handle different data formats like in storage service
-              let dataStr;
-              if (result.data instanceof ArrayBuffer) {
-                dataStr = new TextDecoder().decode(result.data).trim();
-              } else if (result.data instanceof Uint8Array) {
-                dataStr = new TextDecoder().decode(result.data).trim();
-              } else if (typeof result.data === "string") {
-                dataStr = result.data.trim();
+              let dataStr: string;
+              const data = result.data;
+              if (!data) {
+                console.error("No data in theme file");
+                return;
+              } else if (data instanceof ArrayBuffer) {
+                dataStr = new TextDecoder().decode(data).trim();
+              } else if (data instanceof Uint8Array) {
+                dataStr = new TextDecoder().decode(data).trim();
+              } else if (typeof data === "string") {
+                dataStr = data.trim();
               } else {
-                dataStr = result.data.toString().trim();
+                // Assume it's a Buffer or something with toString
+                dataStr = String(data).trim();
               }
 
               const themeData = JSON.parse(dataStr);

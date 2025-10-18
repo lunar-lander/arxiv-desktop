@@ -96,15 +96,17 @@ class StorageService {
 
       if (result.success && result.data) {
         // Handle different data formats
-        let text;
-        if (result.data instanceof ArrayBuffer) {
-          text = new TextDecoder().decode(result.data);
-        } else if (result.data instanceof Uint8Array) {
-          text = new TextDecoder().decode(result.data);
-        } else if (typeof result.data === "string") {
-          text = result.data;
+        let text: string;
+        const fileData = result.data;
+        if (fileData instanceof ArrayBuffer) {
+          text = new TextDecoder().decode(fileData);
+        } else if (fileData instanceof Uint8Array) {
+          text = new TextDecoder().decode(fileData);
+        } else if (typeof fileData === "string") {
+          text = fileData;
         } else {
-          text = result.data.toString();
+          // Assume it's a Buffer or something with toString
+          text = String(fileData);
         }
 
         if (!text.trim()) {
@@ -399,7 +401,7 @@ class StorageService {
     );
   }
 
-  async downloadAndCachePdf(paper, options = {}) {
+  async downloadAndCachePdf(paper, options: { force?: boolean } = {}) {
     await this.initialize();
 
     try {

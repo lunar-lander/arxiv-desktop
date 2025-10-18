@@ -234,6 +234,7 @@ export function PaperProvider({ children }) {
           starredPapers: starred || [],
           searchHistory: searchHistory || [],
           openPapers: opened || [],
+          currentUser: null,
         },
       });
     } catch (error) {
