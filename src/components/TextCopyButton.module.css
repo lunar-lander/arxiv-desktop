@@ -1,0 +1,44 @@
+.copyButton {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--primary, #3498db);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  transform: translate(-50%, -100%);
+  transition: all 0.2s;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.copyButton:hover {
+  background: var(--primary-hover, #2980b9);
+  transform: translate(-50%, -100%) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.copyButton:active {
+  transform: translate(-50%, -100%) scale(0.98);
+}
+
+.copyButton svg {
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
