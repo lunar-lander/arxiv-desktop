@@ -1,3 +1,8 @@
+/**
+ * Secure Electron main process
+ * Fixed security vulnerabilities: async operations, path validation, URL validation
+ */
+
 const {
   app,
   BrowserWindow,
@@ -8,7 +13,8 @@ const {
   clipboard,
 } = require("electron");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises; // Use promises for async
+const fsSync = require("fs"); // Only for sync checks where needed
 const os = require("os");
 const https = require("https");
 const http = require("http");
@@ -16,8 +22,80 @@ const isDev = process.env.NODE_ENV === "development";
 
 let mainWindow;
 
+// Configuration
+const APP_DATA_PATH = path.join(os.homedir(), "ArxivDesktop");
+const PAPERS_PATH = path.join(APP_DATA_PATH, "papers");
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_PROTOCOLS = ["http:", "https:"];
+const BLOCKED_DOMAINS = ["localhost", "127.0.0.1", "0.0.0.0", "[::]"];
+
+// Logging helper (simple console replacement)
+const log = {
+  info: (msg, data) => console.log(`[INFO] ${msg}`, data || ""),
+  warn: (msg, data) => console.warn(`[WARN] ${msg}`, data || ""),
+  error: (msg, error) => console.error(`[ERROR] ${msg}`, error || ""),
+  debug: (msg, data) => isDev && console.log(`[DEBUG] ${msg}`, data || ""),
+};
+
+/**
+ * Validate path is within allowed directories (prevent directory traversal)
+ */
+function validatePath(filePath) {
+  const resolvedPath = path.resolve(filePath);
+  const isAllowed = resolvedPath.startsWith(APP_DATA_PATH);
+
+  if (!isAllowed) {
+    log.warn("Path traversal attempt detected", {
+      requested: filePath,
+      resolved: resolvedPath,
+    });
+    throw new Error("Access denied: path is outside allowed directories");
+  }
+
+  return resolvedPath;
+}
+
+/**
+ * Sanitize filename to prevent directory traversal
+ */
+function sanitizeFilename(filename) {
+  return (
+    filename
+      .replace(/[/\\]/g, "_") // Replace path separators
+      .replace(/\.\./g, "_") // Replace parent directory references
+      // eslint-disable-next-line no-control-regex
+      .replace(/[<>:"|?*\x00-\x1F]/g, "_") // Replace invalid filename chars
+      .substring(0, 255)
+  ); // Limit filename length
+}
+
+/**
+ * Validate URL before opening externally
+ */
+function validateURL(url) {
+  try {
+    const parsedUrl = new URL(url);
+
+    // Check protocol
+    if (!ALLOWED_PROTOCOLS.includes(parsedUrl.protocol)) {
+      throw new Error(`Invalid protocol: ${parsedUrl.protocol}`);
+    }
+
+    // Check for blocked domains
+    if (BLOCKED_DOMAINS.some((domain) => parsedUrl.hostname.includes(domain))) {
+      throw new Error("Access to local resources is blocked");
+    }
+
+    return parsedUrl;
+  } catch (error) {
+    throw new Error(`Invalid URL: ${error.message}`);
+  }
+}
+
+/**
+ * Create main window
+ */
 function createWindow() {
-  // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -28,11 +106,11 @@ function createWindow() {
       contextIsolation: true,
       enableRemoteModule: false,
       preload: path.join(__dirname, "preload.js"),
-      webSecurity: !isDev,
+      webSecurity: true, // ALWAYS enabled (was: !isDev - SECURITY FIX)
     },
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     show: false,
-    icon: path.join(__dirname, "../assets/icon.png"), // Add app icon
+    icon: path.join(__dirname, "../assets/icon.png"),
   });
 
   // Load the app
@@ -45,28 +123,32 @@ function createWindow() {
   // Show window when ready
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
-
-    // Focus on window
     if (isDev) {
       mainWindow.webContents.openDevTools();
     }
   });
 
-  // Handle window closed
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  // Handle external links
+  // Handle external links with validation
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    try {
+      validateURL(url);
+      shell.openExternal(url);
+    } catch (error) {
+      log.warn("Blocked external URL", { url, error: error.message });
+    }
     return { action: "deny" };
   });
 
-  // Create application menu
   createMenu();
 }
 
+/**
+ * Create application menu
+ */
 function createMenu() {
   const template = [
     {
@@ -104,9 +186,7 @@ function createMenu() {
         {
           label: "Exit",
           accelerator: process.platform === "darwin" ? "Cmd+Q" : "Ctrl+Q",
-          click: () => {
-            app.quit();
-          },
+          click: () => app.quit(),
         },
       ],
     },
@@ -150,14 +230,7 @@ function createMenu() {
         {
           label: "Open Papers Folder",
           accelerator: "CmdOrCtrl+O",
-          click: () => {
-            const papersPath = path.join(
-              os.homedir(),
-              "ArxivDesktop",
-              "papers"
-            );
-            shell.openPath(papersPath);
-          },
+          click: () => shell.openPath(PAPERS_PATH),
         },
         {
           label: "Clear Cache",
@@ -200,14 +273,19 @@ function createMenu() {
         {
           label: "Learn More",
           click: () => {
-            shell.openExternal("https://arxiv.org");
+            try {
+              validateURL("https://arxiv.org");
+              shell.openExternal("https://arxiv.org");
+            } catch (error) {
+              log.error("Failed to open arxiv.org", error);
+            }
           },
         },
       ],
     },
   ];
 
-  // macOS specific menu adjustments
+  // macOS specific menu
   if (process.platform === "darwin") {
     template.unshift({
       label: app.getName(),
@@ -224,7 +302,6 @@ function createMenu() {
       ],
     });
 
-    // Window menu
     template[5].submenu = [
       { role: "close" },
       { role: "minimize" },
@@ -238,7 +315,272 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-// App event handlers
+// ============================================================================
+// IPC Handlers (Secure, Async)
+// ============================================================================
+
+// Get app data path
+ipcMain.handle("get-app-data-path", () => {
+  log.debug("get-app-data-path called");
+  return APP_DATA_PATH;
+});
+
+// Ensure directory exists (ASYNC, with validation)
+ipcMain.handle("ensure-directory", async (event, dirPath) => {
+  log.debug("ensure-directory called", { dirPath });
+  try {
+    const validPath = validatePath(dirPath);
+    await fs.mkdir(validPath, { recursive: true });
+    return { success: true };
+  } catch (error) {
+    log.error("ensure-directory failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Write file (ASYNC, with validation and size limits)
+ipcMain.handle("write-file", async (event, filePath, data) => {
+  log.debug("write-file called", { filePath });
+  try {
+    const validPath = validatePath(filePath);
+
+    // Check file size
+    const dataSize =
+      typeof data === "string" ? Buffer.byteLength(data) : data.length;
+    if (dataSize > MAX_FILE_SIZE) {
+      throw new Error(
+        `File size (${dataSize} bytes) exceeds maximum (${MAX_FILE_SIZE} bytes)`
+      );
+    }
+
+    await fs.writeFile(validPath, data);
+    return { success: true };
+  } catch (error) {
+    log.error("write-file failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Read file (ASYNC, with validation and size limits)
+ipcMain.handle("read-file", async (event, filePath) => {
+  log.debug("read-file called", { filePath });
+  try {
+    const validPath = validatePath(filePath);
+
+    // Check file size
+    const stats = await fs.stat(validPath);
+    if (stats.size > MAX_FILE_SIZE) {
+      throw new Error(`File too large: ${stats.size} bytes`);
+    }
+
+    const data = await fs.readFile(validPath, "utf-8");
+    return { success: true, data };
+  } catch (error) {
+    log.error("read-file failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Read file as buffer (ASYNC, with validation)
+ipcMain.handle("read-file-as-buffer", async (event, filePath) => {
+  log.debug("read-file-as-buffer called", { filePath });
+  try {
+    const validPath = validatePath(filePath);
+
+    // Check file size
+    const stats = await fs.stat(validPath);
+    if (stats.size > MAX_FILE_SIZE) {
+      throw new Error(`File too large: ${stats.size} bytes`);
+    }
+
+    const buffer = await fs.readFile(validPath);
+    // Return ArrayBuffer for IPC transfer
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
+  } catch (error) {
+    log.error("read-file-as-buffer failed", error);
+    throw new Error(`Failed to read file: ${error.message}`);
+  }
+});
+
+// Check if file exists (with validation)
+ipcMain.handle("file-exists", async (event, filePath) => {
+  log.debug("file-exists called", { filePath });
+  try {
+    const validPath = validatePath(filePath);
+    await fs.access(validPath);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+// Open external URL (with validation)
+ipcMain.handle("open-external", async (event, url) => {
+  log.debug("open-external called", { url });
+  try {
+    validateURL(url);
+    await shell.openExternal(url);
+    log.info("Opened external URL", { url });
+  } catch (error) {
+    log.warn("open-external rejected", { url, error: error.message });
+    throw error;
+  }
+});
+
+// Dialog handlers
+ipcMain.handle("show-save-dialog", async (event, options) => {
+  log.debug("show-save-dialog called");
+  return await dialog.showSaveDialog(mainWindow, options);
+});
+
+ipcMain.handle("show-open-dialog", async (event, options) => {
+  log.debug("show-open-dialog called");
+  return await dialog.showOpenDialog(mainWindow, options);
+});
+
+ipcMain.handle("show-message-box", async (event, options) => {
+  log.debug("show-message-box called");
+  return await dialog.showMessageBox(mainWindow, options);
+});
+
+// Download file (ASYNC, with validation)
+ipcMain.handle("download-file", async (event, url, filename) => {
+  log.info("download-file called", { url, filename });
+
+  try {
+    // Validate URL
+    validateURL(url);
+
+    // Sanitize filename
+    const sanitizedFilename = sanitizeFilename(filename);
+    const filePath = path.join(PAPERS_PATH, sanitizedFilename);
+
+    // Ensure papers directory exists
+    await fs.mkdir(PAPERS_PATH, { recursive: true });
+
+    // Download file
+    return await downloadFile(url, filePath);
+  } catch (error) {
+    log.error("download-file failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+/**
+ * Download file from URL (async helper)
+ */
+async function downloadFile(url, filePath) {
+  return new Promise((resolve) => {
+    const protocol = url.startsWith("https:") ? https : http;
+
+    const request = protocol.get(url, (response) => {
+      // Handle redirects
+      if (
+        response.statusCode >= 300 &&
+        response.statusCode < 400 &&
+        response.headers.location
+      ) {
+        log.debug("Following redirect", {
+          from: url,
+          to: response.headers.location,
+        });
+        downloadFile(response.headers.location, filePath).then(resolve);
+        return;
+      }
+
+      if (response.statusCode !== 200) {
+        resolve({
+          success: false,
+          error: `HTTP error! status: ${response.statusCode}`,
+        });
+        return;
+      }
+
+      const file = fsSync.createWriteStream(filePath);
+      response.pipe(file);
+
+      file.on("finish", () => {
+        file.close();
+        log.info("File downloaded", { url, path: filePath });
+        resolve({
+          success: true,
+          path: filePath,
+          message: "File downloaded successfully",
+        });
+      });
+
+      file.on("error", async (error) => {
+        log.error("File write error", error);
+        try {
+          await fs.unlink(filePath);
+        } catch (unlinkError) {
+          // Ignore - file may not exist
+        }
+        resolve({ success: false, error: error.message });
+      });
+    });
+
+    request.on("error", async (error) => {
+      log.error("Download request failed", error);
+      try {
+        await fs.unlink(filePath);
+      } catch (unlinkError) {
+        // Ignore - file may not exist
+      }
+      resolve({ success: false, error: error.message });
+    });
+
+    request.setTimeout(60000, () => {
+      request.destroy();
+      log.warn("Download timeout", { url });
+      resolve({ success: false, error: "Download timeout (60s)" });
+    });
+  });
+}
+
+// Show item in folder
+ipcMain.handle("show-item-in-folder", async (event, filePath) => {
+  log.debug("show-item-in-folder called", { filePath });
+  try {
+    const validPath = validatePath(filePath);
+    shell.showItemInFolder(validPath);
+    return { success: true };
+  } catch (error) {
+    log.error("show-item-in-folder failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// Clipboard operations
+ipcMain.handle("write-clipboard", async (event, text) => {
+  log.debug("write-clipboard called");
+  try {
+    clipboard.writeText(text);
+    return { success: true };
+  } catch (error) {
+    log.error("write-clipboard failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle("read-clipboard", async () => {
+  log.debug("read-clipboard called");
+  try {
+    const text = clipboard.readText();
+    return { success: true, text };
+  } catch (error) {
+    log.error("read-clipboard failed", error);
+    return { success: false, error: error.message };
+  }
+});
+
+// ============================================================================
+// App Event Handlers
+// ============================================================================
+
 app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
@@ -257,199 +599,20 @@ app.on("activate", () => {
 app.on("web-contents-created", (event, contents) => {
   contents.on("new-window", (event, navigationUrl) => {
     event.preventDefault();
-    shell.openExternal(navigationUrl);
-  });
-});
-
-// IPC handlers for file operations
-ipcMain.handle("get-app-data-path", () => {
-  return path.join(os.homedir(), "ArxivDesktop");
-});
-
-ipcMain.handle("ensure-directory", async (event, dirPath) => {
-  try {
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle("write-file", async (event, filePath, data) => {
-  try {
-    fs.writeFileSync(filePath, data);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle("read-file", async (event, filePath) => {
-  try {
-    const data = fs.readFileSync(filePath);
-    return { success: true, data };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle("read-file-as-buffer", async (event, filePath) => {
-  try {
-    const buffer = fs.readFileSync(filePath);
-    return buffer.buffer; // Return the underlying ArrayBuffer
-  } catch (error) {
-    console.error("Error reading file as buffer:", error);
-    throw new Error(`Failed to read file: ${error.message}`);
-  }
-});
-
-ipcMain.handle("file-exists", async (event, filePath) => {
-  return fs.existsSync(filePath);
-});
-
-ipcMain.handle("open-external", async (event, url) => {
-  shell.openExternal(url);
-});
-
-ipcMain.handle("show-save-dialog", async (event, options) => {
-  const result = await dialog.showSaveDialog(mainWindow, options);
-  return result;
-});
-
-ipcMain.handle("show-open-dialog", async (event, options) => {
-  const result = await dialog.showOpenDialog(mainWindow, options);
-  return result;
-});
-
-ipcMain.handle("show-message-box", async (event, options) => {
-  const result = await dialog.showMessageBox(mainWindow, options);
-  return result;
-});
-
-ipcMain.handle("download-file", async (event, url, filename) => {
-  return new Promise((resolve) => {
     try {
-      const papersPath = path.join(os.homedir(), "ArxivDesktop", "papers");
-      const filePath = path.join(papersPath, filename);
-
-      // Ensure directory exists
-      if (!fs.existsSync(papersPath)) {
-        fs.mkdirSync(papersPath, { recursive: true });
-      }
-
-      const file = fs.createWriteStream(filePath);
-      const protocol = url.startsWith("https:") ? https : http;
-
-      const request = protocol.get(url, (response) => {
-        // Handle redirects
-        if (
-          response.statusCode >= 300 &&
-          response.statusCode < 400 &&
-          response.headers.location
-        ) {
-          const redirectUrl = response.headers.location;
-          const redirectProtocol = redirectUrl.startsWith("https:")
-            ? https
-            : http;
-
-          redirectProtocol
-            .get(redirectUrl, (redirectResponse) => {
-              redirectResponse.pipe(file);
-
-              file.on("finish", () => {
-                file.close();
-                resolve({
-                  success: true,
-                  path: filePath,
-                  message: "File downloaded successfully",
-                });
-              });
-            })
-            .on("error", (error) => {
-              fs.unlink(filePath, () => {});
-              resolve({
-                success: false,
-                error: error.message,
-              });
-            });
-        } else if (response.statusCode === 200) {
-          response.pipe(file);
-
-          file.on("finish", () => {
-            file.close();
-            resolve({
-              success: true,
-              path: filePath,
-              message: "File downloaded successfully",
-            });
-          });
-        } else {
-          resolve({
-            success: false,
-            error: `HTTP error! status: ${response.statusCode}`,
-          });
-        }
-      });
-
-      request.on("error", (error) => {
-        if (fs.existsSync(filePath)) {
-          fs.unlink(filePath, () => {});
-        }
-        resolve({
-          success: false,
-          error: error.message,
-        });
-      });
-
-      file.on("error", (error) => {
-        if (fs.existsSync(filePath)) {
-          fs.unlink(filePath, () => {});
-        }
-        resolve({
-          success: false,
-          error: error.message,
-        });
-      });
+      validateURL(navigationUrl);
+      shell.openExternal(navigationUrl);
     } catch (error) {
-      resolve({
-        success: false,
+      log.warn("Blocked new window URL", {
+        url: navigationUrl,
         error: error.message,
       });
     }
   });
 });
 
-ipcMain.handle("show-item-in-folder", async (event, filePath) => {
-  try {
-    shell.showItemInFolder(filePath);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+log.info("ArXiv Desktop starting", {
+  isDev,
+  appDataPath: APP_DATA_PATH,
+  papersPath: PAPERS_PATH,
 });
-
-// Clipboard operations
-ipcMain.handle("write-clipboard", async (event, text) => {
-  try {
-    clipboard.writeText(text);
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle("read-clipboard", async () => {
-  try {
-    const text = clipboard.readText();
-    return { success: true, text };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-
-// Handle app updates (if using auto-updater)
-if (!isDev) {
-  // Auto-updater code would go here
-}
