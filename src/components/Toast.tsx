@@ -3,7 +3,7 @@
  * Displays temporary notification messages
  */
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { CheckCircle, AlertCircle, Info, XCircle, X } from "lucide-react";
 import styles from "./Toast.module.css";
 

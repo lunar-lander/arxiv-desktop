@@ -6,7 +6,13 @@
 import { Paper } from "../../domain/entities/Paper";
 import { SearchCriteria } from "../../domain/repositories/IPaperRepository";
 import { IPaperRepository } from "../../domain/repositories/IPaperRepository";
-import { Result, success, failure, AppError } from "../../shared/errors";
+import {
+  Result,
+  success,
+  failure,
+  AppError,
+  ErrorCode,
+} from "../../shared/errors";
 import { LoggerFactory } from "../../infrastructure/logging/Logger";
 import { ApiClientFactory, PaperSource } from "../../infrastructure/api";
 
@@ -94,7 +100,7 @@ export class SearchPapersUseCase {
     } catch (error) {
       logger.error("execute failed", error as Error);
       return failure(
-        new AppError("Search failed", "SEARCH_FAILED", 500, { error })
+        new AppError("Search failed", ErrorCode.API_ERROR, 500, { error })
       );
     }
   }
@@ -114,12 +120,10 @@ export class SearchPapersUseCase {
     } catch (error) {
       logger.error(`searchSource failed for ${source}`, error as Error);
       return failure(
-        new AppError(
-          `Search failed for ${source}`,
-          "SOURCE_SEARCH_FAILED",
-          500,
-          { source, error }
-        )
+        new AppError(`Search failed for ${source}`, ErrorCode.API_ERROR, 500, {
+          source,
+          error,
+        })
       );
     }
   }
@@ -154,7 +158,7 @@ export class SearchPapersUseCase {
   /**
    * Sort papers based on criteria
    */
-  private sortPapers(papers: Paper[], criteria: SearchCriteria): Paper[] {
+  private sortPapers(papers: Paper[], _criteria: SearchCriteria): Paper[] {
     // Default: sort by published date (newest first)
     return papers.sort((a, b) => {
       const dateA = new Date(a.publishedDate).getTime();

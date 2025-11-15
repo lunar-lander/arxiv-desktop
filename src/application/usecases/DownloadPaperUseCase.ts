@@ -5,7 +5,13 @@
 
 import { Paper } from "../../domain/entities/Paper";
 import { IPaperRepository } from "../../domain/repositories/IPaperRepository";
-import { Result, success, failure, AppError } from "../../shared/errors";
+import {
+  Result,
+  success,
+  failure,
+  AppError,
+  ErrorCode,
+} from "../../shared/errors";
 import { LoggerFactory } from "../../infrastructure/logging/Logger";
 import { SecureFileSystem } from "../../infrastructure/ipc/SecureFileSystem";
 import * as path from "path";
@@ -36,8 +42,8 @@ export class DownloadPaperUseCase {
     private readonly paperRepository: IPaperRepository,
     fileSystem?: SecureFileSystem
   ) {
-    this.fileSystem = fileSystem || new SecureFileSystem();
     this.downloadPath = path.join(os.homedir(), "ArxivDesktop", "papers");
+    this.fileSystem = fileSystem || new SecureFileSystem([this.downloadPath]);
     logger.info("DownloadPaperUseCase initialized", {
       downloadPath: this.downloadPath,
     });
@@ -64,8 +70,10 @@ export class DownloadPaperUseCase {
           });
 
           // Get file size
-          const sizeResult = await this.fileSystem.getFileSize(paper.localPath);
-          const fileSize = sizeResult.success ? sizeResult.data : 0;
+          const statsResult = await this.fileSystem.getFileStats(
+            paper.localPath
+          );
+          const fileSize = statsResult.success ? statsResult.data.size : 0;
 
           return success({
             paper,
@@ -131,10 +139,15 @@ export class DownloadPaperUseCase {
         paperId: input.paper.id,
       });
       return failure(
-        new AppError("Failed to download paper", "DOWNLOAD_FAILED", 500, {
-          paperId: input.paper.id,
-          error,
-        })
+        new AppError(
+          "Failed to download paper",
+          ErrorCode.PDF_DOWNLOAD_ERROR,
+          500,
+          {
+            paperId: input.paper.id,
+            error,
+          }
+        )
       );
     }
   }
@@ -175,7 +188,7 @@ export class DownloadPaperUseCase {
       if (axios.isAxiosError(error)) {
         if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
           return failure(
-            new AppError("Download timed out", "DOWNLOAD_TIMEOUT", 408, {
+            new AppError("Download timed out", ErrorCode.TIMEOUT, 408, {
               url,
               error,
             })
@@ -186,7 +199,7 @@ export class DownloadPaperUseCase {
           return failure(
             new AppError(
               "Network error during download",
-              "NETWORK_ERROR",
+              ErrorCode.NETWORK_ERROR,
               503,
               { url, error }
             )
@@ -196,7 +209,7 @@ export class DownloadPaperUseCase {
         return failure(
           new AppError(
             `Download failed: ${error.response.statusText}`,
-            "DOWNLOAD_FAILED",
+            ErrorCode.PDF_DOWNLOAD_ERROR,
             error.response.status,
             { url, error }
           )
@@ -204,10 +217,15 @@ export class DownloadPaperUseCase {
       }
 
       return failure(
-        new AppError("Failed to download file", "DOWNLOAD_FAILED", 500, {
-          url,
-          error,
-        })
+        new AppError(
+          "Failed to download file",
+          ErrorCode.PDF_DOWNLOAD_ERROR,
+          500,
+          {
+            url,
+            error,
+          }
+        )
       );
     }
   }
@@ -279,7 +297,7 @@ export class DownloadPaperUseCase {
       return failure(
         new AppError(
           "Failed to get downloaded papers",
-          "GET_DOWNLOADED_FAILED",
+          ErrorCode.STORAGE_ERROR,
           500,
           { error }
         )
@@ -315,10 +333,15 @@ export class DownloadPaperUseCase {
         paperId: paper.id,
       });
       return failure(
-        new AppError("Failed to delete paper", "DELETE_FAILED", 500, {
-          paperId: paper.id,
-          error,
-        })
+        new AppError(
+          "Failed to delete paper",
+          ErrorCode.FILE_WRITE_ERROR,
+          500,
+          {
+            paperId: paper.id,
+            error,
+          }
+        )
       );
     }
   }

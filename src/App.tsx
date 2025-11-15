@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import HomePage from "./components/HomePage";
 import Sidebar from "./components/Sidebar";
 import PaperViewer from "./components/PaperViewer";
@@ -20,7 +20,7 @@ function AppContent() {
   // Handle menu actions from Electron
   useEffect(() => {
     if (window.electronAPI) {
-      window.electronAPI.onMenuAction((action, data) => {
+      window.electronAPI.onMenuAction((action, _data) => {
         switch (action) {
           case "new-search":
             setCurrentView("home");
@@ -37,12 +37,15 @@ function AppContent() {
       });
 
       return () => {
-        window.electronAPI.removeMenuActionListener();
+        if (window.electronAPI) {
+          window.electronAPI.removeMenuActionListener();
+        }
       };
     }
+    return undefined;
   }, []);
 
-  const handlePaperSelect = (paper) => {
+  const handlePaperSelect = (paper: any) => {
     setSelectedPaper(paper);
     dispatch({ type: "SET_CURRENT_PAPER", payload: paper });
     setCurrentView("paper");

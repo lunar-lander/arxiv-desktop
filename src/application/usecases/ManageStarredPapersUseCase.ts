@@ -5,7 +5,13 @@
 
 import { Paper } from "../../domain/entities/Paper";
 import { IPaperRepository } from "../../domain/repositories/IPaperRepository";
-import { Result, success, failure, AppError } from "../../shared/errors";
+import {
+  Result,
+  success,
+  failure,
+  AppError,
+  ErrorCode,
+} from "../../shared/errors";
 import { LoggerFactory } from "../../infrastructure/logging/Logger";
 
 const logger = LoggerFactory.getLogger("ManageStarredPapersUseCase");
@@ -61,7 +67,7 @@ export class ManageStarredPapersUseCase {
         paperId: input.paper.id,
       });
       return failure(
-        new AppError("Failed to star paper", "STAR_FAILED", 500, {
+        new AppError("Failed to star paper", ErrorCode.UNKNOWN, 500, {
           paperId: input.paper.id,
           error,
         })
@@ -99,7 +105,7 @@ export class ManageStarredPapersUseCase {
         paperId: input.paperId,
       });
       return failure(
-        new AppError("Failed to unstar paper", "UNSTAR_FAILED", 500, {
+        new AppError("Failed to unstar paper", ErrorCode.UNKNOWN, 500, {
           paperId: input.paperId,
           error,
         })
@@ -135,12 +141,10 @@ export class ManageStarredPapersUseCase {
         paperId: input.paper.id,
       });
       return failure(
-        new AppError(
-          "Failed to toggle star status",
-          "TOGGLE_STAR_FAILED",
-          500,
-          { paperId: input.paper.id, error }
-        )
+        new AppError("Failed to toggle star status", ErrorCode.UNKNOWN, 500, {
+          paperId: input.paper.id,
+          error,
+        })
       );
     }
   }
@@ -168,7 +172,7 @@ export class ManageStarredPapersUseCase {
       return failure(
         new AppError(
           "Failed to get starred papers",
-          "GET_STARRED_FAILED",
+          ErrorCode.STORAGE_ERROR,
           500,
           { error }
         )

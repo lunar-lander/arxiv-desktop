@@ -5,7 +5,13 @@
 
 import { Paper } from "../../domain/entities/Paper";
 import { IPaperRepository } from "../../domain/repositories/IPaperRepository";
-import { Result, success, failure, AppError } from "../../shared/errors";
+import {
+  Result,
+  success,
+  failure,
+  AppError,
+  ErrorCode,
+} from "../../shared/errors";
 import { LoggerFactory } from "../../infrastructure/logging/Logger";
 import { ApiClientFactory, PaperSource } from "../../infrastructure/api";
 
@@ -60,7 +66,7 @@ export class GetPaperUseCase {
         return failure(
           new AppError(
             `Source ${source} does not support getting paper by ID`,
-            "UNSUPPORTED_OPERATION",
+            ErrorCode.VALIDATION,
             400,
             { source }
           )
@@ -87,7 +93,7 @@ export class GetPaperUseCase {
     } catch (error) {
       logger.error("getById failed", error as Error, { id: input.id });
       return failure(
-        new AppError("Failed to get paper by ID", "GET_BY_ID_FAILED", 500, {
+        new AppError("Failed to get paper by ID", ErrorCode.NOT_FOUND, 500, {
           id: input.id,
           error,
         })
@@ -131,7 +137,7 @@ export class GetPaperUseCase {
         return failure(
           new AppError(
             `Source ${source} does not support getting paper by DOI`,
-            "UNSUPPORTED_OPERATION",
+            ErrorCode.VALIDATION,
             400,
             { source }
           )
@@ -158,7 +164,7 @@ export class GetPaperUseCase {
     } catch (error) {
       logger.error("getByDoi failed", error as Error, { doi: input.doi });
       return failure(
-        new AppError("Failed to get paper by DOI", "GET_BY_DOI_FAILED", 500, {
+        new AppError("Failed to get paper by DOI", ErrorCode.NOT_FOUND, 500, {
           doi: input.doi,
           error,
         })
@@ -188,7 +194,7 @@ export class GetPaperUseCase {
       return failure(
         new AppError(
           "Failed to get paper from repository",
-          "REPOSITORY_GET_FAILED",
+          ErrorCode.STORAGE_ERROR,
           500,
           { id, error }
         )

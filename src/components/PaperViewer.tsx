@@ -3,7 +3,7 @@
  * Displays PDF papers with zoom, navigation, and text selection
  */
 
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 import "react-pdf/dist/Page/TextLayer.css";
 import { ExternalLink } from "lucide-react";

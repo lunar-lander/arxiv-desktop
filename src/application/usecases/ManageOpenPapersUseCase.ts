@@ -5,7 +5,13 @@
 
 import { Paper } from "../../domain/entities/Paper";
 import { IPaperRepository } from "../../domain/repositories/IPaperRepository";
-import { Result, success, failure, AppError } from "../../shared/errors";
+import {
+  Result,
+  success,
+  failure,
+  AppError,
+  ErrorCode,
+} from "../../shared/errors";
 import { LoggerFactory } from "../../infrastructure/logging/Logger";
 
 const logger = LoggerFactory.getLogger("ManageOpenPapersUseCase");
@@ -54,7 +60,7 @@ export class ManageOpenPapersUseCase {
         paperId: input.paper.id,
       });
       return failure(
-        new AppError("Failed to open paper", "OPEN_FAILED", 500, {
+        new AppError("Failed to open paper", ErrorCode.UNKNOWN, 500, {
           paperId: input.paper.id,
           error,
         })
@@ -85,7 +91,7 @@ export class ManageOpenPapersUseCase {
         paperId: input.paperId,
       });
       return failure(
-        new AppError("Failed to close paper", "CLOSE_FAILED", 500, {
+        new AppError("Failed to close paper", ErrorCode.UNKNOWN, 500, {
           paperId: input.paperId,
           error,
         })
@@ -114,9 +120,14 @@ export class ManageOpenPapersUseCase {
     } catch (error) {
       logger.error("getOpenPapers failed", error as Error);
       return failure(
-        new AppError("Failed to get open papers", "GET_OPEN_FAILED", 500, {
-          error,
-        })
+        new AppError(
+          "Failed to get open papers",
+          ErrorCode.STORAGE_ERROR,
+          500,
+          {
+            error,
+          }
+        )
       );
     }
   }
@@ -158,7 +169,7 @@ export class ManageOpenPapersUseCase {
     } catch (error) {
       logger.error("closeAllPapers failed", error as Error);
       return failure(
-        new AppError("Failed to close all papers", "CLOSE_ALL_FAILED", 500, {
+        new AppError("Failed to close all papers", ErrorCode.UNKNOWN, 500, {
           error,
         })
       );
@@ -207,7 +218,7 @@ export class ManageOpenPapersUseCase {
     } catch (error) {
       logger.error("reorderOpenPapers failed", error as Error);
       return failure(
-        new AppError("Failed to reorder open papers", "REORDER_FAILED", 500, {
+        new AppError("Failed to reorder open papers", ErrorCode.UNKNOWN, 500, {
           error,
         })
       );
