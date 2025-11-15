@@ -1,0 +1,45 @@
+.toastContainer {
+  position: fixed;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toastContainer > * {
+  pointer-events: auto;
+}
+
+/* Position variants */
+.toastContainer.top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.toastContainer.top-left {
+  top: 20px;
+  left: 20px;
+}
+
+.toastContainer.bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.toastContainer.bottom-left {
+  bottom: 20px;
+  left: 20px;
+}
+
+.toastContainer.top-center {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toastContainer.bottom-center {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}

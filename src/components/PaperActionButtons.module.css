@@ -1,0 +1,30 @@
+.viewerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background: var(--button-hover);
+  border-color: var(--button-hover-border);
+  transform: translateY(-1px);
+}
+
+.actionButton svg {
+  flex-shrink: 0;
+}

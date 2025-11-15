@@ -1,0 +1,66 @@
+.pageControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.controlButton {
+  background: var(--button-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: var(--button-hover);
+  border-color: var(--button-hover-border);
+}
+
+.controlButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.pageInput {
+  width: 50px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.pageInput:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* Remove spinner arrows from number input */
+.pageInput::-webkit-outer-spin-button,
+.pageInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pageInput[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.pageTotal {
+  color: var(--text-secondary);
+}

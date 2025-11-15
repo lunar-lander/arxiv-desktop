@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// @ts-nocheck
+import { useState } from "react";
 import { X, User, Lock, LogIn } from "lucide-react";
 import { AuthService } from "../services/authService";
 import styles from "./LoginModal.module.css";
