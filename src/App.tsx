@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import HomePage from "./components/HomePage";
 import Sidebar from "./components/Sidebar";
 import PaperViewer from "./components/PaperViewer";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PaperProvider, usePapers } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
@@ -50,12 +51,14 @@ function AppContent() {
   return (
     <div className={`${styles.appContainer} ${styles[currentTheme]}`}>
       {isSidebarVisible && (
-        <Sidebar
-          onNavigate={setCurrentView}
-          onPaperSelect={handlePaperSelect}
-          currentView={currentView}
-          onToggleSidebar={() => setIsSidebarVisible(false)}
-        />
+        <ErrorBoundary>
+          <Sidebar
+            onNavigate={setCurrentView}
+            onPaperSelect={handlePaperSelect}
+            currentView={currentView}
+            onToggleSidebar={() => setIsSidebarVisible(false)}
+          />
+        </ErrorBoundary>
       )}
       <div
         className={`${styles.mainContent} ${!isSidebarVisible ? styles.fullWidth : ""}`}
@@ -70,16 +73,20 @@ function AppContent() {
           </button>
         )}
         {currentView === "home" && (
-          <HomePage
-            onPaperOpen={handlePaperSelect}
-            searchResults={searchResults}
-            onSearchResults={setSearchResults}
-            lastSearchQuery={lastSearchQuery}
-            onSearchQuery={setLastSearchQuery}
-          />
+          <ErrorBoundary>
+            <HomePage
+              onPaperOpen={handlePaperSelect}
+              searchResults={searchResults}
+              onSearchResults={setSearchResults}
+              lastSearchQuery={lastSearchQuery}
+              onSearchQuery={setLastSearchQuery}
+            />
+          </ErrorBoundary>
         )}
         {currentView === "paper" && selectedPaper && (
-          <PaperViewer paper={selectedPaper} />
+          <ErrorBoundary>
+            <PaperViewer paper={selectedPaper} />
+          </ErrorBoundary>
         )}
       </div>
     </div>
