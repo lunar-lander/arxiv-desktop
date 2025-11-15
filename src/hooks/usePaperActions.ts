@@ -17,10 +17,13 @@ export interface Paper {
 export interface UsePaperActionsProps {
   paper: Paper;
   onShowCitation?: () => void;
+  onDownloadSuccess?: (path: string) => void;
+  onDownloadError?: (error: string) => void;
 }
 
 export interface UsePaperActionsReturn {
   isStarred: boolean;
+  isDownloading: boolean;
   handleStar: () => void;
   handleDownload: () => Promise<void>;
   handleCitation: () => void;
@@ -33,6 +36,8 @@ export interface UsePaperActionsReturn {
 export function usePaperActions({
   paper,
   onShowCitation,
+  onDownloadSuccess,
+  onDownloadError,
 }: UsePaperActionsProps): UsePaperActionsReturn {
   const { state, dispatch } = usePapers();
   const [isDownloading, setIsDownloading] = useState(false);
@@ -61,7 +66,9 @@ export function usePaperActions({
           `${paper.id}.pdf`
         );
         if (downloadResult.success) {
-          alert(`PDF downloaded to: ${downloadResult.path}`);
+          if (onDownloadSuccess) {
+            onDownloadSuccess(downloadResult.path);
+          }
           return;
         }
       }
@@ -75,6 +82,11 @@ export function usePaperActions({
       }
     } catch (error) {
       console.error("Download error:", error);
+      if (onDownloadError) {
+        onDownloadError(
+          error instanceof Error ? error.message : "Download failed"
+        );
+      }
       // Fallback to opening URL
       window.electronAPI.openExternal(paper.pdfUrl);
     } finally {
@@ -100,6 +112,7 @@ export function usePaperActions({
 
   return {
     isStarred,
+    isDownloading,
     handleStar,
     handleDownload,
     handleCitation,

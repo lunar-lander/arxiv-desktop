@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import PaperViewer from "./components/PaperViewer";
 import { PaperProvider, usePapers } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import styles from "./components/App.module.css";
 
 function AppContent() {
@@ -89,7 +90,9 @@ function App() {
   return (
     <ThemeProvider>
       <PaperProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </PaperProvider>
     </ThemeProvider>
   );

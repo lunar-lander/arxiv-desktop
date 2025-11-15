@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Copy, Download, Quote } from "lucide-react";
+import { useToast } from "../context/ToastContext";
 import styles from "./CitationModal.module.css";
 
 const CITATION_FORMATS = {
@@ -13,6 +14,7 @@ const CITATION_FORMATS = {
 
 function CitationModal({ isOpen, onClose, paper }) {
   const [selectedFormat, setSelectedFormat] = useState("apa");
+  const toast = useToast();
 
   if (!isOpen || !paper) return null;
 
@@ -140,10 +142,10 @@ ER  -`;
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(generateCitation(selectedFormat));
-      alert("Citation copied to clipboard!");
+      toast.success("Citation copied to clipboard!");
     } catch (error) {
       console.error("Failed to copy citation:", error);
-      alert("Failed to copy citation");
+      toast.error("Failed to copy citation");
     }
   };
 
