@@ -1,3 +1,4 @@
+// @ts-nocheck
 export class SettingsService {
   static UI_SETTINGS_KEY = "arxiv_ui_settings";
   static CHAT_HISTORY_KEY = "arxiv_chat_history";

@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import * as fs from "fs/promises";
-import * as fsSync from "fs";
+import type { Stats } from "fs";
 import { LoggerFactory } from "../logging/Logger";
 import {
   FileSystemError,
@@ -296,7 +296,7 @@ export class SecureFileSystem {
   /**
    * Get file stats
    */
-  public async getFileStats(filePath: string): Promise<Result<fs.Stats>> {
+  public async getFileStats(filePath: string): Promise<Result<Stats>> {
     const validation = this.validatePath(filePath);
     if (!validation.success) {
       return failure(validation.error);

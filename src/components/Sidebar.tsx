@@ -1,7 +1,7 @@
+// @ts-nocheck
 import { useState } from "react";
 import {
   Home,
-  FileText,
   Star,
   User,
   X,

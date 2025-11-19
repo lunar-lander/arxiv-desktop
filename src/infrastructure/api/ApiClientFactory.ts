@@ -7,7 +7,7 @@ import { ArxivApiClient } from "./ArxivApiClient";
 import { BiorxivApiClient } from "./BiorxivApiClient";
 import { Paper } from "../../domain/entities/Paper";
 import { SearchCriteria } from "../../domain/repositories/IPaperRepository";
-import { Result } from "../../shared/errors";
+import { Result, ErrorCode, AppError, failure } from "../../shared/errors";
 import { LoggerFactory } from "../logging/Logger";
 
 const logger = LoggerFactory.getLogger("ApiClientFactory");
@@ -98,7 +98,7 @@ export class ApiClientFactory {
       const result = results[i];
       const source: PaperSource = i === 0 ? "arxiv" : "biorxiv";
 
-      if (result.status === "fulfilled") {
+      if (result && result.status === "fulfilled") {
         const searchResult = result.value;
         if (searchResult.success) {
           papers.push(...searchResult.data);
@@ -111,7 +111,7 @@ export class ApiClientFactory {
             error: searchResult.error.message,
           });
         }
-      } else {
+      } else if (result) {
         errors.push(`${source}: ${result.reason}`);
         logger.error(`Search rejected for ${source}`, new Error(result.reason));
       }
@@ -119,16 +119,11 @@ export class ApiClientFactory {
 
     if (papers.length === 0 && errors.length > 0) {
       logger.error("All searches failed", new Error(errors.join("; ")));
-      return {
-        success: false,
-        error: {
-          name: "SearchError",
-          message: "All searches failed",
-          code: "SEARCH_FAILED",
-          statusCode: 500,
-          details: { errors },
-        },
-      };
+      return failure(
+        new AppError("All searches failed", ErrorCode.API_ERROR, 500, {
+          errors,
+        })
+      );
     }
 
     logger.info("Multi-source search completed", {

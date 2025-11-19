@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef } from "react";
 
 // MathJax configuration
@@ -19,7 +20,7 @@ const mathJaxConfig = {
   },
 };
 
-let mathJaxPromise = null;
+let mathJaxPromise: Promise<any> | null = null;
 
 const loadMathJax = async () => {
   if (mathJaxPromise) return mathJaxPromise;

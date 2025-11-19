@@ -3,7 +3,6 @@
  * Handles page navigation (previous, next, page input)
  */
 
-import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./PdfPageControls.module.css";
 

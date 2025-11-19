@@ -19,6 +19,7 @@ import {
   usePaperActions,
 } from "../hooks";
 import { useToast } from "../context/ToastContext";
+import type { Paper } from "../types";
 import styles from "./PaperViewer.module.css";
 import { pdfjs } from "react-pdf";
 
@@ -26,13 +27,7 @@ import { pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PaperViewerProps {
-  paper: {
-    id: string;
-    localPath?: string;
-    pdfUrl: string;
-    url: string;
-    [key: string]: any;
-  };
+  paper: Paper;
 }
 
 /**
@@ -48,16 +43,8 @@ function PaperViewer({ paper }: PaperViewerProps) {
   const { selectedText, showCopyButton, copyButtonPosition, handleCopyText } =
     useTextSelection();
 
-  const {
-    scale,
-    actualScale,
-    zoomIn,
-    zoomOut,
-    resetZoom,
-    fitToWidth,
-    getCurrentScale,
-    setScale,
-  } = usePdfZoom({ containerRef });
+  const { scale, zoomIn, zoomOut, resetZoom, fitToWidth, getCurrentScale } =
+    usePdfZoom({ containerRef });
 
   const {
     numPages,
@@ -163,7 +150,7 @@ function PaperViewer({ paper }: PaperViewerProps) {
             <p>{error}</p>
             <button
               className={styles.actionButton}
-              onClick={() => window.electronAPI.openExternal(paper.url)}
+              onClick={() => window.electronAPI?.openExternal(paper.url)}
             >
               <ExternalLink size={16} />
               View Online Instead
