@@ -157,10 +157,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       (t) => t.id === currentTheme
     );
     const nextIndex = (currentIndex + 1) % availableThemes.length;
-    setCurrentTheme(availableThemes[nextIndex].id);
+    const nextTheme = availableThemes[nextIndex];
+    if (nextTheme) {
+      setCurrentTheme(nextTheme.id);
+    }
   };
 
-  const setTheme = (themeName) => {
+  const setTheme = (themeName: string) => {
     const validThemes = availableThemes.map((t) => t.id);
     if (validThemes.includes(themeName)) {
       setCurrentTheme(themeName);

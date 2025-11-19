@@ -109,7 +109,7 @@ export class ArxivApiClient implements IPaperApiClient {
       }
 
       logger.info("ArXiv paper fetched", { id });
-      return success(papers[0]);
+      return success(papers[0] || null);
     } catch (error) {
       return this.handleError(error, "getPaperById");
     }
@@ -164,6 +164,8 @@ export class ArxivApiClient implements IPaperApiClient {
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i];
 
+        if (!entry) continue;
+
         try {
           const paper = this.parseEntry(entry);
           papers.push(paper);
@@ -198,7 +200,10 @@ export class ArxivApiClient implements IPaperApiClient {
     const authorElements = entry.getElementsByTagName("author");
     const authors = [];
     for (let i = 0; i < authorElements.length; i++) {
-      const nameElement = authorElements[i].getElementsByTagName("name")[0];
+      const authorElement = authorElements[i];
+      if (!authorElement) continue;
+
+      const nameElement = authorElement.getElementsByTagName("name")[0];
       const name = nameElement?.textContent || "";
       if (name) {
         authors.push({ name });
@@ -222,7 +227,10 @@ export class ArxivApiClient implements IPaperApiClient {
     const categoryElements = entry.getElementsByTagName("category");
     const categories = [];
     for (let i = 0; i < categoryElements.length; i++) {
-      const term = categoryElements[i].getAttribute("term");
+      const categoryElement = categoryElements[i];
+      if (!categoryElement) continue;
+
+      const term = categoryElement.getAttribute("term");
       if (term) {
         categories.push(term);
       }
@@ -232,8 +240,10 @@ export class ArxivApiClient implements IPaperApiClient {
     const linkElements = entry.getElementsByTagName("link");
     let pdfUrl = "";
     for (let i = 0; i < linkElements.length; i++) {
-      const rel = linkElements[i].getAttribute("rel");
-      const href = linkElements[i].getAttribute("href");
+      const linkElement = linkElements[i];
+      if (!linkElement) continue;
+      const rel = linkElement.getAttribute("rel");
+      const href = linkElement.getAttribute("href");
       if (rel === "related" && href?.includes("pdf")) {
         pdfUrl = href;
         break;

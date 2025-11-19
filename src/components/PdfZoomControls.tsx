@@ -3,7 +3,6 @@
  * Handles zoom in, zoom out, fit to width, reset zoom, and view mode toggle
  */
 
-import React from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import styles from "./PdfZoomControls.module.css";
 

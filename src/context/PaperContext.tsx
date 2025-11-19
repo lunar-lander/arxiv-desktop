@@ -8,7 +8,7 @@ import {
 } from "react";
 import { AuthService } from "../services/authService";
 import storageService from "../services/storageService";
-import type { Paper, PaperState, PaperAction, User } from "../types";
+import type { PaperState, PaperAction } from "../types";
 
 interface PaperContextType {
   state: PaperState;
@@ -69,7 +69,10 @@ function paperReducer(state: PaperState, action: PaperAction): PaperState {
     case "ADD_SEARCH":
       return {
         ...state,
-        searchHistory: [action.payload, ...state.searchHistory.slice(0, 9)],
+        searchHistory: [
+          action.payload,
+          ...(state.searchHistory || []).slice(0, 9),
+        ],
       };
 
     case "LOAD_STATE":
@@ -95,13 +98,13 @@ function paperReducer(state: PaperState, action: PaperAction): PaperState {
   }
 }
 
-export function PaperProvider({ children }) {
+export function PaperProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(paperReducer, initialState);
   const [isLoading, setIsLoading] = useState(false);
-  const abortControllerRef = useRef(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Enhanced dispatch that handles async storage operations with proper error handling
-  const enhancedDispatch = async (action) => {
+  const enhancedDispatch = async (action: PaperAction) => {
     // Prevent multiple concurrent operations
     if (isLoading) {
       console.warn(
@@ -238,7 +241,7 @@ export function PaperProvider({ children }) {
         },
       });
     } catch (error) {
-      if (error.name !== "AbortError") {
+      if (error instanceof Error && error.name !== "AbortError") {
         console.error("Failed to load persisted state:", error);
       }
     }

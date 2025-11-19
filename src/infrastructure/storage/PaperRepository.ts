@@ -354,13 +354,13 @@ export class PaperRepository implements IPaperRepository {
       const starredIndex = data.starredPapers.findIndex(
         (p) => p.id === paperId
       );
-      if (starredIndex !== -1) {
+      if (starredIndex !== -1 && data.starredPapers[starredIndex]) {
         data.starredPapers[starredIndex].localPath = localPath;
       }
 
       // Update in open list
       const openIndex = data.openPapers.findIndex((p) => p.id === paperId);
-      if (openIndex !== -1) {
+      if (openIndex !== -1 && data.openPapers[openIndex]) {
         data.openPapers[openIndex].localPath = localPath;
       }
 

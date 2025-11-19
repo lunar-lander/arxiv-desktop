@@ -141,7 +141,12 @@ export class BiorxivApiClient implements IPaperApiClient {
         return success(null);
       }
 
-      const paper = this.parsePaper(response.data.collection[0]);
+      const biorxivPaper = response.data.collection[0];
+      if (!biorxivPaper) {
+        return success(null);
+      }
+
+      const paper = this.parsePaper(biorxivPaper);
 
       logger.info("BioRxiv paper fetched", { doi });
       return success(paper);

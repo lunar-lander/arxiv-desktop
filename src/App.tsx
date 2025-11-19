@@ -6,7 +6,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PaperProvider, usePapers } from "./context/PaperContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
-import styles from "./components/App.module.css";
+import styles from "./App.module.css";
 
 function AppContent() {
   const [currentView, setCurrentView] = useState("home");

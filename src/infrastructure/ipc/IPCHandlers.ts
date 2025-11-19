@@ -34,7 +34,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   });
 
   // Ensure directory exists (async)
-  ipcMain.handle("ensure-directory", async (event, dirPath: string) => {
+  ipcMain.handle("ensure-directory", async (_event, dirPath: string) => {
     logger.debug("ensure-directory called", { dirPath });
     const result = await fileSystem.ensureDirectory(dirPath);
 
@@ -49,7 +49,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   // Write file (async, with validation)
   ipcMain.handle(
     "write-file",
-    async (event, filePath: string, data: string) => {
+    async (_event, filePath: string, data: string) => {
       logger.debug("write-file called", { filePath });
       const result = await fileSystem.writeFile(filePath, data);
 
@@ -63,7 +63,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   );
 
   // Read file (async, with validation)
-  ipcMain.handle("read-file", async (event, filePath: string) => {
+  ipcMain.handle("read-file", async (_event, filePath: string) => {
     logger.debug("read-file called", { filePath });
     const result = await fileSystem.readFile(filePath);
 
@@ -76,7 +76,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   });
 
   // Read file as buffer (async, with validation)
-  ipcMain.handle("read-file-as-buffer", async (event, filePath: string) => {
+  ipcMain.handle("read-file-as-buffer", async (_event, filePath: string) => {
     logger.debug("read-file-as-buffer called", { filePath });
     const result = await fileSystem.readFileAsBuffer(filePath);
 
@@ -93,13 +93,13 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   });
 
   // Check if file exists
-  ipcMain.handle("file-exists", async (event, filePath: string) => {
+  ipcMain.handle("file-exists", async (_event, filePath: string) => {
     logger.debug("file-exists called", { filePath });
     return await fileSystem.fileExists(filePath);
   });
 
   // Open external URL (with validation)
-  ipcMain.handle("open-external", async (event, url: string) => {
+  ipcMain.handle("open-external", async (_event, url: string) => {
     logger.debug("open-external called", { url });
 
     const validation = URLValidator.validateExternalURL(url);
@@ -118,7 +118,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   // Show save dialog
   ipcMain.handle(
     "show-save-dialog",
-    async (event, options: Electron.SaveDialogOptions) => {
+    async (_event, options: Electron.SaveDialogOptions) => {
       logger.debug("show-save-dialog called");
       const result = await dialog.showSaveDialog(mainWindow, options);
       return result;
@@ -128,7 +128,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   // Show open dialog
   ipcMain.handle(
     "show-open-dialog",
-    async (event, options: Electron.OpenDialogOptions) => {
+    async (_event, options: Electron.OpenDialogOptions) => {
       logger.debug("show-open-dialog called");
       const result = await dialog.showOpenDialog(mainWindow, options);
       return result;
@@ -138,7 +138,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   // Show message box
   ipcMain.handle(
     "show-message-box",
-    async (event, options: Electron.MessageBoxOptions) => {
+    async (_event, options: Electron.MessageBoxOptions) => {
       logger.debug("show-message-box called");
       const result = await dialog.showMessageBox(mainWindow, options);
       return result;
@@ -148,7 +148,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   // Download file (async, with validation)
   ipcMain.handle(
     "download-file",
-    async (event, url: string, filename: string) => {
+    async (_event, url: string, filename: string) => {
       logger.info("download-file called", { url, filename });
 
       // Validate URL
@@ -191,7 +191,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   );
 
   // Show item in folder
-  ipcMain.handle("show-item-in-folder", async (event, filePath: string) => {
+  ipcMain.handle("show-item-in-folder", async (_event, filePath: string) => {
     logger.debug("show-item-in-folder called", { filePath });
 
     // Validate path
@@ -214,7 +214,7 @@ export function registerIPCHandlers(mainWindow: Electron.BrowserWindow): void {
   });
 
   // Clipboard operations (no file system access needed)
-  ipcMain.handle("write-clipboard", async (event, text: string) => {
+  ipcMain.handle("write-clipboard", async (_event, text: string) => {
     logger.debug("write-clipboard called");
     try {
       const { clipboard } = require("electron");
