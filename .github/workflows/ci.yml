@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run linter
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Run Prettier check
+        run: npm run format:check
+        continue-on-error: true
+
+      - name: Build React app
+        run: npm run build
+        env:
+          CI: false
+
+      - name: Check for build errors
+        run: |
+          if [ -d "build" ]; then
+            echo "✅ Build successful"
+          else
+            echo "❌ Build failed"
+            exit 1
+          fi
+
+  package-test:
+    name: Test Packaging - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build React app
+        run: npm run build
+        env:
+          CI: false
+
+      - name: Test packaging (without publish)
+        run: npm run pack
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check package was created
+        run: |
+          if [ -d "dist" ]; then
+            echo "✅ Package created successfully"
+            ls -la dist/
+          else
+            echo "❌ Package creation failed"
+            exit 1
+          fi
+        shell: bash
