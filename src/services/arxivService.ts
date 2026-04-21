@@ -384,9 +384,7 @@ export class ArxivService {
     };
   }
 
-  static async downloadPaper(
-    paper: Paper
-  ): Promise<{
+  static async downloadPaper(paper: Paper): Promise<{
     success: boolean;
     localPath?: string;
     filename?: string;
