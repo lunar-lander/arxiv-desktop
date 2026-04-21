@@ -41,7 +41,7 @@
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"electron/**/*.{js,ts}\" --fix",
     "prepare": "husky"
   },
-  "author": "ixaxaar",
+  "author": "ixaxaar <root@ixaxaar.in>",
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.15.0",
