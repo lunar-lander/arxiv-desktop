@@ -35,6 +35,7 @@ export function Toast({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [id, duration, onClose]);
 
   const icons = {

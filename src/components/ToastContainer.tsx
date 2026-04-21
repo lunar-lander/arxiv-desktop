@@ -3,7 +3,6 @@
  * Manages and displays multiple toast notifications
  */
 
-import React from "react";
 import { Toast, ToastProps } from "./Toast";
 import styles from "./ToastContainer.module.css";
 

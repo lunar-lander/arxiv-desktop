@@ -3,7 +3,6 @@
  * Star, Download, Cite, and View Online actions
  */
 
-import React from "react";
 import { Star, Download, Quote, ExternalLink } from "lucide-react";
 import styles from "./PaperActionButtons.module.css";
 

@@ -3,7 +3,6 @@
  * Floating button that appears when text is selected in PDF
  */
 
-import React from "react";
 import { Copy } from "lucide-react";
 import styles from "./TextCopyButton.module.css";
 

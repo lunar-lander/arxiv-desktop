@@ -1,3 +1,7 @@
+// Module declarations for packages without types
+declare module "mathjax";
+declare module "react-dom/client";
+
 // Type declarations for CSS modules
 declare module "*.module.css" {
   const classes: { [key: string]: string };
@@ -17,25 +21,4 @@ interface FileOperationResult {
   error?: string;
 }
 
-// Electron API types
-interface ElectronAPI {
-  getAppDataPath(): Promise<string>;
-  ensureDirectory(path: string): Promise<void>;
-  writeFile(
-    path: string,
-    data: Uint8Array | string
-  ): Promise<FileOperationResult>;
-  readFile(path: string): Promise<FileOperationResult>;
-  readFileAsBuffer(path: string): Promise<ArrayBuffer>;
-  onMenuAction(callback: (action: string, data: any) => void): void;
-  removeMenuActionListener(): void;
-  openExternal(url: string): void;
-  fileExists(path: string): Promise<boolean>;
-  downloadFile(url: string, filename: string): Promise<any>;
-  showItemInFolder(path: string): Promise<void>;
-  writeClipboard(text: string): Promise<void>;
-}
-
-interface Window {
-  electronAPI?: ElectronAPI;
-}
+// ElectronAPI and Window types are declared in src/shared/types/index.ts

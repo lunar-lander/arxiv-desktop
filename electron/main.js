@@ -19,6 +19,8 @@ const os = require("os");
 const https = require("https");
 const http = require("http");
 const isDev = process.env.NODE_ENV === "development";
+const packageJson = require("../package.json");
+const appVersion = packageJson.version;
 
 let mainWindow;
 
@@ -96,6 +98,10 @@ function validateURL(url) {
  * Create main window
  */
 function createWindow() {
+  // Resolve icon path - gracefully handle missing icon
+  const iconPath = path.join(__dirname, "../assets/icon.png");
+  const hasIcon = fsSync.existsSync(iconPath);
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -110,7 +116,7 @@ function createWindow() {
     },
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     show: false,
-    icon: path.join(__dirname, "../assets/icon.png"),
+    ...(hasIcon ? { icon: iconPath } : {}),
   });
 
   // Load the app
@@ -265,8 +271,7 @@ function createMenu() {
               type: "info",
               title: "About ArXiv Desktop",
               message: "ArXiv Desktop",
-              detail:
-                "A desktop application for browsing and managing academic papers from arXiv and bioRxiv.\n\nVersion: 1.0.0\nBuilt with Electron and React",
+              detail: `A desktop application for browsing and managing academic papers from arXiv and bioRxiv.\n\nVersion: ${appVersion}\nBuilt with Electron and React`,
             });
           },
         },

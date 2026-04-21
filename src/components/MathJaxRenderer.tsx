@@ -19,7 +19,7 @@ const mathJaxConfig = {
   },
 };
 
-let mathJaxPromise = null;
+let mathJaxPromise: Promise<unknown> | null = null;
 
 const loadMathJax = async () => {
   if (mathJaxPromise) return mathJaxPromise;
@@ -37,16 +37,22 @@ const loadMathJax = async () => {
   return mathJaxPromise;
 };
 
-function MathJaxRenderer({ children, inline = false }) {
-  const containerRef = useRef(null);
-  const mathJaxRef = useRef(null);
+function MathJaxRenderer({
+  children,
+  inline = false,
+}: {
+  children: string;
+  inline?: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mathJaxRef = useRef<any>(null);
 
   useEffect(() => {
     const renderMath = async () => {
       if (!containerRef.current || !children) return;
 
       try {
-        const MathJax = await loadMathJax();
+        const MathJax = (await loadMathJax()) as any;
         mathJaxRef.current = MathJax;
 
         // Set the container content

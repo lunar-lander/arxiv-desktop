@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import styles from "./SearchFilters.module.css";
 
-const CATEGORIES = {
+const CATEGORIES: Record<string, string[]> = {
   arxiv: [
     "cs.AI",
     "cs.LG",
@@ -42,17 +42,25 @@ const CATEGORIES = {
   ],
 };
 
-function SearchFilters({ filters, onFiltersChange, source }) {
+function SearchFilters({
+  filters,
+  onFiltersChange,
+  source,
+}: {
+  filters: any;
+  onFiltersChange: (filters: any) => void;
+  source: string;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleFilterChange = (key, value) => {
+  const handleFilterChange = (key: string, value: any) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const handleCategoryToggle = (category) => {
+  const handleCategoryToggle = (category: string) => {
     const currentCategories = filters.categories || [];
     const newCategories = currentCategories.includes(category)
-      ? currentCategories.filter((c) => c !== category)
+      ? currentCategories.filter((c: string) => c !== category)
       : [...currentCategories, category];
 
     handleFilterChange("categories", newCategories);

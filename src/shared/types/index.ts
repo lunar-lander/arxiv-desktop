@@ -245,21 +245,41 @@ export interface ThemeContextValue {
  */
 export interface ElectronAPI {
   // File operations
-  readFile: (filePath: string) => Promise<string>;
-  writeFile: (filePath: string, data: string) => Promise<FileOperationResult>;
-  fileExists: (filePath: string) => Promise<boolean>;
-  ensureDir: (dirPath: string) => Promise<void>;
+  getAppDataPath: () => Promise<string>;
+  ensureDirectory: (path: string) => Promise<void>;
+  writeFile: (
+    path: string,
+    data: Uint8Array | string
+  ) => Promise<FileOperationResult>;
+  readFile: (path: string) => Promise<{
+    success: boolean;
+    data?: Buffer | string | ArrayBuffer | Uint8Array;
+    error?: string;
+  }>;
+  readFileAsBuffer: (path: string) => Promise<ArrayBuffer>;
+  fileExists: (path: string) => Promise<boolean>;
 
-  // Dialog operations
-  showSaveDialog: (options: SaveDialogOptions) => Promise<SaveDialogResult>;
-  showOpenDialog: (options: OpenDialogOptions) => Promise<OpenDialogResult>;
+  // Menu operations
+  onMenuAction: (callback: (action: string, data: any) => void) => void;
+  removeMenuActionListener: () => void;
 
-  // Application operations
-  getAppPath: () => Promise<string>;
-  openExternal: (url: string) => Promise<void>;
+  // Shell operations
+  openExternal: (url: string) => void;
+  showItemInFolder: (path: string) => Promise<void>;
 
   // Download operations
-  downloadFile: (url: string, savePath: string) => Promise<DownloadFileResult>;
+  downloadFile: (url: string, filename: string) => Promise<any>;
+
+  // Clipboard operations
+  writeClipboard: (text: string) => Promise<void>;
+
+  // Dialog operations (new infrastructure)
+  showSaveDialog?: (options: SaveDialogOptions) => Promise<SaveDialogResult>;
+  showOpenDialog?: (options: OpenDialogOptions) => Promise<OpenDialogResult>;
+
+  // Legacy aliases
+  ensureDir?: (dirPath: string) => Promise<void>;
+  getAppPath?: () => Promise<string>;
 }
 
 /**

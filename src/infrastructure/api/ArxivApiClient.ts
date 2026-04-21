@@ -109,7 +109,7 @@ export class ArxivApiClient implements IPaperApiClient {
       }
 
       logger.info("ArXiv paper fetched", { id });
-      return success(papers[0]);
+      return success(papers[0] ?? null);
     } catch (error) {
       return this.handleError(error, "getPaperById");
     }
@@ -162,7 +162,7 @@ export class ArxivApiClient implements IPaperApiClient {
       const entries = xmlDoc.getElementsByTagName("entry");
 
       for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
+        const entry = entries[i]!;
 
         try {
           const paper = this.parseEntry(entry);
@@ -198,7 +198,7 @@ export class ArxivApiClient implements IPaperApiClient {
     const authorElements = entry.getElementsByTagName("author");
     const authors = [];
     for (let i = 0; i < authorElements.length; i++) {
-      const nameElement = authorElements[i].getElementsByTagName("name")[0];
+      const nameElement = authorElements[i]!.getElementsByTagName("name")[0];
       const name = nameElement?.textContent || "";
       if (name) {
         authors.push({ name });
@@ -216,13 +216,13 @@ export class ArxivApiClient implements IPaperApiClient {
 
     // Extract updated date
     const updatedElement = entry.getElementsByTagName("updated")[0];
-    const updatedDate = updatedElement?.textContent;
+    const updatedDate = updatedElement?.textContent ?? undefined;
 
     // Extract categories
     const categoryElements = entry.getElementsByTagName("category");
     const categories = [];
     for (let i = 0; i < categoryElements.length; i++) {
-      const term = categoryElements[i].getAttribute("term");
+      const term = categoryElements[i]!.getAttribute("term");
       if (term) {
         categories.push(term);
       }
@@ -232,8 +232,8 @@ export class ArxivApiClient implements IPaperApiClient {
     const linkElements = entry.getElementsByTagName("link");
     let pdfUrl = "";
     for (let i = 0; i < linkElements.length; i++) {
-      const rel = linkElements[i].getAttribute("rel");
-      const href = linkElements[i].getAttribute("href");
+      const rel = linkElements[i]!.getAttribute("rel");
+      const href = linkElements[i]!.getAttribute("href");
       if (rel === "related" && href?.includes("pdf")) {
         pdfUrl = href;
         break;
@@ -247,15 +247,15 @@ export class ArxivApiClient implements IPaperApiClient {
 
     // Extract DOI
     const doiElement = entry.getElementsByTagName("arxiv:doi")[0];
-    const doi = doiElement?.textContent;
+    const doi = doiElement?.textContent ?? undefined;
 
     // Extract comments
     const commentElement = entry.getElementsByTagName("arxiv:comment")[0];
-    const comments = commentElement?.textContent;
+    const comments = commentElement?.textContent ?? undefined;
 
     // Extract journal reference
     const journalElement = entry.getElementsByTagName("arxiv:journal_ref")[0];
-    const journalRef = journalElement?.textContent;
+    const journalRef = journalElement?.textContent ?? undefined;
 
     return new Paper({
       id,

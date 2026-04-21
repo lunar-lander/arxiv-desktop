@@ -1,8 +1,7 @@
-import axios from "axios";
 import { User, AuthData } from "../types";
 
 export class AuthService {
-  static async loginToArxiv(username, password) {
+  static async loginToArxiv(username: string, _password: string) {
     try {
       // arXiv doesn't have a public API for user authentication
       // This is a placeholder for future implementation
@@ -16,11 +15,11 @@ export class AuthService {
       };
 
       // Store in app data
-      const appDataPath = await window.electronAPI.getAppDataPath();
-      await window.electronAPI.ensureDirectory(appDataPath);
+      const appDataPath = await window.electronAPI!.getAppDataPath();
+      await window.electronAPI!.ensureDirectory(appDataPath);
 
       const authFile = `${appDataPath}/auth.json`;
-      await window.electronAPI.writeFile(
+      await window.electronAPI!.writeFile(
         authFile,
         JSON.stringify(
           {
@@ -35,15 +34,15 @@ export class AuthService {
         success: true,
         user: userData,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
 
-  static async loginToBiorxiv(username, password) {
+  static async loginToBiorxiv(username: string, _password: string) {
     try {
       // bioRxiv also doesn't have public auth API
       // This is a placeholder for future implementation
@@ -55,23 +54,23 @@ export class AuthService {
         loginTime: Date.now(),
       };
 
-      const appDataPath = await window.electronAPI.getAppDataPath();
-      await window.electronAPI.ensureDirectory(appDataPath);
+      const appDataPath = await window.electronAPI!.getAppDataPath();
+      await window.electronAPI!.ensureDirectory(appDataPath);
 
       const authFile = `${appDataPath}/auth.json`;
 
       // Read existing auth data
       let authData: AuthData = {};
-      const exists = await window.electronAPI.fileExists(authFile);
+      const exists = await window.electronAPI!.fileExists(authFile);
       if (exists) {
-        const result = await window.electronAPI.readFile(authFile);
+        const result = await window.electronAPI!.readFile(authFile);
         if (result.success && result.data) {
           authData = JSON.parse(result.data.toString());
         }
       }
 
       authData.biorxiv = userData;
-      await window.electronAPI.writeFile(
+      await window.electronAPI!.writeFile(
         authFile,
         JSON.stringify(authData, null, 2)
       );
@@ -80,22 +79,22 @@ export class AuthService {
         success: true,
         user: userData,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
 
   static async getCurrentUser() {
     try {
-      const appDataPath = await window.electronAPI.getAppDataPath();
+      const appDataPath = await window.electronAPI!.getAppDataPath();
       const authFile = `${appDataPath}/auth.json`;
-      const exists = await window.electronAPI.fileExists(authFile);
+      const exists = await window.electronAPI!.fileExists(authFile);
 
       if (exists) {
-        const result = await window.electronAPI.readFile(authFile);
+        const result = await window.electronAPI!.readFile(authFile);
         if (result.success && result.data) {
           const authData: AuthData = JSON.parse(result.data.toString());
 
@@ -103,7 +102,7 @@ export class AuthService {
           let latestUser: User | null = null;
           let latestTime = 0;
 
-          for (const [source, userData] of Object.entries(authData)) {
+          for (const [_source, userData] of Object.entries(authData)) {
             if (
               userData &&
               userData.loggedIn &&
@@ -126,20 +125,20 @@ export class AuthService {
     }
   }
 
-  static async logout(source) {
+  static async logout(source: string) {
     try {
-      const appDataPath = await window.electronAPI.getAppDataPath();
+      const appDataPath = await window.electronAPI!.getAppDataPath();
       const authFile = `${appDataPath}/auth.json`;
-      const exists = await window.electronAPI.fileExists(authFile);
+      const exists = await window.electronAPI!.fileExists(authFile);
 
       if (exists) {
-        const result = await window.electronAPI.readFile(authFile);
+        const result = await window.electronAPI!.readFile(authFile);
         if (result.success && result.data) {
           const authData: AuthData = JSON.parse(result.data.toString());
 
           if (authData[source]) {
             authData[source]!.loggedIn = false;
-            await window.electronAPI.writeFile(
+            await window.electronAPI!.writeFile(
               authFile,
               JSON.stringify(authData, null, 2)
             );
@@ -148,22 +147,22 @@ export class AuthService {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }
 
   static async logoutAll() {
     try {
-      const appDataPath = await window.electronAPI.getAppDataPath();
+      const appDataPath = await window.electronAPI!.getAppDataPath();
       const authFile = `${appDataPath}/auth.json`;
-      const exists = await window.electronAPI.fileExists(authFile);
+      const exists = await window.electronAPI!.fileExists(authFile);
 
       if (exists) {
-        const result = await window.electronAPI.readFile(authFile);
+        const result = await window.electronAPI!.readFile(authFile);
         if (result.success && result.data) {
           const authData: AuthData = JSON.parse(result.data.toString());
 
@@ -173,7 +172,7 @@ export class AuthService {
             }
           }
 
-          await window.electronAPI.writeFile(
+          await window.electronAPI!.writeFile(
             authFile,
             JSON.stringify(authData, null, 2)
           );
@@ -181,10 +180,10 @@ export class AuthService {
       }
 
       return { success: true };
-    } catch (error) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }

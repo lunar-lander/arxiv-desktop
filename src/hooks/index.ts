@@ -26,7 +26,6 @@ export type {
 
 export { usePaperActions } from "./usePaperActions";
 export type {
-  Paper as ActionPaper,
   UsePaperActionsProps,
   UsePaperActionsReturn,
 } from "./usePaperActions";

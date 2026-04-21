@@ -7,7 +7,7 @@ import { ArxivApiClient } from "./ArxivApiClient";
 import { BiorxivApiClient } from "./BiorxivApiClient";
 import { Paper } from "../../domain/entities/Paper";
 import { SearchCriteria } from "../../domain/repositories/IPaperRepository";
-import { Result } from "../../shared/errors";
+import { Result, ErrorCode, AppError } from "../../shared/errors";
 import { LoggerFactory } from "../logging/Logger";
 
 const logger = LoggerFactory.getLogger("ApiClientFactory");
@@ -95,7 +95,7 @@ export class ApiClientFactory {
     const errors: string[] = [];
 
     for (let i = 0; i < results.length; i++) {
-      const result = results[i];
+      const result = results[i]!;
       const source: PaperSource = i === 0 ? "arxiv" : "biorxiv";
 
       if (result.status === "fulfilled") {
@@ -121,13 +121,9 @@ export class ApiClientFactory {
       logger.error("All searches failed", new Error(errors.join("; ")));
       return {
         success: false,
-        error: {
-          name: "SearchError",
-          message: "All searches failed",
-          code: "SEARCH_FAILED",
-          statusCode: 500,
-          details: { errors },
-        },
+        error: new AppError("All searches failed", ErrorCode.API_ERROR, 500, {
+          errors,
+        }),
       };
     }
 

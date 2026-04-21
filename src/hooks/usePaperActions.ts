@@ -6,13 +6,7 @@
 import { useState } from "react";
 import { usePapers } from "../context/PaperContext";
 
-export interface Paper {
-  id: string;
-  localPath?: string;
-  pdfUrl: string;
-  url: string;
-  [key: string]: any;
-}
+import type { Paper } from "../types";
 
 export interface UsePaperActionsProps {
   paper: Paper;
@@ -61,7 +55,7 @@ export function usePaperActions({
     try {
       // Try to download the paper if not already downloaded
       if (!paper.localPath) {
-        const downloadResult = await window.electronAPI.downloadFile(
+        const downloadResult = await window.electronAPI!.downloadFile(
           paper.pdfUrl,
           `${paper.id}.pdf`
         );
@@ -75,10 +69,10 @@ export function usePaperActions({
 
       // If already downloaded or download failed, show file in folder
       if (paper.localPath) {
-        await window.electronAPI.showItemInFolder(paper.localPath);
+        await window.electronAPI?.showItemInFolder(paper.localPath);
       } else {
         // Fallback to opening URL
-        window.electronAPI.openExternal(paper.pdfUrl);
+        window.electronAPI?.openExternal(paper.pdfUrl);
       }
     } catch (error) {
       console.error("Download error:", error);
@@ -88,7 +82,7 @@ export function usePaperActions({
         );
       }
       // Fallback to opening URL
-      window.electronAPI.openExternal(paper.pdfUrl);
+      window.electronAPI?.openExternal(paper.pdfUrl);
     } finally {
       setIsDownloading(false);
     }
@@ -107,7 +101,7 @@ export function usePaperActions({
    * View paper online
    */
   const handleViewOnline = () => {
-    window.electronAPI.openExternal(paper.url);
+    window.electronAPI?.openExternal(paper.url);
   };
 
   return {

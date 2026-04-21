@@ -7,7 +7,6 @@ import {
   ISettingsRepository,
   PdfViewState,
   ChatSession,
-  ChatMessage,
   UISettings,
 } from "../../domain/repositories/ISettingsRepository";
 import { SearchCriteria } from "../../domain/repositories/IPaperRepository";

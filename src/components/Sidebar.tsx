@@ -1,7 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Home,
-  FileText,
   Star,
   User,
   X,
@@ -15,30 +14,40 @@ import LoginModal from "./LoginModal";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({ onNavigate, onPaperSelect, currentView, onToggleSidebar }) {
+function Sidebar({
+  onNavigate,
+  onPaperSelect,
+  currentView,
+  onToggleSidebar,
+}: {
+  onNavigate: (view: string) => void;
+  onPaperSelect: (paper: any) => void;
+  currentView: string;
+  onToggleSidebar: () => void;
+}) {
   const { state, dispatch } = usePapers();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const handleNavigation = (view) => {
+  const handleNavigation = (view: string) => {
     onNavigate(view);
   };
 
-  const handlePaperSelect = (paper) => {
+  const handlePaperSelect = (paper: any) => {
     onPaperSelect(paper);
     onNavigate("paper");
   };
 
-  const handleClosePaper = (paperId, e) => {
+  const handleClosePaper = (paperId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: "REMOVE_OPEN_PAPER", payload: paperId });
   };
 
-  const handleToggleStar = (paper, e) => {
+  const handleToggleStar = (paper: any, e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch({ type: "TOGGLE_STAR", payload: paper });
   };
 
-  const handleLogin = (user) => {
+  const handleLogin = (user: any) => {
     dispatch({ type: "SET_USER", payload: user });
   };
 

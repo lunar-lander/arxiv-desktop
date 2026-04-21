@@ -3,6 +3,23 @@
   "version": "1.0.0",
   "description": "Desktop app for arXiv and bioRxiv paper management",
   "main": "electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lunar-lander/arxiv-desktop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lunar-lander/arxiv-desktop/issues"
+  },
+  "keywords": [
+    "arxiv",
+    "biorxiv",
+    "papers",
+    "academic",
+    "research",
+    "pdf",
+    "electron",
+    "desktop"
+  ],
   "scripts": {
     "start": "electron .",
     "dev": "concurrently \"npm run dev:react\" \"wait-on http://localhost:3000 && npm run dev:electron\"",
@@ -10,17 +27,21 @@
     "dev:electron": "NODE_ENV=development electron .",
     "build": "react-scripts build",
     "build:electron": "npm run build && electron-builder",
-    "test": "react-scripts test",
+    "test": "react-scripts test --watchAll=false",
+    "test:watch": "react-scripts test",
     "pack": "npm run build && electron-builder --dir",
     "dist": "npm run build && electron-builder",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
     "dist:all": "npm run build && electron-builder -mwl",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json}\" \"electron/**/*.{js,ts}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json}\" \"electron/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json}\" \"electron/**/*.{js,ts}\"",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"electron/**/*.{js,ts}\"",
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" \"electron/**/*.{js,ts}\" --fix",
     "prepare": "husky"
   },
-  "author": "Claude",
+  "author": "ixaxaar",
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.15.0",
@@ -30,7 +51,6 @@
     "@typescript-eslint/eslint-plugin": "^8.11.0",
     "@typescript-eslint/parser": "^8.11.0",
     "concurrently": "^9.0.1",
-    "cross-env": "^7.0.3",
     "electron": "^38.0.0",
     "electron-builder": "^26.0.12",
     "eslint": "^9.14.0",
@@ -60,7 +80,7 @@
     "src/**/*.{css,json}": [
       "prettier --write"
     ],
-    "electron/**/*.js": [
+    "electron/**/*.{js,ts}": [
       "prettier --write",
       "eslint --fix"
     ]
@@ -79,8 +99,9 @@
     ]
   },
   "build": {
-    "appId": "com.claude.arxiv-desktop",
+    "appId": "com.arxivdesktop.app",
     "productName": "ArXiv Desktop",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -90,13 +111,58 @@
       "node_modules/**/*"
     ],
     "mac": {
-      "category": "public.app-category.education"
+      "category": "public.app-category.education",
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ]
     },
     "win": {
-      "target": "nsis"
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
     },
     "linux": {
-      "target": "AppImage"
+      "icon": "assets/icon.png",
+      "category": "Science",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        },
+        {
+          "target": "rpm",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "lunar-lander",
+      "repo": "arxiv-desktop"
     }
   }
 }

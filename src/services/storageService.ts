@@ -47,7 +47,6 @@ class StorageService {
       }
 
       this.initialized = true;
-      console.log("StorageService initialized successfully");
     } catch (error) {
       console.error("Failed to initialize storage:", error);
       this.initialized = false;
@@ -59,16 +58,16 @@ class StorageService {
   getDefaultData() {
     return {
       version: "1.0.0",
-      starredPapers: [],
-      openPapers: [],
-      searchHistory: [],
-      pdfViewState: {}, // paperId -> { scale, pageNumber, viewMode, lastViewed }
+      starredPapers: [] as any[],
+      openPapers: [] as any[],
+      searchHistory: [] as any[],
+      pdfViewState: {} as Record<string, any>,
       theme: "light",
       lastUpdated: Date.now(),
     };
   }
 
-  async loadData() {
+  async loadData(): Promise<any> {
     await this.initialize();
 
     // Check memory cache first
@@ -83,7 +82,7 @@ class StorageService {
     }
 
     try {
-      const exists = await window.electronAPI.fileExists(this.dataFile);
+      const exists = await window.electronAPI!.fileExists(this.dataFile!);
 
       if (!exists) {
         const defaultData = this.getDefaultData();
@@ -92,7 +91,7 @@ class StorageService {
         return defaultData;
       }
 
-      const result = await window.electronAPI.readFile(this.dataFile);
+      const result = await window.electronAPI!.readFile(this.dataFile!);
 
       if (result.success && result.data) {
         // Handle different data formats
@@ -113,11 +112,13 @@ class StorageService {
           throw new Error("Empty data file");
         }
 
-        let data;
+        let data: any;
         try {
           data = JSON.parse(text);
         } catch (parseError) {
-          throw new Error(`JSON parse error: ${parseError.message}`);
+          throw new Error(
+            `JSON parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+          );
         }
 
         // Validate data structure
@@ -157,7 +158,7 @@ class StorageService {
     }
   }
 
-  async saveData(data) {
+  async saveData(data: any) {
     return new Promise((resolve) => {
       this.operationQueue.push(async () => {
         try {
@@ -173,7 +174,7 @@ class StorageService {
     });
   }
 
-  async _saveDataDirect(data) {
+  async _saveDataDirect(data: any) {
     await this.initialize();
 
     try {
@@ -199,8 +200,8 @@ class StorageService {
       const encoder = new TextEncoder();
       const uint8Array = encoder.encode(jsonData);
 
-      const result = await window.electronAPI.writeFile(
-        this.dataFile,
+      const result = await window.electronAPI!.writeFile(
+        this.dataFile!,
         uint8Array
       );
 
@@ -230,7 +231,7 @@ class StorageService {
     while (this.operationQueue.length > 0) {
       const operation = this.operationQueue.shift();
       try {
-        await operation();
+        if (operation) await operation();
       } catch (error) {
         console.error("Queue operation failed:", error);
       }
@@ -245,12 +246,12 @@ class StorageService {
     return data.starredPapers || [];
   }
 
-  async addStar(paper) {
+  async addStar(paper: any) {
     const data = await this.loadData();
     const starred = data.starredPapers || [];
 
     // Remove if already exists to avoid duplicates
-    const filtered = starred.filter((p) => p.id !== paper.id);
+    const filtered = starred.filter((p: any) => p.id !== paper.id);
     filtered.push({ ...paper, starredAt: Date.now() });
 
     data.starredPapers = filtered;
@@ -259,10 +260,10 @@ class StorageService {
     return filtered;
   }
 
-  async removeStar(paperId) {
+  async removeStar(paperId: string) {
     const data = await this.loadData();
     data.starredPapers = (data.starredPapers || []).filter(
-      (p) => p.id !== paperId
+      (p: any) => p.id !== paperId
     );
     await this.saveData(data);
     return data.starredPapers;
@@ -273,12 +274,12 @@ class StorageService {
     return data.openPapers || [];
   }
 
-  async addToOpenedPapers(paper) {
+  async addToOpenedPapers(paper: any) {
     const data = await this.loadData();
     const opened = data.openPapers || [];
 
     // Remove if already exists and add to front (most recent)
-    const filtered = opened.filter((p) => p.id !== paper.id);
+    const filtered = opened.filter((p: any) => p.id !== paper.id);
     filtered.unshift({ ...paper, openedAt: Date.now() });
 
     // Keep only last 50 opened papers
@@ -287,26 +288,28 @@ class StorageService {
     return data.openPapers;
   }
 
-  async removeFromOpenedPapers(paperId) {
+  async removeFromOpenedPapers(paperId: string) {
     const data = await this.loadData();
-    data.openPapers = (data.openPapers || []).filter((p) => p.id !== paperId);
+    data.openPapers = (data.openPapers || []).filter(
+      (p: any) => p.id !== paperId
+    );
     await this.saveData(data);
     return data.openPapers;
   }
 
-  async updatePaperLocalPath(paperId, localPath) {
+  async updatePaperLocalPath(paperId: string, localPath: string) {
     const data = await this.loadData();
 
     // Update localPath in opened papers
     if (data.openPapers) {
-      data.openPapers = data.openPapers.map((paper) =>
+      data.openPapers = data.openPapers.map((paper: any) =>
         paper.id === paperId ? { ...paper, localPath } : paper
       );
     }
 
     // Update localPath in starred papers
     if (data.starredPapers) {
-      data.starredPapers = data.starredPapers.map((paper) =>
+      data.starredPapers = data.starredPapers.map((paper: any) =>
         paper.id === paperId ? { ...paper, localPath } : paper
       );
     }
@@ -315,12 +318,12 @@ class StorageService {
   }
 
   // PDF view state management
-  async getPdfViewState(paperId) {
+  async getPdfViewState(paperId: string) {
     const data = await this.loadData();
     return data.pdfViewState[paperId] || null;
   }
 
-  async savePdfViewState(paperId, viewState) {
+  async savePdfViewState(paperId: string, viewState: any) {
     const data = await this.loadData();
     data.pdfViewState[paperId] = {
       ...viewState,
@@ -330,13 +333,13 @@ class StorageService {
   }
 
   // Search history
-  async addSearchHistory(searchData) {
+  async addSearchHistory(searchData: any) {
     const data = await this.loadData();
     const history = data.searchHistory || [];
 
     // Remove duplicate searches
     const filtered = history.filter(
-      (h) => h.query !== searchData.query || h.source !== searchData.source
+      (h: any) => h.query !== searchData.query || h.source !== searchData.source
     );
 
     filtered.unshift({
@@ -362,12 +365,12 @@ class StorageService {
 
     // Clean old search history
     data.searchHistory = (data.searchHistory || []).filter(
-      (h) => h.timestamp > cutoffTime
+      (h: any) => h.timestamp > cutoffTime
     );
 
     // Clean old PDF view states (keep starred papers)
     const keepPaperIds = new Set([
-      ...(data.starredPapers || []).map((p) => p.id),
+      ...(data.starredPapers || []).map((p: any) => p.id),
     ]);
 
     Object.keys(data.pdfViewState).forEach((paperId) => {
@@ -383,7 +386,7 @@ class StorageService {
   }
 
   // PDF caching methods
-  sanitizeFilename(filename) {
+  sanitizeFilename(filename: string) {
     if (!filename || typeof filename !== "string") {
       return "unknown";
     }
@@ -401,7 +404,7 @@ class StorageService {
     );
   }
 
-  async downloadAndCachePdf(paper, options: { force?: boolean } = {}) {
+  async downloadAndCachePdf(paper: any, options: { force?: boolean } = {}) {
     await this.initialize();
 
     try {
@@ -415,12 +418,11 @@ class StorageService {
         (paper.title || "untitled").substring(0, 100)
       );
       const filename = `${sanitizedId}_${sanitizedTitle}.pdf`;
-      const localPath = `${this.papersDir}/${filename}`;
+      const localPath = `${this.papersDir!}/${filename}`;
 
       // Check if already cached
-      const exists = await window.electronAPI.fileExists(localPath);
+      const exists = await window.electronAPI!.fileExists(localPath);
       if (exists && !options.force) {
-        console.log("PDF already cached:", localPath);
         return localPath;
       }
 
@@ -430,15 +432,13 @@ class StorageService {
       }
 
       // Download the PDF
-      console.log("Downloading PDF:", paper.pdfUrl, "to", filename);
 
-      const result = await window.electronAPI.downloadFile(
+      const result = await window.electronAPI!.downloadFile(
         paper.pdfUrl,
         filename
       );
 
       if (result && result.success) {
-        console.log("PDF downloaded successfully:", result.path);
         return result.path;
       } else {
         const errorMsg = result?.error || "Unknown download error";
@@ -451,15 +451,15 @@ class StorageService {
     }
   }
 
-  async getPaperCachePath(paper) {
+  async getPaperCachePath(paper: any) {
     await this.initialize();
 
     const sanitizedId = this.sanitizeFilename(paper.id);
     const sanitizedTitle = this.sanitizeFilename(paper.title.substring(0, 100));
     const filename = `${sanitizedId}_${sanitizedTitle}.pdf`;
-    const localPath = `${this.papersDir}/${filename}`;
+    const localPath = `${this.papersDir!}/${filename}`;
 
-    const exists = await window.electronAPI.fileExists(localPath);
+    const exists = await window.electronAPI!.fileExists(localPath);
     return exists ? localPath : null;
   }
 
@@ -474,7 +474,7 @@ class StorageService {
     return JSON.stringify(data, null, 2);
   }
 
-  async importData(jsonString) {
+  async importData(jsonString: string) {
     try {
       const importedData = JSON.parse(jsonString);
       // Validate basic structure
@@ -494,7 +494,7 @@ export const storageService = new StorageService();
 
 // Initialize immediately when imported
 if (typeof window !== "undefined" && window.electronAPI) {
-  storageService.initialize().catch((error) => {
+  storageService.initialize().catch((error: unknown) => {
     console.error("Failed to auto-initialize storage service:", error);
   });
 }

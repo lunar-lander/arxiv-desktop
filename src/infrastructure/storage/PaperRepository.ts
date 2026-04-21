@@ -346,8 +346,9 @@ export class PaperRepository implements IPaperRepository {
       const data = await this.loadData();
 
       // Update in metadata
-      if (data.paperMetadata[paperId]) {
-        data.paperMetadata[paperId].localPath = localPath;
+      const metadata = data.paperMetadata[paperId];
+      if (metadata) {
+        metadata.localPath = localPath;
       }
 
       // Update in starred list
@@ -355,13 +356,15 @@ export class PaperRepository implements IPaperRepository {
         (p) => p.id === paperId
       );
       if (starredIndex !== -1) {
-        data.starredPapers[starredIndex].localPath = localPath;
+        const starred = data.starredPapers[starredIndex];
+        if (starred) starred.localPath = localPath;
       }
 
       // Update in open list
       const openIndex = data.openPapers.findIndex((p) => p.id === paperId);
       if (openIndex !== -1) {
-        data.openPapers[openIndex].localPath = localPath;
+        const open = data.openPapers[openIndex];
+        if (open) open.localPath = localPath;
       }
 
       await this.saveData(data);

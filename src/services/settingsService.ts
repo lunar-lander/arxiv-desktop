@@ -4,7 +4,7 @@ export class SettingsService {
   static CHAT_SESSIONS_KEY = "arxiv_chat_sessions";
 
   // UI Settings Management
-  static getUISettings() {
+  static getUISettings(): any {
     try {
       const settings = localStorage.getItem(this.UI_SETTINGS_KEY);
       return settings ? JSON.parse(settings) : this.getDefaultUISettings();
@@ -23,7 +23,7 @@ export class SettingsService {
     };
   }
 
-  static saveUISettings(settings) {
+  static saveUISettings(settings: any) {
     try {
       const currentSettings = this.getUISettings();
       const newSettings = {
@@ -39,14 +39,14 @@ export class SettingsService {
     }
   }
 
-  static updateUISetting(key, value) {
+  static updateUISetting(key: string, value: any) {
     const settings = this.getUISettings();
     settings[key] = value;
     return this.saveUISettings(settings);
   }
 
   // Chat History Management
-  static getChatHistory() {
+  static getChatHistory(): any[] {
     try {
       const history = localStorage.getItem(this.CHAT_HISTORY_KEY);
       return history ? JSON.parse(history) : [];
@@ -56,7 +56,7 @@ export class SettingsService {
     }
   }
 
-  static saveChatHistory(messages) {
+  static saveChatHistory(messages: any[]) {
     try {
       // Validate and deduplicate messages
       if (!Array.isArray(messages)) {
@@ -87,18 +87,20 @@ export class SettingsService {
   }
 
   // Chat Sessions Management
-  static getChatSessions() {
+  static getChatSessions(): any[] {
     try {
       const sessions = localStorage.getItem(this.CHAT_SESSIONS_KEY);
       const parsedSessions = sessions ? JSON.parse(sessions) : [];
 
       // Validate and sanitize sessions
-      const validSessions = parsedSessions.filter((session) => {
+      const validSessions = parsedSessions.filter((session: any) => {
         return session.id && Array.isArray(session.messages);
       });
 
       // Sort by lastUpdated timestamp (newest first)
-      validSessions.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+      validSessions.sort(
+        (a: any, b: any) => (b.lastUpdated || 0) - (a.lastUpdated || 0)
+      );
 
       return validSessions;
     } catch (error) {
@@ -109,16 +111,16 @@ export class SettingsService {
     }
   }
 
-  static sessionExists(sessionId) {
+  static sessionExists(sessionId: string) {
     const sessions = this.getChatSessions();
-    return sessions.some((session) => session.id === sessionId);
+    return sessions.some((session: any) => session.id === sessionId);
   }
 
   static saveChatSession(
-    sessionName,
-    messages,
-    context = {},
-    sessionId = null
+    sessionName: string,
+    messages: any[],
+    context: any = {},
+    sessionId: string | null = null
   ) {
     try {
       // Validate messages input
@@ -135,7 +137,7 @@ export class SettingsService {
       const timestamp = Date.now();
 
       const sessionIndex = sessions.findIndex(
-        (session) => session.id === newSessionId
+        (session: any) => session.id === newSessionId
       );
 
       if (sessionIndex !== -1) {
@@ -167,14 +169,18 @@ export class SettingsService {
       }
 
       // Sort sessions by lastUpdated timestamp (newest first)
-      sessions.sort((a, b) => (b.lastUpdated || 0) - (a.lastUpdated || 0));
+      sessions.sort(
+        (a: any, b: any) => (b.lastUpdated || 0) - (a.lastUpdated || 0)
+      );
 
       // Atomic save operation
       localStorage.setItem(this.CHAT_SESSIONS_KEY, JSON.stringify(sessions));
 
       // Verify the save was successful
       const savedSessions = this.getChatSessions();
-      const savedSession = savedSessions.find((s) => s.id === newSessionId);
+      const savedSession = savedSessions.find(
+        (s: any) => s.id === newSessionId
+      );
 
       if (!savedSession) {
         console.error("Failed to verify session save");
@@ -188,11 +194,11 @@ export class SettingsService {
     }
   }
 
-  static deduplicateMessages(messages) {
+  static deduplicateMessages(messages: any[]) {
     if (!Array.isArray(messages)) return [];
 
     const seen = new Set();
-    return messages.filter((msg) => {
+    return messages.filter((msg: any) => {
       if (!msg.id) {
         // Generate ID for messages without one
         msg.id = `${msg.type}_${msg.timestamp || Date.now()}_${Math.random()}`;
@@ -208,11 +214,11 @@ export class SettingsService {
     });
   }
 
-  static generateAutoSessionName(messages) {
+  static generateAutoSessionName(messages: any[]) {
     if (!Array.isArray(messages) || messages.length === 0) return "New Chat";
 
     // Use the first user message as session name (truncated)
-    const firstUserMessage = messages.find((msg) => msg.type === "user");
+    const firstUserMessage = messages.find((msg: any) => msg.type === "user");
     if (firstUserMessage && firstUserMessage.content) {
       const name = firstUserMessage.content.trim();
       return name.length > 50 ? `${name.substring(0, 50)}...` : name;
@@ -221,21 +227,21 @@ export class SettingsService {
     return `Chat ${new Date().toLocaleDateString()}`;
   }
 
-  static loadChatSession(sessionId) {
+  static loadChatSession(sessionId: string) {
     try {
       const sessions = this.getChatSessions();
-      return sessions.find((session) => session.id === sessionId) || null;
+      return sessions.find((session: any) => session.id === sessionId) || null;
     } catch (error) {
       console.error("Error loading chat session:", error);
       return null;
     }
   }
 
-  static deleteChatSession(sessionId) {
+  static deleteChatSession(sessionId: string) {
     try {
       const sessions = this.getChatSessions();
       const filteredSessions = sessions.filter(
-        (session) => session.id !== sessionId
+        (session: any) => session.id !== sessionId
       );
       localStorage.setItem(
         this.CHAT_SESSIONS_KEY,
@@ -248,7 +254,7 @@ export class SettingsService {
     }
   }
 
-  static exportChatSession(sessionId, format = "json") {
+  static exportChatSession(sessionId: string, format = "json") {
     try {
       const session = this.loadChatSession(sessionId);
       if (!session) return null;
@@ -263,21 +269,23 @@ export class SettingsService {
             mimeType: "application/json",
           };
 
-        case "txt":
+        case "txt": {
           const textContent = this.formatSessionAsText(session);
           return {
             fileName: `${fileName}.txt`,
             content: textContent,
             mimeType: "text/plain",
           };
+        }
 
-        case "md":
+        case "md": {
           const markdownContent = this.formatSessionAsMarkdown(session);
           return {
             fileName: `${fileName}.md`,
             content: markdownContent,
             mimeType: "text/markdown",
           };
+        }
 
         default:
           throw new Error(`Unsupported export format: ${format}`);
@@ -288,13 +296,13 @@ export class SettingsService {
     }
   }
 
-  static formatSessionAsText(session) {
+  static formatSessionAsText(session: any) {
     let content = `Chat Session: ${session.name}\n`;
     content += `Created: ${new Date(session.createdAt).toLocaleString()}\n`;
     content += `Messages: ${session.messageCount}\n`;
     content += `${"=".repeat(50)}\n\n`;
 
-    session.messages.forEach((message, index) => {
+    session.messages.forEach((message: any) => {
       const timestamp = new Date(message.timestamp).toLocaleString();
       const speaker =
         message.type === "user"
@@ -310,13 +318,13 @@ export class SettingsService {
     return content;
   }
 
-  static formatSessionAsMarkdown(session) {
+  static formatSessionAsMarkdown(session: any) {
     let content = `# ${session.name}\n\n`;
     content += `**Created:** ${new Date(session.createdAt).toLocaleString()}  \n`;
     content += `**Messages:** ${session.messageCount}  \n\n`;
     content += `---\n\n`;
 
-    session.messages.forEach((message, index) => {
+    session.messages.forEach((message: any) => {
       const timestamp = new Date(message.timestamp).toLocaleString();
       const speaker =
         message.type === "user"

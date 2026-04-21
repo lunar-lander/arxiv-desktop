@@ -135,7 +135,6 @@ export function useTextSelection(): UseTextSelectionReturn {
       // Modern clipboard API (preferred)
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(selectedText);
-        console.log("Text copied to clipboard via Clipboard API");
       } else {
         // Fallback for older browsers or non-secure contexts
         const textArea = document.createElement("textarea");
@@ -153,7 +152,6 @@ export function useTextSelection(): UseTextSelectionReturn {
         if (!successful) {
           throw new Error("execCommand copy failed");
         }
-        console.log("Text copied to clipboard via execCommand");
       }
 
       // Success - clear selection

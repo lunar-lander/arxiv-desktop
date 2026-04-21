@@ -1,6 +1,6 @@
 # ArXiv Desktop App - Makefile
 
-.PHONY: help install clean dev build test lint format pack dist
+.PHONY: help install clean dev dev-react build test lint format pack dist dist-linux dist-mac dist-win info setup reset start
 
 # Default target
 .DEFAULT_GOAL := help
@@ -28,6 +28,9 @@ install: ## Install all dependencies
 	npm install
 	@echo "$(GREEN)✓ Dependencies installed$(NC)"
 
+setup: clean install ## Complete setup (clean + install)
+	@echo "$(GREEN)✓ Setup complete$(NC)"
+
 clean: ## Clean node_modules and build artifacts
 	@echo "$(YELLOW)Cleaning project...$(NC)"
 	rm -rf node_modules
@@ -42,6 +45,10 @@ dev: ## Start Electron desktop app in development mode
 	@echo "$(YELLOW)This will start both React dev server and Electron$(NC)"
 	npm run dev
 
+dev-react: ## Start React development server only
+	@echo "$(GREEN)Starting React dev server...$(NC)"
+	npm run dev:react
+
 # Building and Testing
 build: ## Build React app for production
 	@echo "$(GREEN)Building app for production...$(NC)"
@@ -50,35 +57,53 @@ build: ## Build React app for production
 
 test: ## Run tests
 	@echo "$(GREEN)Running tests...$(NC)"
-	npm test -- --watchAll=false --verbose
+	npm test
 	@echo "$(GREEN)✓ Tests completed$(NC)"
 
 lint: ## Run ESLint
 	@echo "$(GREEN)Running ESLint...$(NC)"
-	npx eslint src electron --ext .js,.jsx
+	npm run lint
 	@echo "$(GREEN)✓ Linting completed$(NC)"
 
 format: ## Format code with Prettier
 	@echo "$(GREEN)Formatting code...$(NC)"
-	npx prettier --write "src/**/*.{js,jsx,css}" "electron/**/*.js"
+	npm run format
 	@echo "$(GREEN)✓ Code formatting completed$(NC)"
 
 # Packaging and Distribution
-pack: build ## Package the Electron app
+pack: build ## Package the Electron app (unpacked)
 	@echo "$(GREEN)Packaging Electron app...$(NC)"
 	npm run pack
 	@echo "$(GREEN)✓ App packaged$(NC)"
 
-dist: build ## Create distribution packages
-	@echo "$(GREEN)Creating distribution packages...$(NC)"
+dist: build ## Create distribution package for current platform
+	@echo "$(GREEN)Creating distribution package...$(NC)"
 	npm run dist
-	@echo "$(GREEN)✓ Distribution packages created$(NC)"
+	@echo "$(GREEN)✓ Distribution package created in dist/$(NC)"
+
+dist-linux: build ## Create Linux distribution (AppImage, deb, rpm)
+	@echo "$(GREEN)Creating Linux distribution...$(NC)"
+	npm run dist:linux
+	@echo "$(GREEN)✓ Linux packages created in dist/$(NC)"
+
+dist-mac: build ## Create macOS distribution (dmg, zip)
+	@echo "$(GREEN)Creating macOS distribution...$(NC)"
+	npm run dist:mac
+	@echo "$(GREEN)✓ macOS packages created in dist/$(NC)"
+
+dist-win: build ## Create Windows distribution (nsis, portable)
+	@echo "$(GREEN)Creating Windows distribution...$(NC)"
+	npm run dist:win
+	@echo "$(GREEN)✓ Windows packages created in dist/$(NC)"
 
 # Development Utilities
-reset: ## Reset project (clean + install)
-	@echo "$(YELLOW)Resetting project...$(NC)"
-	$(MAKE) clean
-	$(MAKE) install
-	@echo "$(GREEN)✓ Project reset completed$(NC)"
+reset: clean install ## Reset project (clean + install)
 
 start: dev ## Quick start (alias for dev)
+
+info: ## Show environment information
+	@echo "$(BLUE)Environment Info$(NC)"
+	@echo "  Node: $$(node --version)"
+	@echo "  npm:  $$(npm --version)"
+	@echo "  App:  $(PROJECT_NAME) v$(VERSION)"
+	@echo "  OS:   $$(uname -s) $$(uname -m)"

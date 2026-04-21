@@ -43,13 +43,7 @@ function HomePage({
   // Add scroll listener for infinite scroll
   useEffect(() => {
     const handleScroll = () => {
-      console.log("Scroll event fired");
       if (!homeContainerRef.current || isLoadingMore || !hasMoreResults) {
-        console.log("Early return:", {
-          hasContainer: !!homeContainerRef.current,
-          isLoadingMore,
-          hasMoreResults,
-        });
         return;
       }
 
@@ -57,31 +51,18 @@ function HomePage({
         homeContainerRef.current;
       const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
 
-      console.log("Scroll metrics:", {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        scrollPercentage,
-        hasSearchParams: !!currentSearchParams,
-      });
-
       // Load more when scrolled to 90% of the container
       if (scrollPercentage > 0.9 && currentSearchParams) {
-        console.log("Triggering load more");
         handleLoadMore();
       }
     };
 
     const container = homeContainerRef.current;
     if (container) {
-      console.log("Adding scroll listener to home container");
       container.addEventListener("scroll", handleScroll);
       return () => {
-        console.log("Removing scroll listener");
         container.removeEventListener("scroll", handleScroll);
       };
-    } else {
-      console.log("No home container found for scroll listener");
     }
   }, [
     isLoadingMore,
@@ -172,7 +153,6 @@ function HomePage({
         onPaperOpen(paperWithLocalPath);
       } else {
         // If download fails, try to open the PDF in viewer with the remote URL
-        console.log("Download failed, attempting to open remote PDF directly");
         onPaperOpen(paper);
       }
     } catch (error) {
